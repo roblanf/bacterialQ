@@ -1,0 +1,135 @@
+#!/usr/bin/env Rscript
+
+args <- commandArgs(trailingOnly = TRUE)
+existing_model_nex <- args[1]
+trained_model_nex <- args[2]
+output_dir <- args[3]
+
+library(ggfortify)
+library(ggrepel)
+
+#' Read Q matrix and convert it to a vector
+#'
+#' @param Q_matrix The Q matrix
+#' @return The Q matrix as a vector
+readQ <- function(Q_matrix) {
+  Q <- (Q_matrix + t(Q_matrix))
+  diag(Q) <- 0
+  Q <- (Q / sum(Q)) * 100.0
+  Q <- Q[lower.tri(Q)]
+  return(as.vector(Q))
+}
+
+#' Read models from a nexus file
+#'
+#' @param file_path The path to the nexus file
+#' @return A list of models
+read_nexus_models <- function(file_path) {
+  nexus_lines <- readLines(file_path)
+  model_start <- which(nexus_lines == "begin models;") + 1
+  model_end <- which(nexus_lines == "end;") - 1
+  model_lines <- nexus_lines[model_start:model_end]
+
+  models <- list()
+  i <- 1
+  while (i <= length(model_lines)) {
+    cur_line <- gsub("^\\s+|\\s+$", "", model_lines[i])
+    if (grepl("^.*=$", model_lines[i])) {
+      model_name <- gsub("=", "", model_lines[i])
+      model_name <- gsub("^model", "", model_name)
+      model_name <- gsub("^\\s+|\\s+$", "", model_name)
+      Q_matrix <- matrix(nrow = 20, ncol = 20)
+      diag(Q_matrix) <- 0
+      for (j in 1:19) {
+        i <- i + 1
+        values <- as.numeric(strsplit(model_lines[i], " ")[[1]])
+        if (length(values) == j) {
+          Q_matrix[j + 1, 1:j] <- values
+        } else {
+          warning(paste("Skipping line", i, "due to mismatch in values length for model", model_name))
+        }
+      }
+      Q_matrix[upper.tri(Q_matrix)] <- t(Q_matrix)[upper.tri(Q_matrix)]
+      i <- i + 1
+      F_vector <- as.numeric(strsplit(gsub(";", "", model_lines[i]), " ")[[1]])
+      models[[model_name]] <- list(name = model_name, Q = Q_matrix, F = F_vector)
+    }
+    i <- i + 1
+  }
+  return(models)
+}
+
+# Read existing and trained models
+existing_models <- read_nexus_models(existing_model_nex)
+trained_models <- read_nexus_models(trained_model_nex)
+
+# Extract Q matrices and F vectors from existing models
+existing_Q <- lapply(existing_models, function(model) readQ(model$Q))
+existing_F <- lapply(existing_models, function(model) model$F)
+
+# Extract Q matrices and F vectors from trained models
+trained_Q <- lapply(trained_models, function(model) readQ(model$Q))
+trained_F <- lapply(trained_models, function(model) model$F)
+
+# Combine Q matrices and F vectors from existing and trained models
+allQ <- rbind(do.call(rbind, existing_Q), do.call(rbind, trained_Q))
+allF <- rbind(do.call(rbind, existing_F), do.call(rbind, trained_F))
+
+# Set row names
+rownames(allQ) <- c(names(existing_models), names(trained_models))
+rownames(allF) <- c(names(existing_models), names(trained_models))
+
+# Create a vector of model sources
+model_source <- c(rep("Existing", length(existing_models)), rep("Trained", length(trained_models)))
+
+# Create a function to determine the type based on the model name
+determine_type <- function(model_name) {
+  if (startsWith(model_name, "Q.")) {
+    return("QMaker")
+  } else if (startsWith(model_name, "MT")) {
+    return("Mitochondria")
+  } else if (startsWith(model_name, "CP")) {
+    return("Choloroplast")
+  } else if (startsWith(model_name, "HI") || startsWith(model_name, "FL") || endsWith(model_name, "REV")) {
+    return("Virus")
+  } else if (startsWith(model_name, "p__")) {
+    return("Bac_phyla")
+  } else {
+    return("General")
+  }
+}
+
+# Determine the type for each model
+model_type <- sapply(rownames(allQ), determine_type)
+
+# Perform PCA on the data
+pca_Q <- prcomp(allQ, scale. = TRUE)
+pca_F <- prcomp(allF, scale. = TRUE)
+
+# Create PCA plot for Q matrices using autoplot and add labels with geom_text_repel
+pca_Q_plot <- autoplot(pca_Q,
+  data = data.frame(Model = rownames(allQ), Source = model_source, Type = model_type),
+  colour = "Type", shape = "Source"
+) +
+  geom_text_repel(aes(label = Model), size = 3, show.legend = FALSE, max.overlaps = Inf) +
+  scale_shape_manual(values = c(16, 8)) +
+  labs(title = "PCA of Q matrices") +
+  theme_bw() +
+  theme(plot.title = element_text(hjust = 0.5))
+
+# Save PCA plot for Q matrices
+ggsave(filename = file.path(output_dir, "PCA_Q.png"), plot = pca_Q_plot, width = 12, height = 11, dpi = 300)
+
+# Create PCA plot for stationary frequencies using autoplot and add labels with geom_text_repel
+pca_F_plot <- autoplot(pca_F,
+  data = data.frame(Model = rownames(allF), Source = model_source, Type = model_type),
+  colour = "Type", shape = "Source"
+) +
+  geom_text_repel(aes(label = Model), size = 3, show.legend = FALSE, max.overlaps = Inf) +
+  scale_shape_manual(values = c(16, 8)) +
+  labs(title = "PCA of stationary frequencies") +
+  theme_bw() +
+  theme(plot.title = element_text(hjust = 0.5))
+
+# Save PCA plot for stationary frequencies
+ggsave(filename = file.path(output_dir, "PCA_F.png"), plot = pca_F_plot, width = 12, height = 11, dpi = 300)

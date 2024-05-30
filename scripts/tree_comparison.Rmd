@@ -1,0 +1,183 @@
+---
+title: "Tree Comparison"
+output: html_document
+params:
+  tree1_path: "path/to/tree1.tre"
+  tree2_path: "path/to/tree2.tre"
+  summary_path: "path/to/table.csv"
+  root: FALSE
+  name: "default_name"
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE, message = FALSE, warning = FALSE)
+
+library(ape)
+library(phangorn)
+library(ggtree)
+library(ggplot2)
+library(kableExtra)
+
+# Read the tree files
+tree1 <- read.tree(params$tree1_path)
+tree2 <- read.tree(params$tree2_path)
+ifroot <- params$root
+
+if (!ifroot) {
+  tree1 <- unroot(tree1)
+  tree2 <- unroot(tree2)
+}
+
+# Check if the taxa of the two trees are equal
+taxa_equal <- setequal(tree1$tip.label, tree2$tip.label)
+if (!taxa_equal) {
+  taxa_diff1 <- setdiff(tree1$tip.label, tree2$tip.label)
+  taxa_diff2 <- setdiff(tree2$tip.label, tree1$tip.label)
+  cat("The taxa of the two trees are not equal.\n")
+  cat("Number of taxa unique to Tree 1:", length(taxa_diff1), "\n")
+  cat("Number of taxa unique to Tree 2:", length(taxa_diff2), "\n")
+  cat("The differing taxa have been removed for the analysis.\n")
+  tree1 <- drop.tip(tree1, taxa_diff1)
+  tree2 <- drop.tip(tree2, taxa_diff2)
+}
+
+# Define a function to extract the tree name from the file path
+extract_tree_name <- function(file_path) {
+  # Remove the directory path and file extension from the file path
+  tree_name <- sub("^.*\\/", "", file_path)
+  tree_name <- sub("\\..*$", "", tree_name)
+  return(tree_name)
+}
+
+# Extract tree names from file paths
+tree1_name <- extract_tree_name(params$tree1_path)
+tree2_name <- extract_tree_name(params$tree2_path)
+```
+
+## Tree Topology
+
+### Phylograms plot
+```{r echo=FALSE, fig.height=10, fig.width=16, message=FALSE, warning=FALSE}
+phylograms <- function(tree, y_scale = -5, subtitle = "") {
+  ggtree(tree, cex = 0.8, lwd = 1, aes(color = branch.length - mean(branch.length))) +
+    scale_color_continuous(
+      high = "red", low = "black",
+      name = "centralized(Branch Length)",
+      guide = guide_colourbar(barwidth = 10)
+    ) +
+    geom_tiplab(align = TRUE, size = 2) +
+    geom_treescale(y = y_scale, color = "black", fontsize = 4) +
+    labs(subtitle = subtitle) +
+    theme(legend.position = "bottom")
+}
+
+p1 <- phylograms(tree1, subtitle = "Tree 1")
+p2 <- phylograms(tree2, subtitle = "Tree 2")
+
+multiplot(p1, p2, ncol = 2)
+```
+
+### Table of topological distance metrics
+```{r echo=FALSE, message=FALSE, warning=FALSE}
+# Calculate distances
+RF_dist <- round(RF.dist(tree1, tree2, normalize = FALSE, check.labels = TRUE, rooted = ifroot), 4)
+nRF_dist <- round(RF.dist(tree1, tree2, normalize = TRUE, check.labels = TRUE, rooted = ifroot), 4)
+wRF_dist <- round(wRF.dist(tree1, tree2, normalize = FALSE, check.labels = TRUE, rooted = ifroot), 4)
+KF_dist <- round(KF.dist(tree1, tree2, check.labels = TRUE, rooted = ifroot), 4)
+SPR_dist <- round(SPR.dist(tree1, tree2), 4)
+path_dist <- round(path.dist(tree1, tree2, check.labels = TRUE, use.weight = TRUE), 4)
+
+# Calculate tree length
+tree1_bl <- sum(tree1$edge.length)
+tree2_bl <- sum(tree2$edge.length)
+bl_diff_pct <- (tree2_bl - tree1_bl) / tree1_bl * 100
+
+# Create a data frame with the results
+result_df <- data.frame(
+  "name" = params$name,
+  "Tree1" = tree1_name,
+  "Tree2" = tree2_name,
+  "RF_dist" = RF_dist,
+  "nRF" = nRF_dist,
+  "wRF" = wRF_dist,
+  "KF dist" = KF_dist,
+  "SPR dist" = SPR_dist,
+  "Path_dist" = path_dist,
+  "Tree1_BL" = tree1_bl,
+  "Tree2_BL" = tree2_bl,
+  "BL_diff_per" = bl_diff_pct
+)
+
+# Print the resulting data frame
+kable_styling(knitr::kable(result_df, caption = "Tree distance Summary", row.names = FALSE), bootstrap_options = c("striped", "hover", "condensed"))
+
+if (!file.exists(params$summary_path)) {
+  write.table(result_df, file = params$summary_path, sep = ",", row.names = FALSE, col.names = TRUE)
+} else {
+  # Read existing data
+  existing_data <- read.table(params$summary_path, sep = ",", header = TRUE)
+  # Combine existing data with new data
+  combined_data <- rbind(existing_data, result_df)
+  # Write combined data to file
+  write.table(combined_data, file = params$summary_path, sep = ",", row.names = FALSE, col.names = TRUE)
+}
+```
+
+## Branch Lengths
+
+### Summary parameters table
+```{r echo=FALSE, message=FALSE, warning=FALSE}
+# Calculate tree statistics
+tree_stats <- function(tree, tree_name) {
+  total_length <- sum(tree$edge.length)
+  internal_lengths <- sum(tree$edge.length[tree$edge[, 2] <= length(tree$tip.label)])
+  prop_internal <- internal_lengths / total_length
+  summary_stats <- summary(tree$edge.length)
+  c(
+    Tree = tree_name,
+    Tree_Length = round(total_length, 4),
+    Sum_int = round(internal_lengths, 4),
+    prop_int = round(prop_internal, 4),
+    round(summary_stats, 4)
+  )
+}
+
+# Calculate stats for both trees
+stats_tree1 <- tree_stats(tree1, tree_name = "Tree 1")
+stats_tree2 <- tree_stats(tree2, tree_name = "Tree 2")
+
+# Combine into a data frame
+tree_summary <- rbind(stats_tree1, stats_tree2)
+rownames(tree_summary) <- NULL
+
+kable_styling(knitr::kable(tree_summary, caption = "Branch length Summary"), bootstrap_options = c("striped", "hover", "condensed"))
+```
+
+### Faceted histogram
+```{r echo=FALSE, message=FALSE, warning=FALSE}
+# Load branch length data
+branch_length_data <- data.frame(
+  tree = rep(c("Tree 1", "Tree 2"), each = length(tree1$edge.length)),
+  branch_length = c(tree1$edge.length, tree2$edge.length)
+)
+
+# Create a faceted histogram
+ggplot(branch_length_data, aes(x = branch_length)) +
+  geom_histogram(binwidth = 0.1, fill = "blue", color = "black") +
+  facet_grid(tree ~ ., scales = "free_y") +
+  labs(x = "Branch Length", y = "Frequency") +
+  theme_minimal() +
+  scale_x_log10()
+```
+
+### ECDF plot
+```{r echo=FALSE, message=FALSE, warning=FALSE}
+# Create an ECDF plot
+ggplot(branch_length_data, aes(x = branch_length, color = tree)) +
+  stat_ecdf(geom = "step") +
+  labs(x = "Branch Length", y = "ECDF") +
+  scale_color_manual(values = c("Tree 1" = "blue", "Tree 2" = "red")) +
+  theme_minimal() +
+  theme(legend.position = "top") +
+  scale_x_log10()
+```

@@ -1,0 +1,13 @@
+/alignment/
+/download_alignments/
+/scripts/TESTING/
+/scripts/archived/
+/Result/
+/Result_rona/
+*.faa
+**/__pycache__/
+.*/ 
+slurm-*
+rona-*
+Q.GTDB_*
+Rplots.pdf

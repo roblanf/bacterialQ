@@ -1,0 +1,38 @@
+name: qgtdb
+channels:
+        - bioconda
+        - conda-forge
+        - annaconda
+
+dependencies:
+        - python=3.9.16
+        - r-base=4.2.3
+        - seaborn
+        - numpy
+        - pandas
+        - python-lsp-server
+        - r-languageserver
+        - r-ggfortify
+        - r-ggrepel
+        - r-castor
+        - r-patchwork
+        - r-ggplot2
+        - r-dplyr
+        - r-optparse
+        - r-rmarkdown
+        - r-kableextra
+        - r-jsonlite
+        - r-vegan
+        - r-rtsne
+        - r-ggcorrplot
+        - biopython
+        - matplotlib
+        - pandoc
+        - ucsc-faSomeRecords
+        - iqtree
+        - fasttree
+        - veryfasttree
+        - treeshrink
+        - r-phangorn
+        - bioconductor-ggtree
+
