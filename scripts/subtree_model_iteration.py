@@ -220,8 +220,7 @@ def sample_alignment(loci_dir: Path, taxa_list: Path, output_folder: Path, num_a
 
     if not loci_files:
         raise ValueError("Loci set is empty after filtering. Program will terminate.")
-
-    log_message('process', "Sampling alignments...")
+    
     process_loci_files(loci_files, taxa_list, output_folder, num_aln=num_aln)
 
 @log_and_handle_error
@@ -234,9 +233,11 @@ def initial_data_extraction(args: argparse.Namespace) -> Tuple[Path, Path]:
     sample_alignment(args.test_loc_path, args.output_dir / "select_id.txt", args.output_dir / "loci" / "testing_loci", loci_filter=args.output_dir / "select_loci.txt", num_aln=None, combine_subtree=True)  # Replacing split_loci
     
     concat_training_loci = args.output_dir / "loci" / "concat_training_loci.faa"
+    log_message('process', "Abstract alingment of selected taxa scale in training set:")
     concatenate_sequences(str(args.output_dir / "loci" / "training_loci"), str(concat_training_loci))
 
     concat_testing_loci = args.output_dir / "loci" / "concat_testing_loci.faa"
+    log_message('process', "Abstract alingment of selected taxa scale in testing set:")
     concatenate_sequences(str(args.output_dir / "loci" / "testing_loci"), str(concat_testing_loci))
 
     return concat_training_loci, concat_testing_loci

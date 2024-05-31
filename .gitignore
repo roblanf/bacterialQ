@@ -11,3 +11,5 @@ slurm-*
 rona-*
 Q.GTDB_*
 Rplots.pdf
+.RData
+.Rhistory
