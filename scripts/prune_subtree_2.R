@@ -301,7 +301,8 @@ prune_subtrees <- function(tree_file, tree_size_lower_lim, tree_size_upper_lim, 
   original_num_taxa <- length(tree$tip.label)
 
   # Perform automated pruning based on the specified mode
-  pruned_nodes <- auto_prune(tree, interior_nodes, tree_size_lower_lim, tree_size_upper_lim, num_tree, mode)
+  pruned_nodes <- auto_prune(tree, interior_nodes, tree_size_lower_lim, tree_size_upper_lim, num_tree, mode) %>% 
+    arrange(desc(degree))
 
   # Create summary directory if it doesn't exist
   summary_dir <- paste0(output_dir, "/summary")

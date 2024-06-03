@@ -18,6 +18,7 @@ from quality_trimming import *
 from concat_seq import concatenate_sequences
 from get_subtree import prune_tree
 from mdlogger import *
+from fasta_filter import drop_rubbish_aln
 
 # Define constants
 t_drop_species = 0.5
@@ -112,29 +113,13 @@ def sample_alignment(loci_dir: Path, taxa_list: Path, output_folder: Path, num_a
             log_message('result', f"Discarded {len([f for f in loci_dir.glob('*.fa*') if f.name not in filtered_loci])} loci based on the loci filter.")
         return loci_files
 
-    def check_non_empty_seq(file_path, n):
-        # Check if a sequence file contains at least n non-empty sequences
-        non_empty_count = 0
-        with open(file_path, 'r') as f:
-            content = f.read().splitlines()
-            for line in content:
-                if line.startswith('>'):
-                    continue
-                if line.strip('-?'):
-                    non_empty_count += 1
-                    if non_empty_count >= n:
-                        return True
-        return False
-
     def run_faSomeRecords(loci_file, taxa_file, output_file):
         # Run the faSomeRecords command to extract sequences from a loci file based on a taxa file
         cmd = f"faSomeRecords {loci_file} {taxa_file} {output_file}"
         run_command(cmd, f"{output_folder}/log.md", log_any=False)
-        if not check_non_empty_seq(output_file, 4):
-            # If the output file contains less than 4 informative taxa, remove it and return True
-            os.remove(output_file)
-            return False
-        return True
+        # Drop rubbish alignment: remove sequences with less than 5 parsimony informative sites and 3 valid taxa
+        # If keep the alignment, delete the row and column with less than nchar_row & nchar_col non-gap characters
+        return drop_rubbish_aln(output_file, nchar_row=4, nchar_col=1, ntaxa=3, npls_site=5)
 
     def process_loci_files(loci_files, taxa_list, output_dir, num_aln=None):
         splited_aln_count, deleted_aln_count = 0, 0
@@ -183,7 +168,7 @@ def sample_alignment(loci_dir: Path, taxa_list: Path, output_folder: Path, num_a
                     print(len(subtree_loci_pairs))
                     random.shuffle(subtree_loci_pairs)  # Shuffle the list to avoid sequential selection
                     target_aln_count = min(num_aln or total_aln_count, total_aln_count)
-                    target_aln_count = min(int(target_aln_count * 1.1), total_aln_count)  # 10% spare space, but not exceeding total alignment count
+                    target_aln_count = min(int(target_aln_count * 1.2), total_aln_count)  # 20% spare space, but not exceeding total alignment count
                     for taxa_file, loci_file in subtree_loci_pairs[:target_aln_count]:
                         tree_name = os.path.splitext(os.path.basename(taxa_file))[0]
                         loci_name = os.path.splitext(os.path.basename(loci_file))[0]
@@ -198,7 +183,7 @@ def sample_alignment(loci_dir: Path, taxa_list: Path, output_folder: Path, num_a
                     if splited_aln_count < num_aln:
                         log_message('result', f"Could not obtain the requested {num_aln} alignments. Keeping {splited_aln_count} alignments.")
                 else:
-                    # If all potential alignments need to be sampled
+                    # If all potential alignments need to be processed
                     for taxa_file in os.listdir(taxa_list):
                         if taxa_file.endswith(".txt"):
                             tree_name = os.path.splitext(taxa_file)[0]
@@ -223,21 +208,43 @@ def sample_alignment(loci_dir: Path, taxa_list: Path, output_folder: Path, num_a
     
     process_loci_files(loci_files, taxa_list, output_folder, num_aln=num_aln)
 
+def get_constraint_tree(loci_dir, subtree_dir, output_tree_path):
+    from Bio import Phylo
+    from get_subtree import get_subtree_from_fasta
+    # Get and arrange aligments by filename
+    loci_file_names = os.listdir(loci_dir)
+    sorted_loci_file_names = sorted(loci_file_names)
+
+    # Create a dictionary to store the subtree for each file
+    tree_dict = {}
+    for file in os.listdir(subtree_dir):
+        if file.endswith('.tre'):
+            with open(os.path.join(subtree_dir, file), 'r') as f:
+                tree_name, _ = os.path.splitext(file)
+                tree_dict[tree_name] = Phylo.read(f, 'newick')
+
+    # Extract and write trees in the order of sorted_loci_subtree_names
+    with open(output_tree_path, 'w') as output_tree:
+        for file in sorted_loci_file_names:
+                file_path = os.path.join(loci_dir, file)
+                subtree_name = re.search('subtree_\d+', file).group()
+                get_subtree_from_fasta(tree_dict[subtree_name], file_path, output_tree)
+
 @log_and_handle_error
 def initial_data_extraction(args: argparse.Namespace) -> Tuple[Path, Path]:
     """
     Extract training and testing loci for all signed species.
     """
-    log_message('process', "Extracting training and testing loci for all species...")
+    log_message('process', "Abstract alingment of selected taxa scale in training set:")
     sample_alignment(args.train_loc_path, args.output_dir / "select_id.txt", args.output_dir / "loci" / "training_loci", loci_filter=args.output_dir / "select_loci.txt", combine_subtree=True)  # Replacing split_loci
+    log_message('process', "Abstract alingment of selected taxa scale in testing set:")
     sample_alignment(args.test_loc_path, args.output_dir / "select_id.txt", args.output_dir / "loci" / "testing_loci", loci_filter=args.output_dir / "select_loci.txt", num_aln=None, combine_subtree=True)  # Replacing split_loci
     
     concat_training_loci = args.output_dir / "loci" / "concat_training_loci.faa"
-    log_message('process', "Abstract alingment of selected taxa scale in training set:")
+    log_message('process', "Concatenating training loci...")
     concatenate_sequences(str(args.output_dir / "loci" / "training_loci"), str(concat_training_loci))
-
     concat_testing_loci = args.output_dir / "loci" / "concat_testing_loci.faa"
-    log_message('process', "Abstract alingment of selected taxa scale in testing set:")
+    log_message('process', "Concatenating testing loci...")
     concatenate_sequences(str(args.output_dir / "loci" / "testing_loci"), str(concat_testing_loci))
 
     return concat_training_loci, concat_testing_loci
@@ -427,7 +434,8 @@ def main(args: argparse.Namespace) -> None:
         subtree_dir = iteration_dir / "subtrees"
         # Calculate the number of subtrees to prune
         if args.fix_subtree_num:
-            num_subtrees = math.ceil(args.num_aln * 1.1 / len(list(args.output_dir.glob('loci/training_loci/*.fa*'))))
+            # change 1.0 to keep some spare space
+            num_subtrees = math.ceil(args.num_aln * 1.0 / len(list(args.output_dir.glob('loci/training_loci/*.fa*'))))
         else:
             num_subtrees = None
         prune_subtrees(args, prev_tree, subtree_dir, num_subtrees, args.prune_mode)
@@ -446,7 +454,8 @@ def main(args: argparse.Namespace) -> None:
         if trained_model_nex:
             cmd += f" -mdef {trained_model_nex}"
         if args.fix_subtree_topology:
-            cmd += f" -te {prev_tree}"
+            get_constraint_tree(subtree_train_loci_dir, subtree_dir, subtree_update_dir / "constraint_tree.tre")
+            cmd += f" -te {subtree_update_dir / 'constraint_tree.tre'}"
         cmd += f" -pre {subtree_update_dir / args.prefix}"
         run_command(cmd, f"{args.output_dir}/log.md", log_output=args.keep_cmd_output, log_time=True)
 

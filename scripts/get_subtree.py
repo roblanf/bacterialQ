@@ -41,6 +41,20 @@ def get_subtree(tree, taxa_list):
             cptree.prune(tip)
     return cptree
 
+def get_taxa_list_from_fasta(fasta_file):
+    species_list = []
+    with open(fasta_file, 'r') as file:
+        for line in file:
+            if line.startswith('>'):  # headers start with '>'
+                species_name = line.split(' ')[0][1:].strip()
+                species_list.append(species_name)
+    return species_list
+
+def get_subtree_from_fasta(tree, fasta_file, output_file):
+    species_list = get_taxa_list_from_fasta(fasta_file)
+    subtree = get_subtree(tree, species_list)
+    Phylo.write(subtree, output_file, "newick")
+
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Prune a tree based on a list of taxa.")
     parser.add_argument("tree_file", help="Path to the input tree file (in newick format).")
