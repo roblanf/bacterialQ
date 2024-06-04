@@ -60,7 +60,11 @@ read_nexus_models <- function(file_path) {
 }
 
 # Read existing and trained models
-existing_models <- read_nexus_models(existing_model_nex)
+if (file.exists(existing_model_nex)) {
+  existing_models <- read_nexus_models(existing_model_nex)
+} else {
+  existing_models <- list()
+}
 trained_models <- read_nexus_models(trained_model_nex)
 
 # Extract Q matrices and F vectors from existing models
@@ -118,7 +122,12 @@ pca_Q_plot <- autoplot(pca_Q,
   theme(plot.title = element_text(hjust = 0.5))
 
 # Save PCA plot for Q matrices
-ggsave(filename = file.path(output_dir, "PCA_Q.png"), plot = pca_Q_plot, width = 12, height = 11, dpi = 300)
+# if existing_models is empty, then change the name of plot
+if (length(existing_models) == 0) {
+  ggsave(filename = file.path(output_dir, "PCA_Q_trained.png"), plot = pca_Q_plot, width = 12, height = 11, dpi = 300)
+} else {
+  ggsave(filename = file.path(output_dir, "PCA_Q.png"), plot = pca_Q_plot, width = 12, height = 11, dpi = 300)
+}
 
 # Create PCA plot for stationary frequencies using autoplot and add labels with geom_text_repel
 pca_F_plot <- autoplot(pca_F,
@@ -132,4 +141,8 @@ pca_F_plot <- autoplot(pca_F,
   theme(plot.title = element_text(hjust = 0.5))
 
 # Save PCA plot for stationary frequencies
-ggsave(filename = file.path(output_dir, "PCA_F.png"), plot = pca_F_plot, width = 12, height = 11, dpi = 300)
+if (length(existing_models) == 0) {
+  ggsave(filename = file.path(output_dir, "PCA_F_trained.png"), plot = pca_F_plot, width = 12, height = 11, dpi = 300)
+} else {
+  ggsave(filename = file.path(output_dir, "PCA_F.png"), plot = pca_F_plot, width = 12, height = 11, dpi = 300)
+}

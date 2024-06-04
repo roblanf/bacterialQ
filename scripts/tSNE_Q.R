@@ -61,7 +61,7 @@ read_nexus_models <- function(file_path) {
 }
 
 # Read existing and trained models
-if (!is.null(existing_model_nex)) {
+if (file.exists(existing_model_nex)) {
   existing_models <- read_nexus_models(existing_model_nex)
 } else {
   existing_models <- list()
@@ -111,10 +111,11 @@ determine_type <- function(model_name) {
 
 # Determine the type for each model
 model_type <- sapply(rownames(allQ), determine_type)
-
+perp <- min(floor((nrow(allQ) - 1) / 3), 5)
 # Perform t-SNE on the data
-tsne_Q <- Rtsne(allQ, dims = 2, perplexity = min(floor((nrow(allQ) - 1) / 3), 30), check_duplicates = FALSE)
-tsne_F <- Rtsne(allF, dims = 2, perplexity = min(floor((nrow(allF) - 1) / 3), 30), check_duplicates = FALSE)
+tsne_Q <- Rtsne(allQ, dims = 2, perplexity = perp, check_duplicates = FALSE, initial_dims = 50, theta = 0.1)
+tsne_F <- Rtsne(allF, dims = 2, perplexity = perp, check_duplicates = FALSE, initial_dims = 20, theta = 0.1)
+
 
 # Create t-SNE plot for Q matrices using ggplot and add labels with geom_text_repel
 tsne_Q_plot <- ggplot(data.frame(tSNE1 = tsne_Q$Y[, 1], tSNE2 = tsne_Q$Y[, 2], Model = rownames(allQ), Source = model_source, Type = model_type), aes(x = tSNE1, y = tSNE2, color = Type, shape = Source)) +
@@ -126,7 +127,12 @@ tsne_Q_plot <- ggplot(data.frame(tSNE1 = tsne_Q$Y[, 1], tSNE2 = tsne_Q$Y[, 2], M
   theme(plot.title = element_text(hjust = 0.5))
 
 # Save t-SNE plot for Q matrices
-ggsave(filename = file.path(output_dir, "tSNE_Q.png"), plot = tsne_Q_plot, width = 12, height = 11, dpi = 300)
+# if existing_models is empty, then change the name of plot
+if (length(existing_models) == 0) {
+  ggsave(filename = file.path(output_dir, "tSNE_Q_trained.png"), plot = tsne_Q_plot, width = 12, height = 11, dpi = 300)
+} else {
+  ggsave(filename = file.path(output_dir, "tSNE_Q.png"), plot = tsne_Q_plot, width = 12, height = 11, dpi = 300)
+}
 
 # Create t-SNE plot for stationary frequencies using ggplot and add labels with geom_text_repel
 tsne_F_plot <- ggplot(data.frame(tSNE1 = tsne_F$Y[, 1], tSNE2 = tsne_F$Y[, 2], Model = rownames(allQ), Source = model_source, Type = model_type), aes(x = tSNE1, y = tSNE2, color = Type, shape = Source)) +
@@ -138,4 +144,8 @@ tsne_F_plot <- ggplot(data.frame(tSNE1 = tsne_F$Y[, 1], tSNE2 = tsne_F$Y[, 2], M
   theme(plot.title = element_text(hjust = 0.5))
 
 # Save t-SNE plot for stationary frequencies
-ggsave(filename = file.path(output_dir, "tSNE_F.png"), plot = tsne_F_plot, width = 12, height = 11, dpi = 300)
+if (length(existing_models) == 0) {
+  ggsave(filename = file.path(output_dir, "tSNE_F_trained.png"), plot = tsne_F_plot, width = 12, height = 11, dpi = 300)
+} else {
+  ggsave(filename = file.path(output_dir, "tSNE_F.png"), plot = tsne_F_plot, width = 12, height = 11, dpi = 300)
+}
