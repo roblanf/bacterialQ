@@ -71,7 +71,7 @@ calculate_tree_distances <- function(tree1_file, tree2_file, dir_path) {
     )
 
     # Define the summary file path
-    summary_path <- paste0(dir_path, "/tree_pairwise_compare.csv")
+    summary_path <- paste0(dir_path, "/../tree_pairwise_compare.csv")
 
     # If the csv file doesn't exist or is empty, write the column names
     if (!file.exists(summary_path) || file.size(summary_path) == 0) {
@@ -88,23 +88,23 @@ calculate_tree_distances <- function(tree1_file, tree2_file, dir_path) {
 # Define a function to generate heatmaps
 generate_heatmaps <- function(dir_path) {
     # Define the summary file path
-    summary_path <- paste0(dir_path, "/tree_pairwise_compare.csv")
+    summary_path <- paste0(dir_path, "/../tree_pairwise_compare.csv")
 
     # Read the summary file
     summary_df <- read.csv(summary_path)
 
-    # Calculate distance matrices
-    RF_dist_matrix <- as.matrix(dist(summary_df$RF_dist))
-    nRF_dist_matrix <- as.matrix(dist(summary_df$nRF))
-
     # Generate heatmaps
-    heatmap(RF_dist_matrix, main = "RF Distance", labRow = FALSE, labCol = FALSE)
-    dev.copy(png, filename = paste0(dir_path, "/RF_dist.png"))
-    dev.off()
+    RF_heatmap <- ggplot(summary_df, aes(x = Tree1, y = Tree2, fill = RF_dist)) +
+        geom_tile() +
+        theme_minimal() +
+        labs(title = "RF Distance of Trees")
+    ggsave(paste0(dir_path, "/../RF_dist.png"), RF_heatmap, width = 8, height = 6)
 
-    heatmap(nRF_dist_matrix, main = "nRF Distance", labRow = FALSE, labCol = FALSE)
-    dev.copy(png, filename = paste0(dir_path, "/nRF_dist.png"))
-    dev.off()
+    nRF_heatmap <- ggplot(summary_df, aes(x = Tree1, y = Tree2, fill = nRF)) +
+        geom_tile() +
+        theme_minimal() +
+        labs(title = "nRF Distance of Trees")
+    ggsave(paste0(dir_path, "/../nRF_dist.png"), nRF_heatmap, width = 8, height = 6)
 }
 
 # Get command line arguments
