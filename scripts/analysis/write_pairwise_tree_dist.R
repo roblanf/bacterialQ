@@ -131,4 +131,4 @@ for (i in seq(ncol(tree_pairs))) {
 }
 
 # Generate heatmaps
-generate_heatmaps(dir_path)
+# generate_heatmaps(dir_path)
