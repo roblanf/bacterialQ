@@ -19,6 +19,12 @@ This image shows an interesting fact. In different tests, the size of the subtre
 
 No obvious pattern was found in the PCA image as the maximum subtree size increases.
 
+### Time usage
+![CPU TIME](./CPU_time.png)  
+绘制了不同最大子树大小下的CPU时间（测试中的当前占用内核*时间）使用情况。期望中，消耗的CPU时间总和应该呈现指数的上升趋势。但因为子树上限为200和250的测试中得到的子树较为相似，所以并没有太大的时间消耗上升。  
+![CPU TIME2](./CPU_time_facet.png)  
+这个图像展示了不同最大子树大小下的CPU时间使用情况
+
 ### TODO
 
 - [ ] Add ref_tree + trained models / initial_models to BIC comparison
