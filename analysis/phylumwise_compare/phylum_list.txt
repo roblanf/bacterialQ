@@ -15,6 +15,7 @@ Acidobacteriota
 Dependentiae
 Thermotogota
 Poribacteria
+Patescibacteria
 Fusobacteriota
 Actinomycetota
 Spirochaetota
