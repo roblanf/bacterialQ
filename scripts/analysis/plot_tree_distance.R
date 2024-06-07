@@ -31,20 +31,24 @@ plot_heatmap <- function(summary_df, output_path, suffix) {
   # Filter the data to only include lower triangle values
   summary_df$Tree1_loop <- as.numeric(str_extract(summary_df$Tree1, "\\d+$"))
   summary_df$Tree2_loop <- as.numeric(str_extract(summary_df$Tree2, "\\d+$"))
-  summary_df <- summary_df %>% filter(Tree1_num <= Tree2_num) %>% filter(!(Tree1_num == Tree2_num & Tree1_loop > Tree2_loop))
+  summary_df <- summary_df %>%
+    filter(Tree1_num <= Tree2_num) %>%
+    filter(!(Tree1_num == Tree2_num & Tree1_loop > Tree2_loop))
   # Plot the heatmap
   p <- ggplot(summary_df, aes(x = reorder(Tree1, Tree1_num), y = reorder(Tree2, Tree2_num), fill = RF_dist)) +
     geom_tile() +
-    geom_text(aes(label = round(RF_dist, 2)), size = 3, color = "black") +  # Add text to each cell
+    geom_text(aes(label = round(RF_dist, 2)), size = 3, color = "black") + # Add text to each cell
     coord_equal() +
     theme(axis.text.x = element_text(angle = 45, hjust = 1)) +
     scale_fill_gradient(low = "white", high = "red") +
     labs(x = "Tree1", y = "Tree2", fill = "RF_dist") +
     theme_light() +
-    theme(axis.text = element_text(size = 10),
-          panel.background = element_rect(fill = "white"),
-          panel.grid.major = element_blank(),  # Remove major grid lines
-          panel.grid.minor = element_blank())  # Remove minor grid lines
+    theme(
+      axis.text = element_text(size = 10),
+      panel.background = element_rect(fill = "white"),
+      panel.grid.major = element_blank(), # Remove major grid lines
+      panel.grid.minor = element_blank()
+    ) # Remove minor grid lines
 
   # Save the plot
   ggsave(filename = paste0(output_path, "/RF_dist_heatmap_", suffix, ".png"), plot = p)
@@ -52,23 +56,28 @@ plot_heatmap <- function(summary_df, output_path, suffix) {
 
 plot_NMDS <- function(summary_df, output_path, suffix) {
   # Prepare data for NMDS
-  nRF_matrix <- summary_df %>% select(Tree1, Tree2, nRF) %>% spread(Tree2, nRF)
+  nRF_matrix <- summary_df %>%
+    select(Tree1, Tree2, nRF) %>%
+    spread(Tree2, nRF)
   namerow <- nRF_matrix %>% pull(Tree1)
-  nRF_matrix <- nRF_matrix %>% select(-Tree1) %>% as.matrix()
+  nRF_matrix <- nRF_matrix %>%
+    select(-Tree1) %>%
+    as.matrix()
   rownames(nRF_matrix) <- namerow
-  print(nRF_matrix)
-  
+
   # Perform NMDS
-  z <- metaMDS(comm = nRF_matrix,
-               autotransform = FALSE,
-               distance = "euclidean",
-               engine = "monoMDS",
-               k = 2,
-               weakties = TRUE,
-               model = "global",
-               maxit = 300,
-               try = 50,
-               trymax = 100)
+  z <- metaMDS(
+    comm = nRF_matrix,
+    autotransform = FALSE,
+    distance = "euclidean",
+    engine = "monoMDS",
+    k = 2,
+    weakties = TRUE,
+    model = "global",
+    maxit = 300,
+    try = 50,
+    trymax = 100
+  )
 
   # Prepare data for plot
   z.points <- data.frame(z$points)
@@ -77,9 +86,11 @@ plot_NMDS <- function(summary_df, output_path, suffix) {
   p <- ggplot(data = z.points, aes(x = MDS1, y = MDS2, label = rownames(nRF_matrix))) +
     geom_point() +
     coord_equal() +
-    theme_bw() + 
-    theme(axis.text.x = element_blank(),  # remove x-axis text
-          axis.text.y = element_blank()) +  # remove y-axis text
+    theme_bw() +
+    theme(
+      axis.text.x = element_blank(), # remove x-axis text
+      axis.text.y = element_blank()
+    ) + # remove y-axis text
     geom_text_repel()
 
   # Save the plot
