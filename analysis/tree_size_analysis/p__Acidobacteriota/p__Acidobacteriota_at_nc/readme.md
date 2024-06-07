@@ -21,9 +21,9 @@ No obvious pattern was found in the PCA image as the maximum subtree size increa
 
 ### Time usage
 ![CPU TIME](./CPU_time.png)  
-绘制了不同最大子树大小下的CPU时间（测试中的当前占用内核*时间）使用情况。期望中，消耗的CPU时间总和应该呈现指数的上升趋势。但因为子树上限为200和250的测试中得到的子树较为相似，所以并没有太大的时间消耗上升。  
+The graph shows the CPU time usage (current occupied cores * time) for different maximum subtree sizes. Ideally, the total CPU time consumed should exhibit an exponential increase. However, the tests with subtree limits of 200 and 250 resulted in similar subtrees, so there wasn't a significant increase in time consumption.  
 ![CPU TIME2](./CPU_time_facet.png)  
-这个图像展示了不同最大子树大小下的CPU时间使用情况
+Also provide the CPU time usage for different maximum subtree sizes.
 
 ### TODO
 
