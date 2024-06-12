@@ -15,14 +15,28 @@ def calculate_correlation_and_distance(model1, model2):
         model1.create_Q_matrix()
     if model2.Q_matrix is None:
         model2.create_Q_matrix()
-    model1.Q_params = model1.Q_params/np.sum(model1.Q_params)
-    model2.Q_params = model2.Q_params/np.sum(model2.Q_params)
+    
+    # Normalize Q_params
+    model1.Q_params = model1.Q_params / np.sum(model1.Q_params)
+    model2.Q_params = model2.Q_params / np.sum(model2.Q_params)
     correlations = []
     distances = []
+    
     for attr in ['Q_params', 'state_freq', 'Q_matrix']:
         attr1 = getattr(model1, attr)
         attr2 = getattr(model2, attr)
-        corr = np.corrcoef(attr1.flatten(), attr2.flatten())[0, 1]
+        # Check if attr1 and attr2 are square matrices
+        if attr1.ndim == 2 and attr1.shape[0] == attr1.shape[1]:
+            # Create a mask to include only the lower triangular part, excluding the diagonal
+            mask = np.tril(np.ones(attr1.shape, dtype=bool), k=-1)
+            attr1_flattened = attr1[mask]
+            attr2_flattened = attr2[mask]
+        else:
+            attr1_flattened = attr1.flatten()
+            attr2_flattened = attr2.flatten()
+        # Calculate the Pearson correlation coefficient
+        corr = np.corrcoef(attr1_flattened, attr2_flattened)[0, 1]
+        # Calculate the Euclidean distance
         dist = np.linalg.norm(attr1 - attr2)
         correlations.append(corr)
         distances.append(dist)

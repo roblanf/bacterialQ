@@ -12,10 +12,11 @@ import sys
 file_path = os.path.realpath(__file__)
 sys.path.append(os.path.dirname(os.path.dirname(file_path)))
 from Q_convert import extract_Q_from_nex, AminoAcidSubstitutionModel
+from models_dist_table import *
 
-def combine_iqtree_sum(input_file, output_file):
+def combine_csv_sum(input_file, output_file):
     """
-    Combine IQ-TREE summary files.
+    Combine summary files formatted in csv.
     """
     if not os.path.exists(output_file) or os.stat(output_file).st_size == 0:
         shutil.copy(input_file, output_file)
@@ -58,7 +59,8 @@ def process_directory(result_dir, sum_dir='./'):
     """
     if os.path.exists(os.path.join(result_dir, 'final_test', 'tree_comparison.html')):
         extract_last_treefile(result_dir, os.path.join(sum_dir, 'treefiles'))
-        combine_iqtree_sum(os.path.join(result_dir, 'iqtree_results.csv'), os.path.join(sum_dir, 'combined_iqtree_sum.csv'))
+        combine_csv_sum(os.path.join(result_dir, 'iqtree_results.csv'), os.path.join(sum_dir, 'combined_iqtree_sum.csv'))
+        combine_csv_sum(os.path.join(result_dir, 'tree_summary.csv'), os.path.join(sum_dir, 'combined_tree_sum.csv'))
         Q_matrix = extract_Q_from_nex(os.path.join(result_dir, 'trained_models', 'trained_model.nex'))
         for i in range(len(Q_matrix)):
             Q_matrix[i].add_Q_to_nex(os.path.join(sum_dir, 'trained_models_all.nex'))
@@ -123,134 +125,6 @@ def plot_model(existed_model_nex, trained_model_nex, sum_res):
     subprocess.run(["Rscript", tsne_script, existed_model_nex, trained_model_nex, sum_res])
     subprocess.run(["Rscript", pca_script, "NULL", trained_model_nex, sum_res])
     subprocess.run(["Rscript", tsne_script, "NULL", trained_model_nex, sum_res])
-
-# A simpler version of making distance matrix, which formed as a matrix
-# def calculate_distance(nex_file, attr = 'Q_matrix'):
-#     # Read nex file and extract all models
-#     # This depends on the structure of your nex file and the Model class
-#     models = extract_Q_from_nex(nex_file)  # Replace with actual function to read nex file
-
-#     # change the model names to the phylum names
-#     for i in range(len(models)):
-#         models[i].create_Q_matrix()
-#         models[i].model_name = extract_phylum_name(models[i].model_name)
-#         models[i].Q_params = models[i].Q_params/np.sum(models[i].Q_params)
-
-#     # Calculate pairwise distance for all models
-#     distance_matrix = np.zeros((len(models), len(models)))
-#     for i in range(len(models)):
-#         for j in range(i, len(models)):
-#             attr1 = getattr(models[i], attr)
-#             attr2 = getattr(models[j], attr)
-#             # corr = np.corrcoef(attr1.flatten(), attr2.flatten())[0, 1]
-#             dist = np.linalg.norm(attr1 - attr2)
-#             distance_matrix[i, j] = dist
-#             distance_matrix[j, i] = dist
-
-#     return distance_matrix, [model.model_name for model in models]  # Assuming each model has a name attribute
-
-# def save_distance_to_csv(distance_matrix, model_names, output_file):
-#     # Open the output file in write mode
-#     with open(output_file, 'w', newline='') as csvfile:
-#         writer = csv.writer(csvfile)
-
-#         # Write the header
-#         writer.writerow(model_names)
-#         # Write the rows
-#         for i, row in enumerate(distance_matrix):
-#             writer.writerow([model_names[i]] + list(row))
-
-# def write_distance_matrix(nex_file, output_file):
-#     distance_matrix, model_names = calculate_distance(nex_file)
-#     save_distance_to_csv(distance_matrix, model_names, output_file)
-
-# Another version of making distance matrix, which formed as ggplot data format
-def calculate_correlation_and_distance(model1, model2):
-    """
-    Calculate correlation and Euclidean distance for Q_params, state_freq, and Q_matrix.
-    
-    Args:
-        model1 (AminoAcidSubstitutionModel): First model.
-        model2 (AminoAcidSubstitutionModel): Second model.
-    
-    Returns:
-        tuple: Correlations and distances for Q_params, state_freq, and Q_matrix.
-    """
-    if model1.Q_matrix is None:
-        model1.create_Q_matrix()
-    if model2.Q_matrix is None:
-        model2.create_Q_matrix()
-    model1.Q_params = model1.Q_params / np.sum(model1.Q_params)
-    model2.Q_params = model2.Q_params / np.sum(model2.Q_params)
-    correlations = []
-    distances = []
-    for attr in ['Q_params', 'state_freq', 'Q_matrix']:
-        attr1 = getattr(model1, attr)
-        attr2 = getattr(model2, attr)
-        corr = np.corrcoef(attr1.flatten(), attr2.flatten())[0, 1]
-        dist = np.linalg.norm(attr1 - attr2)
-        correlations.append(corr)
-        distances.append(dist)
-    return correlations, distances
-
-def calculate_trained_models_dist(nex_file):
-    """
-    Calculate correlations and distances for trained models.
-    
-    Args:
-        nex_file (str): Path to the .nex file.
-    
-    Returns:
-        tuple: Correlations, distances, and model names.
-    """
-    models = extract_Q_from_nex(nex_file)
-    n = len(models)
-    correlations = np.zeros((n, n, 3))
-    distances = np.zeros((n, n, 3))
-    for i in range(n):
-        for j in range(i, n):
-            correlations[i, j], distances[i, j] = calculate_correlation_and_distance(models[i], models[j])
-            correlations[j, i], distances[j, i] = correlations[i, j], distances[i, j]
-    return correlations, distances, [model.model_name for model in models]
-
-def calculate_all_models_dist(trained_nex_file, existed_nex_file):
-    """
-    Calculate correlations and distances between trained and existed models.
-    
-    Args:
-        trained_nex_file (str): Path to the trained model .nex file.
-        existed_nex_file (str): Path to the existed model .nex file.
-    
-    Returns:
-        tuple: Correlations, distances, and model names for trained and existed models.
-    """
-    trained_models = extract_Q_from_nex(trained_nex_file)
-    existed_models = extract_Q_from_nex(existed_nex_file)
-    n, m = len(trained_models), len(existed_models)
-    correlations = np.zeros((n, m, 3))
-    distances = np.zeros((n, m, 3))
-    for i in range(n):
-        for j in range(m):
-            correlations[i, j], distances[i, j] = calculate_correlation_and_distance(trained_models[i], existed_models[j])
-    return correlations, distances, [model.model_name for model in trained_models], [model.model_name for model in existed_models]
-
-def save_to_csv(correlations, distances, model_names1, model_names2, output_file):
-    """
-    Save model correlations and distances to a CSV file.
-    
-    Args:
-        correlations (np.ndarray): Correlations array.
-        distances (np.ndarray): Distances array.
-        model_names1 (list): List of model names for the first set.
-        model_names2 (list): List of model names for the second set.
-        output_file (str): Path to the output CSV file.
-    """
-    with open(output_file, 'w', newline='') as csvfile:
-        writer = csv.writer(csvfile)
-        writer.writerow(['model1', 'model2', 'Q_params correlation', 'state_freq correlation', 'Q_matrix correlation', 'Q_params distance', 'state_freq distance', 'Q_matrix distance'])
-        for i in range(correlations.shape[0]):
-            for j in range(correlations.shape[1]):
-                writer.writerow([model_names1[i], model_names2[j]] + correlations[i, j].tolist() + distances[i, j].tolist())
 
 def main(root_directory, sum_dir, regex, existed_model_nex):
     """
