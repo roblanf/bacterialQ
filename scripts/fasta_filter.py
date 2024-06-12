@@ -16,12 +16,14 @@ class SequenceData:
         pis_mask = np.apply_along_axis(func, 0, array)
         return pis_mask
 
-    def filter_array(self, nchar_row=4, nchar_col=1):
-        row_mask = np.sum(self.aln != '-', axis=1) >= nchar_row
-        self.aln = self.aln[row_mask]
-        self.names = self.names[row_mask]
-        col_mask = np.sum(self.aln != '-', axis=0) >= nchar_col
-        self.aln = self.aln[:, col_mask]
+    def filter_array(self, nchar_row=None, nchar_col=None):
+        if nchar_row:
+            row_mask = np.sum(self.aln != '-', axis=1) >= nchar_row
+            self.aln = self.aln[row_mask]
+            self.names = self.names[row_mask]
+        if nchar_col:
+            col_mask = np.sum(self.aln != '-', axis=0) >= nchar_col
+            self.aln = self.aln[:, col_mask]
 
     def filter_array_with_ratio(self, pct_row, pct_col):
         row_mask = np.sum(self.aln != '-', axis=1) >= pct_row * self.aln.shape[1]
@@ -69,7 +71,7 @@ def fasta_to_array(fasta_file):
     
     return SequenceData(np.array(sequences), np.array(names))
     
-def drop_rubbish_aln(alignment_file, nchar_row=4, nchar_col=1, ntaxa=3, npls_site=5, auto_drop=True):
+def drop_rubbish_aln(alignment_file, nchar_row=None, nchar_col=None, ntaxa=3, npls_site=5, auto_drop=True):
     if os.path.exists(alignment_file):
         if os.path.getsize(alignment_file) == 0:
             if auto_drop:
