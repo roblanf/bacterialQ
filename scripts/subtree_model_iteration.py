@@ -88,7 +88,7 @@ def run_command(cmd: str, log_file: str, log_any: bool = True, log_output: bool 
     return stdout, stderr, exit_code
 
 @log_and_handle_error
-def sample_alignment(loci_dir: Path, taxa_list: Path, output_folder: Path, num_aln: int = None, combine_subtree: bool = False, loci_filter: Path = None, drop_low_info = False) -> None:
+def sample_alignment(loci_dir: Path, taxa_list: Path, output_folder: Path, num_aln: int = None, combine_subtree: bool = False, loci_filter: Path = None, nchar_row = None, nchar_col = None) -> None:
     """
     Sample alignments from the given loci directory and subtree directory.
 
@@ -112,36 +112,16 @@ def sample_alignment(loci_dir: Path, taxa_list: Path, output_folder: Path, num_a
             loci_files = [f for f in loci_files if f.name in filtered_loci]
             log_message('result', f"Discarded {len([f for f in loci_dir.glob('*.fa*') if f.name not in filtered_loci])} loci based on the loci filter.")
         return loci_files
-    
-    def check_non_empty_seq(file_path, n):
-        # Check if a sequence file contains at least n non-empty sequences
-        non_empty_count = 0
-        with open(file_path, 'r') as f:
-            content = f.read().splitlines()
-            for line in content:
-                if line.startswith('>'):
-                    continue
-                if line.strip('-?'):
-                    non_empty_count += 1
-                    if non_empty_count >= n:
-                        return True
-        return False
 
-    def run_faSomeRecords(loci_file, taxa_file, output_file, drop_low_info = False):
+    def run_faSomeRecords(loci_file, taxa_file, output_file, nchar_row = None, nchar_col = None):
         # Run the faSomeRecords command to extract sequences from a loci file based on a taxa file
         cmd = f"faSomeRecords {loci_file} {taxa_file} {output_file}"
         run_command(cmd, f"{output_folder}/log.md", log_any=False)
-        if drop_low_info:
-            # Drop rubbish alignment: remove sequences with less than 5 parsimony informative sites and 3 valid taxa
-            # If keep the alignment, delete the row and column with less than nchar_row & nchar_col non-gap characters
-            return drop_rubbish_aln(output_file, nchar_row=2, nchar_col=1, ntaxa=3, npls_site=5)
-        elif not check_non_empty_seq(output_file, 4):
-            # If the output file contains less than 4 informative taxa, remove it and return True
-            os.remove(output_file)
-            return False
-        return True
+        # Drop rubbish alignment: remove sequences with less than 5 parsimony informative sites and 3 valid taxa
+        # If keep the alignment, delete the row and column with less than nchar_row & nchar_col non-gap characters
+        return drop_rubbish_aln(output_file, nchar_row=nchar_row, nchar_col=nchar_col, ntaxa=3, npls_site=5)
 
-    def process_loci_files(loci_files, taxa_list, output_dir, num_aln=None, drop_low_info=False):
+    def process_loci_files(loci_files, taxa_list, output_dir, num_aln=None, nchar_row = None, nchar_col = None):
         splited_aln_count, deleted_aln_count = 0, 0
         if taxa_list.is_file():
             # If a single taxa file is provided
@@ -149,7 +129,7 @@ def sample_alignment(loci_dir: Path, taxa_list: Path, output_folder: Path, num_a
             log_message('result', f"Number of input species: {sum(1 for line in open(taxa_list))}")
             for loci_file in loci_files:
                 output_file = output_dir / os.path.basename(loci_file)
-                if run_faSomeRecords(loci_file, taxa_list, output_file, drop_low_info):
+                if run_faSomeRecords(loci_file, taxa_list, output_file, nchar_row, nchar_col):
                     splited_aln_count += 1
                 else:
                     deleted_aln_count += 1
@@ -166,7 +146,7 @@ def sample_alignment(loci_dir: Path, taxa_list: Path, output_folder: Path, num_a
                 target_aln_count = min(num_aln or len(loci_files), len(loci_files))
                 for loci_file in loci_files:
                     output_file = output_dir / os.path.basename(loci_file)
-                    if run_faSomeRecords(loci_file, all_taxa_file, output_file, drop_low_info):
+                    if run_faSomeRecords(loci_file, all_taxa_file, output_file, nchar_row, nchar_col):
                         splited_aln_count += 1
                     else:
                         deleted_aln_count += 1
@@ -194,7 +174,7 @@ def sample_alignment(loci_dir: Path, taxa_list: Path, output_folder: Path, num_a
                         loci_name = os.path.splitext(os.path.basename(loci_file))[0]
                         ext = os.path.splitext(loci_file)[1]
                         output_file = output_dir / f"{tree_name}_{loci_name}{ext}"
-                        if run_faSomeRecords(loci_file, taxa_file, output_file, drop_low_info):
+                        if run_faSomeRecords(loci_file, taxa_file, output_file, nchar_row, nchar_col):
                             splited_aln_count += 1
                         else:
                             deleted_aln_count += 1
@@ -211,7 +191,7 @@ def sample_alignment(loci_dir: Path, taxa_list: Path, output_folder: Path, num_a
                                 loci_name = os.path.splitext(os.path.basename(loci_file))[0]
                                 ext = os.path.splitext(loci_file)[1]
                                 output_file = output_dir / f"{tree_name}_{loci_name}{ext}"
-                                if run_faSomeRecords(loci_file, taxa_list / taxa_file, output_file, drop_low_info):
+                                if run_faSomeRecords(loci_file, taxa_list / taxa_file, output_file, nchar_row, nchar_col):
                                     splited_aln_count += 1
                                 else:
                                     deleted_aln_count += 1
@@ -226,7 +206,7 @@ def sample_alignment(loci_dir: Path, taxa_list: Path, output_folder: Path, num_a
     if not loci_files:
         raise ValueError("Loci set is empty after filtering. Program will terminate.")
     
-    process_loci_files(loci_files, taxa_list, output_folder, num_aln=num_aln, drop_low_info = drop_low_info)
+    process_loci_files(loci_files, taxa_list, output_folder, num_aln = num_aln, nchar_row = nchar_row, nchar_col = nchar_col)
 
 def get_constraint_tree(loci_dir, subtree_dir, output_tree_path):
     from Bio import Phylo
@@ -255,10 +235,11 @@ def initial_data_extraction(args: argparse.Namespace) -> Tuple[Path, Path]:
     """
     Extract training and testing loci for all signed species.
     """
+    nchar_keep_col = max(sum(1 for line in open(args.output_dir / "select_id.txt"))//100, 4)
     log_message('process', "Abstract alingment of selected taxa scale in training set:")
-    sample_alignment(args.train_loc_path, args.output_dir / "select_id.txt", args.output_dir / "loci" / "training_loci", loci_filter=args.output_dir / "select_loci.txt", combine_subtree=True)  # Replacing split_loci
+    sample_alignment(args.train_loc_path, args.output_dir / "select_id.txt", args.output_dir / "loci" / "training_loci", loci_filter=args.output_dir / "select_loci.txt",num_aln=None, nchar_col=nchar_keep_col)
     log_message('process', "Abstract alingment of selected taxa scale in testing set:")
-    sample_alignment(args.test_loc_path, args.output_dir / "select_id.txt", args.output_dir / "loci" / "testing_loci", loci_filter=args.output_dir / "select_loci.txt", num_aln=None, combine_subtree=True)  # Replacing split_loci
+    sample_alignment(args.test_loc_path, args.output_dir / "select_id.txt", args.output_dir / "loci" / "testing_loci", loci_filter=args.output_dir / "select_loci.txt",num_aln=None, nchar_col=nchar_keep_col)
     
     concat_training_loci = args.output_dir / "loci" / "concat_training_loci.faa"
     log_message('process', "Concatenating training loci...")
@@ -462,7 +443,7 @@ def main(args: argparse.Namespace) -> None:
 
         # 2. Extract subtree loci from the filtered sequence set using split_loci.sh
         log_message('process', "### Extract subtree loci for trainning")
-        sample_alignment(training_loci_path, subtree_dir / "taxa_list", iteration_dir / "training_loci", loci_filter=args.output_dir / "select_loci.txt", num_aln=args.num_aln, drop_low_info=True)
+        sample_alignment(training_loci_path, subtree_dir / "taxa_list", iteration_dir / "training_loci", num_aln=args.num_aln, nchar_row = 3, nchar_col = 1)
         subtree_train_loci_dir = iteration_dir / "training_loci"
         files_to_remove.append(subtree_train_loci_dir)
 
@@ -646,7 +627,7 @@ def main(args: argparse.Namespace) -> None:
         subtree_test_loci_dir = final_test_dir / "testing_alignment"
         files_to_remove.append(subtree_test_loci_dir)
         prune_subtrees(args, new_tree, final_test_dir / "subtrees", num_subtrees = None, prune_mode = "random")
-        sample_alignment(testing_loci_path, final_test_dir / "subtrees" / "taxa_list", subtree_test_loci_dir, loci_filter=args.output_dir / "select_loci.txt", drop_low_info=True)
+        sample_alignment(testing_loci_path, final_test_dir / "subtrees" / "taxa_list", subtree_test_loci_dir, nchar_row=3, nchar_col=1)
         log_message('process', "#### Test model performance")
         test_model(args, final_test_dir, subtree_test_loci_dir, model_set, trained_model_nex, "partition", loop_id = "final_test_partition", te=None)
     log_message('process', "### Final model testing of concatenated test loci")
