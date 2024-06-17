@@ -328,14 +328,16 @@ def test_model(args, output_dir, test_loci_dir, model_name_set, trained_model_ne
             model_table = content[model_table_start:model_table_end].strip()
 
             log_message('result', f"Model testing results ({mode}):")
-            log_message('result', "| Model | LogL | BIC |", new_line = True)
+            log_message('result', "| Model | LogL | BIC |")
             log_message('result', "|-------|------|-----|")
 
+            model_data = []
             for line in model_table.split("\n")[3:]:  # Skip header lines
                 if not line.strip():
                     continue
                 fields = line.split()
                 model, logl, bic = fields[0], fields[1], fields[8]
+                model_data.append([model, logl, bic])
                 log_message('result', f"| {model} | {logl} | {bic} |")
 
     if mode == "partition":
@@ -347,10 +349,16 @@ def test_model(args, output_dir, test_loci_dir, model_name_set, trained_model_ne
         # Print best models output as a table
         with open(output_dir / 'models.txt', 'r') as f:
             best_models = [line.strip().split() for line in f]
-        log_message('result', "| Model | Count |", new_line = True)
+        
+        log_message('result', "| Model | Count |")
         log_message('result', "|-------|-------|")
+        
+        model_data = []
         for model, count in best_models:
+            model_data.append([model, count])
             log_message('result', f"| {model} | {count} |")
+        
+    return model_data
 
 def compare_trees(args, prev_tree, new_tree, iteration_dir, name):
     cmd_R = f"""
@@ -371,6 +379,46 @@ def compare_trees(args, prev_tree, new_tree, iteration_dir, name):
     log_message('result', f"Normalized RF distance: {nrf_dist}")
     log_message('result', f"Tree 1 branch length: {tree1_bl}")
     log_message('result', f"Tree 2 branch length: {tree2_bl}")
+
+def logging_cross_test_table(ref_concat_result, final_concat_result):
+    """
+    Log the cross test results as a 3x3 table.
+    """
+    def extract_best_logl(model_data):
+        """
+        Extract the best logL for inferred and existed models from the model data.
+        """
+        inferred_logl = float('inf')
+        existed_logl = float('inf')
+        
+        for model, logl, _ in model_data:
+            logl = float(logl)
+            if model.startswith(('d__', 'p__', 'c__', 'o__', 'f__', 'g__', 's__')):
+                inferred_logl = max(inferred_logl, logl)
+            else:
+                existed_logl = max(existed_logl, logl)
+        
+        return inferred_logl, existed_logl
+
+    # Extract best logL for inferred and existed models
+    logl11, logl12 = extract_best_logl(final_concat_result)
+    logl21, logl22 = extract_best_logl(ref_concat_result)
+    
+    # Calculate differences
+    tree_diff1 = round(logl11 - logl12, 4)
+    tree_diff2 = round(logl21 - logl22, 4)
+    model_diff1 = round(logl11 - logl21, 4)
+    model_diff2 = round(logl12 - logl22, 4)
+    min_logl = round(min(logl11, logl12, logl21, logl22), 4)
+    max_logl = round(max(logl11, logl12, logl21, logl22), 4)
+    model_tree_diff = round(max_logl - min_logl, 4)
+    
+    # Print the 2x2 table
+    log_message('result', "| Model | Final tree | Reference tree | Tree diff |")
+    log_message('result', "|-------|------------|----------------|-----------|")
+    log_message('result', f"| Inferred model | {logl11:.4f} | {logl12:.4f} | {tree_diff1:.4f} |")
+    log_message('result', f"| Existed model | {logl21:.4f} | {logl22:.4f} | {tree_diff2:.4f} |")
+    log_message('result', f"| Model diff | {model_diff1:.4f} | {model_diff2:.4f} | {model_tree_diff:.4f} |")
 
 def main(args: argparse.Namespace) -> None:
     """
@@ -620,7 +668,7 @@ def main(args: argparse.Namespace) -> None:
         bubble_difference_plot(initial_best_model, new_model, final_test_dir / "model_comparison.png")
         log_link('result', "Model comparison plot", str(final_test_dir / "model_comparison.png"))
 
-    # 2. Extract subtrees for testing loci and test
+    # 2. Validate the final model in subtrees on testing loci
     if args.test_partition:
         log_message('process', "### Final model testing of test loci in subtrees")
         log_message('process', "#### Extract subtree loci for testing")
@@ -630,11 +678,24 @@ def main(args: argparse.Namespace) -> None:
         sample_alignment(testing_loci_path, final_test_dir / "subtrees" / "taxa_list", subtree_test_loci_dir, nchar_row=3, nchar_col=1)
         log_message('process', "#### Test model performance")
         test_model(args, final_test_dir, subtree_test_loci_dir, model_set, trained_model_nex, "partition", loop_id = "final_test_partition", te=None)
-    log_message('process', "### Final model testing of concatenated test loci")
-    test_model(args, final_test_dir, concat_testing_loci, model_set, trained_model_nex, "concat", loop_id = "final_test_concat", te=new_tree)
+    # Validate the final model in cocatenate testing loci
+    log_message('process', "### Final model testing of concatenated test loci on final tree")
+    final_concat_result = test_model(args, final_test_dir, concat_testing_loci, model_set, trained_model_nex, "concat", loop_id = "final_test_concat", te=new_tree)
+    # If cross test is enabled, test the final model on both the reference tree and final tree
+    if args.test_cross:
+        log_message('process', "### Cross test on concatenated test loci")
+        # Use a temporary directory to store the results of the reference tree test
+        log_message('process', "#### Final model testing of concatenated test loci on reference tree")
+        ref_concat_dir = final_test_dir / "ref_concat"
+        ref_concat_dir.mkdir(parents=True, exist_ok=True)
+        ref_concat_result = test_model(args, ref_concat_dir, concat_testing_loci, model_set, trained_model_nex, "concat", loop_id = "final_test_concat_ref", te=filtered_allspc_tree)
+        # files_to_remove.append(ref_concat_dir)
+        # Compare the results of the two tests
+        log_message('process', "#### Cross test comparison")
+        logging_cross_test_table(ref_concat_result, final_concat_result)
 
     log_message('process', "### PCA Plot for all models")
-    # 3. Plot PCA of Q matrices and state frequencies among initial and trained models
+    # 5. Plot PCA of Q matrices and state frequencies among initial and trained models
     cmd = f"Rscript PCA_Q.R {args.model_dir} {args.output_dir}/trained_models/trained_model.nex {args.output_dir}/trained_models"
     run_command(cmd, f"{args.output_dir}/log.md")
     log_link('result', "PCA plot of Q matrices", str(args.output_dir / "trained_models" / "PCA_Q.png"))
@@ -671,6 +732,7 @@ def cli() -> argparse.Namespace:
 
     parser.add_argument('-t', '--test_in_loop', action='store_true', help='Test new estimated model with test data in each loop')
     parser.add_argument('--test_partition', action='store_true', help='Test the final model on partitioned loci')
+    parser.add_argument('--test_cross', action='store_true', help='Test the final model on both the reference tree and final tree')
     parser.add_argument('--fix_subtree_num', action='store_true', help='Fix the number of subtrees during model estimation')
     parser.add_argument('--fix_subtree_topology', action='store_true', help='Fix the topology of subtrees during model estimation')
 
