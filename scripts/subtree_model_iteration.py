@@ -266,9 +266,9 @@ def prune_subtrees(args, ref_tree, subtree_dir, num_subtrees, prune_mode):
 
     # Run the R script to prune subtrees
     if num_subtrees:
-        cmd = f"Rscript prune_subtree_2.R -t {ref_tree} -l {args.tree_size_lower_lim} -u {args.tree_size_upper_lim} -n {num_subtrees} -o {subtree_dir} -m {prune_mode}"
+        cmd = f"Rscript prune_subtree.R -t {ref_tree} -l {args.tree_size_lower_lim} -u {args.tree_size_upper_lim} -n {num_subtrees} -o {subtree_dir} -m {prune_mode}"
     else:
-         cmd = f"Rscript prune_subtree_2.R -t {ref_tree} -l {args.tree_size_lower_lim} -u {args.tree_size_upper_lim} -o {subtree_dir} -m {prune_mode}"
+         cmd = f"Rscript prune_subtree.R -t {ref_tree} -l {args.tree_size_lower_lim} -u {args.tree_size_upper_lim} -o {subtree_dir} -m {prune_mode}"
     run_command(cmd, f"{args.output_dir}/log.md")
 
     # Print prune_subtree.R log directly to the log file

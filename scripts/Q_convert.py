@@ -105,10 +105,20 @@ class AminoAcidSubstitutionModel:
         if other_model.Q_matrix is None:
             other_model.create_Q_matrix()
 
-        corr = np.corrcoef(self.Q_matrix.flatten(), other_model.Q_matrix.flatten())[0, 1]
+        # Create a mask to exclude diagonal elements
+        mask = ~np.eye(self.Q_matrix.shape[0], dtype=bool)
+
+        # Apply the mask and flatten the matrices
+        self_flattened = self.Q_matrix[mask]
+        other_flattened = other_model.Q_matrix[mask]
+
+        # Calculate the Pearson correlation coefficient between the masked, flattened Q matrices
+        corr = np.corrcoef(self_flattened, other_flattened)[0, 1]
+        
+        # Calculate the Euclidean distance between the Q matrices
         dist = np.linalg.norm(self.Q_matrix - other_model.Q_matrix)
-        # print(f"Pearson's correlation: {corr}")
-        # print(f"Euclidean distance: {dist}")
+        
+        # Check if the correlation exceeds the threshold
         if corr > threshold:
             print("Convergence reached")
             return True, corr, dist
