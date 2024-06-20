@@ -16,7 +16,7 @@ from Q_convert import *
 from grep_iqtree_output import *
 from quality_trimming import *
 from concat_seq import concatenate_sequences
-from get_subtree import prune_tree
+from get_subtree import prune_tree, remove_redundant_nodes
 from mdlogger import *
 from fasta_filter import drop_rubbish_aln
 
@@ -276,6 +276,12 @@ def prune_subtrees(args, ref_tree, subtree_dir, num_subtrees, prune_mode):
         log_message('result', f.read())
     log_message('result', f"See detailed summary in {subtree_dir / 'summary'}")
 
+    # Remove the mono-furcation nodes in the pruned trees
+    for file in subtree_dir.glob("*.tre"):
+        try:
+            remove_redundant_nodes(file)
+        except Exception as e:
+            log_message('error', f"Error remove mono-furcation nodes in {file}: {e}")
     return subtree_dir
 
 def test_model(args, output_dir, test_loci_dir, model_name_set, trained_model_nex, mode, loop_id, te=None):
@@ -384,40 +390,41 @@ def logging_cross_test_table(ref_concat_result, final_concat_result):
     """
     Log the cross test results as a 3x3 table.
     """
-    def extract_best_logl(model_data):
+    def extract_best_bic(model_data):
         """
-        Extract the best logL for inferred and existed models from the model data.
+        Extract the best BIC for inferred and existed models from the model data.
         """
-        inferred_logl = float('inf')
-        existed_logl = float('inf')
+        inferred_bic = float('inf')
+        existed_bic = float('inf')
         
-        for model, logl, _ in model_data:
-            logl = float(logl)
+        for model, _, bic in model_data:
+            bic = float(bic)
             if model.startswith(('d__', 'p__', 'c__', 'o__', 'f__', 'g__', 's__')):
-                inferred_logl = max(inferred_logl, logl)
+                inferred_bic = min(inferred_bic, bic)
             else:
-                existed_logl = max(existed_logl, logl)
+                existed_bic = min(existed_bic, bic)
         
-        return inferred_logl, existed_logl
+        return inferred_bic, existed_bic
 
     # Extract best logL for inferred and existed models
-    logl11, logl12 = extract_best_logl(final_concat_result)
-    logl21, logl22 = extract_best_logl(ref_concat_result)
+    bic11, bic21 = extract_best_bic(final_concat_result)
+    bic12, bic22 = extract_best_bic(ref_concat_result)
     
     # Calculate differences
-    tree_diff1 = round(logl11 - logl12, 4)
-    tree_diff2 = round(logl21 - logl22, 4)
-    model_diff1 = round(logl11 - logl21, 4)
-    model_diff2 = round(logl12 - logl22, 4)
-    min_logl = round(min(logl11, logl12, logl21, logl22), 4)
-    max_logl = round(max(logl11, logl12, logl21, logl22), 4)
-    model_tree_diff = round(max_logl - min_logl, 4)
+    tree_diff1 = round(bic11 - bic12, 4)
+    tree_diff2 = round(bic21 - bic22, 4)
+    model_diff1 = round(bic11 - bic21, 4)
+    model_diff2 = round(bic12 - bic22, 4)
+    min_bic = round(min(bic11, bic12, bic21, bic22), 4)
+    max_bic = round(max(bic11, bic12, bic21, bic22), 4)
+    model_tree_diff = round(max_bic - min_bic, 4)
     
     # Print the 2x2 table
+    log_message('result', "BIC difference between different models and trees:")
     log_message('result', "| Model | Final tree | Reference tree | Tree diff |")
     log_message('result', "|-------|------------|----------------|-----------|")
-    log_message('result', f"| Inferred model | {logl11:.4f} | {logl12:.4f} | {tree_diff1:.4f} |")
-    log_message('result', f"| Existed model | {logl21:.4f} | {logl22:.4f} | {tree_diff2:.4f} |")
+    log_message('result', f"| Inferred model | {bic11:.4f} | {bic12:.4f} | {tree_diff1:.4f} |")
+    log_message('result', f"| Existed model | {bic21:.4f} | {bic22:.4f} | {tree_diff2:.4f} |")
     log_message('result', f"| Model diff | {model_diff1:.4f} | {model_diff2:.4f} | {model_tree_diff:.4f} |")
 
 def main(args: argparse.Namespace) -> None:
@@ -503,8 +510,13 @@ def main(args: argparse.Namespace) -> None:
         if trained_model_nex:
             cmd += f" -mdef {trained_model_nex}"
         if args.fix_subtree_topology:
-            get_constraint_tree(subtree_train_loci_dir, subtree_dir, subtree_update_dir / "constraint_tree.tre")
-            cmd += f" -te {subtree_update_dir / 'constraint_tree.tre'}"
+            constraint_tree_path = subtree_update_dir / "constraint_tree.tre"
+            get_constraint_tree(subtree_train_loci_dir, subtree_dir, constraint_tree_path)
+            # path_to_remove = subtree_update_dir / "constraint_tree2.tre"
+            # remove_redundant_nodes(constraint_tree_path, path_to_remove)
+            cmd += f" -te {constraint_tree_path}" 
+            # cmd += f" -te {path_to_remove}" 
+
         cmd += f" -pre {subtree_update_dir / args.prefix}"
         run_command(cmd, f"{args.output_dir}/log.md", log_output=args.keep_cmd_output, log_time=True)
 
@@ -596,6 +608,16 @@ def main(args: argparse.Namespace) -> None:
         if prev_model:
             bubble_difference_plot(prev_model, new_model, iteration_dir / f"model_diff_{iteration_id}.png")
             log_link('result', "Model difference plot", str(iteration_dir / f"model_diff_{iteration_id}.png"))
+        
+        # Generate summary for model update
+        if args.model_update_summary:
+            summary_dir = model_update_dir / "summary"
+            summary_dir.mkdir(exist_ok=True)
+            subtree_log_path = subtree_update_dir / f"{args.prefix}.log"
+            model_log_path = model_update_dir / f"{args.prefix}.log"
+            cmd = f"Rscript model_update_summary.R {subtree_iqtree_path} {subtree_log_path} {model_log_path} {summary_dir}"
+            log_message('process', "Generated summary for model update, see" + str(summary_dir))
+            run_command(cmd, f"{args.output_dir}/log.md")
 
         # 5. Re-estimate the tree using FastTree on the concatenated loci
         log_message('process', "### Tree update")
@@ -740,6 +762,7 @@ def cli() -> argparse.Namespace:
     parser.add_argument('--tree_size_upper_lim', type=int, default=100, help='Upper limit for the size of subtrees (default: 100)')  
     parser.add_argument('--prune_mode', type=str, default='random', choices=['random', 'lower', 'upper', 'shallow'], help="Pruning mode (random/lower/upper/shallow) (default: random)")
 
+    parser.add_argument('-s', '--model_update_summary', action='store_true', help='Enable model update summary inner each iteration')
     parser.add_argument('-c', '--keep_cmd_output', action='store_true', help='Keep detailed command output in the log file')
     parser.add_argument('--keep_tmp', action='store_true', help='Keep temporary files')
     parser.add_argument('-v', '--verbose', action='store_true', help='Print commands')

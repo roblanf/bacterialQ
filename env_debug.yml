@@ -34,6 +34,7 @@ dependencies:
         - iqtree
         - fasttree
         - veryfasttree
+        - raxml-ng
         - treeshrink
         - r-phangorn
         - bioconductor-ggtree

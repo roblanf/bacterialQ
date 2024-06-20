@@ -1,8 +1,8 @@
-#!/usr/bin/env python3
 import os
 import argparse
 from Bio import Phylo
 import copy
+from io import StringIO
 
 def prune_tree(tree_file, taxa_list_path, output_file):
     # Read newick to prune
@@ -12,6 +12,7 @@ def prune_tree(tree_file, taxa_list_path, output_file):
     taxa_list = read_taxa_list(taxa_list_path)
 
     subtree = get_subtree(tree, taxa_list)
+    subtree = prune_degree_one_nodes(subtree.root)
 
     # Check number of subtree tips == number of taxa
     assert len([tip for tip in subtree.get_terminals()]) == len(set(taxa_list))
@@ -36,9 +37,17 @@ def read_taxa_list(path_to_list):
 
 def get_subtree(tree, taxa_list):
     cptree = copy.deepcopy(tree)
+    taxa_set = set(taxa_list)  # Convert list to set for faster lookup
+    # Check if the tree has any terminals
+    if not cptree.get_terminals():
+        raise ValueError("The tree has no terminals to prune.")
     for tip in cptree.get_terminals():
-        if tip.name not in taxa_list:
-            cptree.prune(tip)
+        if tip.name not in taxa_set:
+            cptree.prune(tip)  # Prune the tip if it's not in the taxa set
+    # cptree = prune_degree_one_nodes(cptree.root)
+    # Check if any terminals remain in the tree
+    if not cptree.get_terminals():
+        raise ValueError("All terminals have been pruned from the tree.")
     return cptree
 
 def get_taxa_list_from_fasta(fasta_file):
@@ -54,6 +63,88 @@ def get_subtree_from_fasta(tree, fasta_file, output_file):
     species_list = get_taxa_list_from_fasta(fasta_file)
     subtree = get_subtree(tree, species_list)
     Phylo.write(subtree, output_file, "newick")
+
+def count_nodes_and_tips(tree):
+    """
+    Count the number of nodes and tips in a Newick tree string.
+
+    Args:
+        tree (str): A Newick tree string.
+
+    Returns:
+        tuple: A tuple containing the number of nodes and the number of tips.
+    """
+    nodes = tree.count('(')
+    tips = tree.count(',') + 1
+    return nodes, tips
+
+def remove_redundant_nodes(tree_path, output_file=None):
+    """
+    Check each tree of the Newick tree file for redundant nodes.
+    The method is to remove all nodes with degree 1, including potential extra degree 1 root nodes.
+    If output_file is provided, write the Newick tree to the output file, otherwise, overwrite the input file.
+
+    Args:
+        tree_path (str): The path to the Newick tree file.
+        output_file (str, optional): The path to the output file. If not specified, the input file will be overwritten.
+
+    Returns:
+        None: The function modifies the tree file in place or writes to the specified output file.
+    """
+    # Read the tree file
+    with open(tree_path, 'r') as file:
+        tree_lines = file.readlines()
+
+    modified_lines = []
+    for tree_data in tree_lines:
+        tree_data = tree_data.strip()
+
+        # Read the tree from the Newick string
+        tree = Phylo.read(StringIO(tree_data), "newick")
+
+        # Prune degree 1 nodes
+        tree = prune_degree_one_nodes(tree.root)
+
+        # Convert the tree back to Newick string
+        output = StringIO()
+        Phylo.write(tree, output, "newick")
+        modified_lines.append(output.getvalue().strip())
+
+    # Determine the output file path
+    output_path = output_file if output_file else tree_path
+
+    # Write the modified tree data to the output file
+    with open(output_path, 'w') as file:
+        file.write('\n'.join(modified_lines) + '\n')
+        
+def prune_degree_one_nodes(clade):
+    """
+    Recursively prune nodes with degree 1 and merge branch lengths.
+
+    Args:
+        clade (Bio.Phylo.BaseTree.Clade): The clade to prune.
+
+    Returns:
+        Bio.Phylo.BaseTree.Clade: The pruned clade.
+    """
+    if clade.is_terminal():
+        return clade
+
+    new_clades = []
+    for subclade in clade.clades:
+        if subclade.is_terminal():
+            new_clades.append(subclade)
+        else:
+            pruned_subclade = prune_degree_one_nodes(subclade)
+            if pruned_subclade and len(pruned_subclade.clades) > 1:
+                new_clades.append(pruned_subclade)
+            elif pruned_subclade and len(pruned_subclade.clades) == 1:
+                # Merge branch lengths and add the single subclade
+                single_subclade = pruned_subclade.clades[0]
+                single_subclade.branch_length = (single_subclade.branch_length or 0) + (pruned_subclade.branch_length or 0)
+                new_clades.append(single_subclade)
+    clade.clades = new_clades
+    return clade
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Prune a tree based on a list of taxa.")
