@@ -44,7 +44,7 @@ def get_subtree(tree, taxa_list):
     for tip in cptree.get_terminals():
         if tip.name not in taxa_set:
             cptree.prune(tip)  # Prune the tip if it's not in the taxa set
-    # cptree = prune_degree_one_nodes(cptree.root)
+    cptree = prune_degree_one_nodes(cptree.root)
     # Check if any terminals remain in the tree
     if not cptree.get_terminals():
         raise ValueError("All terminals have been pruned from the tree.")
@@ -117,12 +117,13 @@ def remove_redundant_nodes(tree_path, output_file=None):
     with open(output_path, 'w') as file:
         file.write('\n'.join(modified_lines) + '\n')
         
-def prune_degree_one_nodes(clade):
+def prune_degree_one_nodes(clade, combine_node_label=False):
     """
     Recursively prune nodes with degree 1 and merge branch lengths.
 
     Args:
         clade (Bio.Phylo.BaseTree.Clade): The clade to prune.
+        combine_node_label (bool): If True, combine the labels of pruned nodes with their child nodes.
 
     Returns:
         Bio.Phylo.BaseTree.Clade: The pruned clade.
@@ -135,15 +136,40 @@ def prune_degree_one_nodes(clade):
         if subclade.is_terminal():
             new_clades.append(subclade)
         else:
-            pruned_subclade = prune_degree_one_nodes(subclade)
+            pruned_subclade = prune_degree_one_nodes(subclade, combine_node_label)
             if pruned_subclade and len(pruned_subclade.clades) > 1:
                 new_clades.append(pruned_subclade)
             elif pruned_subclade and len(pruned_subclade.clades) == 1:
                 # Merge branch lengths and add the single subclade
                 single_subclade = pruned_subclade.clades[0]
                 single_subclade.branch_length = (single_subclade.branch_length or 0) + (pruned_subclade.branch_length or 0)
+                
+                # Combine node labels if the flag is set
+                if combine_node_label:
+                    if pruned_subclade.name:
+                        if single_subclade.name:
+                            single_subclade.name = f"{pruned_subclade.name}-{single_subclade.name}"
+                        else:
+                            single_subclade.name = pruned_subclade.name
+
                 new_clades.append(single_subclade)
     clade.clades = new_clades
+
+    # Check if the root node itself is a degree-one node
+    if len(clade.clades) == 1:
+        single_subclade = clade.clades[0]
+        single_subclade.branch_length = (single_subclade.branch_length or 0) + (clade.branch_length or 0)
+        
+        # Combine node labels if the flag is set
+        if combine_node_label:
+            if clade.name:
+                if single_subclade.name:
+                    single_subclade.name = f"{clade.name}-{single_subclade.name}"
+                else:
+                    single_subclade.name = clade.name
+
+        return single_subclade
+
     return clade
 
 if __name__ == "__main__":
