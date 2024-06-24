@@ -15,6 +15,7 @@ dependencies:
         - r-ggfortify
         - r-ggrepel
         - r-castor
+        - r-phytools
         - r-patchwork
         - r-ggplot2
         - r-ggextra

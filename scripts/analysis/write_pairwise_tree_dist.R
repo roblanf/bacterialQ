@@ -1,7 +1,9 @@
-# Load required libraries
 library(ape)
 library(phangorn)
 library(ggplot2)
+library(tidyverse)
+library(vegan)
+library(ggrepel)
 
 # Define a function to extract the tree name from the file path
 extract_tree_name <- function(file_path) {
@@ -13,10 +15,16 @@ extract_tree_name <- function(file_path) {
 
 # Define a function to calculate distance metrics between two trees
 calculate_tree_distances <- function(tree1_file, tree2_file, dir_path) {
+    # Ensure tree1_file is lexicographically larger than tree2_file
+    if (tree1_file < tree2_file) {
+        temp <- tree1_file
+        tree1_file <- tree2_file
+        tree2_file <- temp
+    }
+
     # Read tree files
     tree1 <- read.tree(paste0(dir_path, "/", tree1_file))
     tree2 <- read.tree(paste0(dir_path, "/", tree2_file))
-
 
     ifroot <- is.rooted(tree1) && is.rooted(tree2)
 
@@ -96,15 +104,89 @@ generate_heatmaps <- function(dir_path) {
     # Generate heatmaps
     RF_heatmap <- ggplot(summary_df, aes(x = Tree1, y = Tree2, fill = RF_dist)) +
         geom_tile() +
-        theme_minimal() +
-        labs(title = "RF Distance of Trees")
-    ggsave(paste0(dir_path, "/../RF_dist.png"), RF_heatmap, width = 8, height = 6)
+        geom_text(aes(label = RF_dist), size = 3) +  # Add text annotations
+        coord_equal() +
+        scale_fill_gradient(low = "white", high = "red") +
+        labs(x = "Tree1", y = "Tree2", fill = "RF_dist") +
+        theme_light() +
+        theme(
+            axis.text = element_text(size = 10),
+            panel.background = element_rect(fill = "white"),
+            panel.grid.major = element_blank(), # Remove major grid lines
+            panel.grid.minor = element_blank(),
+            axis.text.x = element_text(angle = 45, hjust = 1)
+        )
+    ggsave(paste0(dir_path, "/../RF_dist.png"), RF_heatmap, width = 8, height = 8)
 
     nRF_heatmap <- ggplot(summary_df, aes(x = Tree1, y = Tree2, fill = nRF)) +
         geom_tile() +
-        theme_minimal() +
-        labs(title = "nRF Distance of Trees")
-    ggsave(paste0(dir_path, "/../nRF_dist.png"), nRF_heatmap, width = 8, height = 6)
+        geom_text(aes(label = nRF), size = 3) +  # Add text annotations
+        coord_equal() +
+        scale_fill_gradient(low = "white", high = "red") +
+        labs(x = "Tree1", y = "Tree2", fill = "nRF") +
+        theme_light() +
+        theme(
+            axis.text = element_text(size = 10),
+            panel.background = element_rect(fill = "white"),
+            panel.grid.major = element_blank(), # Remove major grid lines
+            panel.grid.minor = element_blank(),
+            axis.text.x = element_text(angle = 45, hjust = 1)
+        )
+    ggsave(paste0(dir_path, "/../nRF_dist.png"), nRF_heatmap, width = 8, height = 8)
+}
+
+# Define a function to generate NMDS plots
+plot_NMDS <- function(csv_file, metric_column, output_path) {
+    # Read the summary file
+    summary_df <- read.csv(csv_file)
+    
+    # Prepare data for NMDS
+    summary_df_2 <- summary_df %>%
+        rename(Tree2 = Tree1, Tree1 = Tree2)
+    
+    summary_df <- rbind(summary_df, summary_df_2)
+    
+    nRF_matrix <- summary_df %>%
+        select(Tree1, Tree2, !!sym(metric_column)) %>%
+        spread(Tree2, !!sym(metric_column))
+    
+    namerow <- nRF_matrix %>% pull(Tree1)
+    nRF_matrix <- nRF_matrix %>%
+        select(-Tree1) %>%
+        as.matrix()
+    rownames(nRF_matrix) <- namerow
+    # nRF_matrix[is.nan(nRF_matrix)] <- 0
+    
+    # Perform NMDS
+    z <- metaMDS(
+        comm = nRF_matrix,
+        autotransform = FALSE,
+        distance = "euclidean",
+        engine = "monoMDS",
+        k = 2,
+        weakties = TRUE,
+        model = "global",
+        maxit = 300,
+        try = 50,
+        trymax = 100
+    )
+    
+    # Prepare data for plot
+    z.points <- data.frame(z$points)
+    
+    # Create the plot
+    p <- ggplot(data = z.points, aes(x = MDS1, y = MDS2, label = rownames(nRF_matrix))) +
+        geom_point() +
+        coord_equal() +
+        theme_bw() +
+        theme(
+            axis.text.x = element_blank(), # remove x-axis text
+            axis.text.y = element_blank()
+        ) + # remove y-axis text
+        geom_text_repel(max.overlaps = Inf)
+    
+    # Save the plot
+    ggsave(filename = paste0(output_path, "/../NMDS_", metric_column, ".png"), plot = p)
 }
 
 # Get command line arguments
@@ -115,12 +197,12 @@ if (length(args) != 1) {
     stop("Usage: Rscript script.R <dir_path>")
 }
 
-# Assign command line argument to variable
+# Assign command line argument to variables
 dir_path <- args[1]
 
 # Get all tree files in the directory
 tree_files <- list.files(dir_path)
-tree_files <- tree_files[grepl("\\..*tre.*$", tree_files)]
+tree_files <- tree_files[grepl("\\..*tre.*$", tree_files, ignore.case = TRUE)]
 
 # Get all possible pairs of tree files
 tree_pairs <- combn(tree_files, 2)
@@ -131,4 +213,8 @@ for (i in seq(ncol(tree_pairs))) {
 }
 
 # Generate heatmaps
-# generate_heatmaps(dir_path)
+generate_heatmaps(dir_path)
+
+# Generate NMDS plot
+summary_path <- paste0(dir_path, "/../tree_pairwise_compare.csv")
+plot_NMDS(summary_path, "nRF", dir_path)
