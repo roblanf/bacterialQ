@@ -21,8 +21,8 @@ from mdlogger import *
 from fasta_filter import drop_rubbish_aln
 
 # Define constants
-t_drop_species = 0.5
-t_drop_loc = 0.1
+t_drop_species = 0.2
+t_drop_loc = 0.2
 initial_model_set = "LG,Q.PFAM,Q.INSECT,Q.PLANT,Q.YEAST,MTMET,MTART"
 keep_model_thres = 0.05
 
@@ -394,8 +394,8 @@ def logging_cross_test_table(ref_concat_result, final_concat_result):
         """
         Extract the best BIC for inferred and existed models from the model data.
         """
-        inferred_bic = float('inf')
-        existed_bic = float('inf')
+        inferred_bic = float('-inf')
+        existed_bic = float('-inf')
         
         for model, _, bic in model_data:
             bic = float(bic)
