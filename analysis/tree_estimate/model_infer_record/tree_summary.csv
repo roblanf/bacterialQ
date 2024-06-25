@@ -1,0 +1,4 @@
+"name","Tree1","Tree2","RF_dist","nRF","wRF","KF.dist","SPR.dist","Path_dist","Tree1_BL","Tree2_BL","BL_diff_per"
+"loop_1","ref_tree","p__Gemmatimonadota_150_1",132,0.1241,25.4369,1.0889,41,145.3044,66.39753,89.552852075,34.8737702667554
+"loop_2","p__Gemmatimonadota_150_1","p__Gemmatimonadota_150_2",2,0.0019,0.1492,0.0268,1,1.0563,89.552852075,89.491718449,-0.0682654148734438
+"final_test","ref_tree","p__Gemmatimonadota_150_2",134,0.1259,25.4132,1.0876,43,145.1627,66.39753,89.491718449,34.7816981279273

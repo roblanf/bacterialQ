@@ -1,0 +1,645 @@
+IQ-TREE multicore version 2.3.4 COVID-edition for Linux x86 64-bit built Jun 18 2024
+Developed by Bui Quang Minh, James Barbetti, Nguyen Lam Tung, Olga Chernomor,
+Heiko Schmidt, Dominik Schrempf, Michael Woodhams, Ly Trong Nhan, Thomas Wong
+
+Host:    rona.rsb.anu.edu.au (AVX2, FMA3, 1007 GB RAM)
+Command: iqtree -T 30 -s /home/tim/project/GTDB_TREE/Result_rona/test_tree_update/p__Gemmatimonadota_150/loci/concat_training_loci.faa -m p__Gemmatimonadota_150_2+I+G4 -mdef /home/tim/project/GTDB_TREE/Result_rona/test_tree_update/p__Gemmatimonadota_150/trained_models/trained_model.nex -t /home/tim/project/GTDB_TREE/Result_rona/test_tree_update/p__Gemmatimonadota_150/ref_tree.tre -pre /home/tim/project/GTDB_TREE/Result_rona/test_tree_update/new_tree_test/iqtree/IQ_I_G4
+Seed:    298267 (Using SPRNG - Scalable Parallel Random Number Generator)
+Time:    Thu Jun 20 23:47:57 2024
+Kernel:  AVX+FMA - 30 threads (256 CPU cores detected)
+
+Reading alignment file /home/tim/project/GTDB_TREE/Result_rona/test_tree_update/p__Gemmatimonadota_150/loci/concat_training_loci.faa ... Fasta format detected
+Reading fasta file: done in 0.693713 secs using 86.74% CPU
+Alignment most likely contains protein sequences
+Alignment has 535 sequences with 33550 columns, 32634 distinct patterns
+27970 parsimony-informative, 1523 singleton sites, 4057 constant sites
+            Gap/Ambiguity  Composition  p-value
+Analyzing sequences: done in 0.0216225 secs using 2525% CPU
+   1  G007121555    9.88%    failed      0.00%
+   2  G947581745    9.90%    failed      0.00%
+   3  G017881465    8.89%    failed      0.00%
+   4  G019348475   34.10%    failed      0.01%
+   5  G003220975   27.90%    failed      0.00%
+   6  G955652265   57.98%    failed      0.00%
+   7  G019637445    4.15%    failed      0.00%
+   8  G025450035   39.15%    failed      0.11%
+   9  G023910675   35.20%    failed      0.00%
+  10  G031127095    9.92%    failed      0.00%
+  11  G016207445   23.86%    failed      0.00%
+  12  G030597435   37.31%    failed      0.00%
+  13  G022822445    6.69%    failed      0.00%
+  14  G007122885   19.22%    failed      0.00%
+  15  G021413975   15.95%    failed      0.00%
+  16  G009692105   22.86%    failed      0.00%
+  17  G009692185    3.10%    failed      0.00%
+  18  G013813715    5.67%    failed      0.00%
+  19  G030601605   29.48%    failed      0.00%
+  20  G016704465   11.92%    failed      0.10%
+  21  G017889745   35.42%    failed      0.00%
+  22  G020350425   32.75%    failed      0.00%
+  23  G016873995    9.52%    passed      6.73%
+  24  G016179225   46.58%    failed      0.00%
+  25  G022573095   30.58%    failed      0.00%
+  26  G030601615   26.72%    failed      0.00%
+  27  G017881545   23.77%    failed      0.00%
+  28  G029941275   16.28%    failed      0.00%
+  29  G028280205   27.02%    failed      0.00%
+  30  G946480295   22.92%    passed     15.59%
+  31  G007126575    9.30%    failed      0.00%
+  32  G029288095   30.81%    failed      0.00%
+  33  G030623445    4.82%    failed      0.00%
+  34  G013812695   18.41%    failed      0.00%
+  35  G007132965   21.94%    failed      0.00%
+  36  G026705295   10.72%    failed      0.00%
+  37  G937889645    6.55%    failed      0.00%
+  38  G025360265   20.68%    failed      0.00%
+  39  G002404335   36.23%    failed      0.00%
+  40  G022571515    8.89%    failed      0.00%
+  41  G030446945   31.12%    failed      0.05%
+  42  G011772755   31.05%    failed      0.00%
+  43  G016209885   11.22%    failed      0.00%
+  44  G003220935   20.21%    failed      0.00%
+  45  G022826565   13.04%    failed      0.00%
+  46  G011390805   13.51%    failed      0.00%
+  47  G019694735    6.99%    failed      0.00%
+  48  G003220955   35.17%    failed      0.00%
+  49  G019689955   26.11%    failed      0.00%
+  50  G026914155   10.58%    failed      0.00%
+  51  G015664885   11.99%    failed      0.00%
+  52  G004525055   19.90%    failed      0.67%
+  53  G003141205   28.17%    failed      0.00%
+  54  G031127075   10.74%    failed      0.00%
+  55  G016199245   39.67%    failed      0.00%
+  56  G019510405   39.67%    failed      1.78%
+  57  G019456185    5.09%    failed      0.00%
+  58  G937961295   18.50%    failed      0.00%
+  59  G951813395    7.00%    failed      0.00%
+  60  G016871895   10.33%    failed      0.00%
+  61  G013813675   21.90%    failed      0.00%
+  62  G016182795   14.68%    failed      0.00%
+  63  G028287225   14.09%    failed      0.00%
+  64  G025934955   11.40%    failed      0.00%
+  65  G027295155   34.25%    failed      0.00%
+  66  G025358925   11.34%    failed      0.00%
+  67  G002215645    4.59%    failed      0.00%
+  68  G017881505   11.59%    failed      0.00%
+  69  G016794735   25.37%    failed      0.00%
+  70  G003222205    5.90%    failed      0.00%
+  71  G937906875   12.27%    failed      0.65%
+  72  G009380025    9.08%    failed      0.00%
+  73  G003220985   32.01%    failed      0.00%
+  74  G025930755    8.94%    failed      1.02%
+  75  G027484025   13.84%    failed      0.00%
+  76  G013361335   13.73%    failed      0.24%
+  77  G003131365   35.28%    failed      0.00%
+  78  G016871855   22.89%    failed      0.00%
+  79  G002483225    6.93%    failed      0.00%
+  80  G946480845   45.10%    failed      0.00%
+  81  G016209995   36.45%    failed      0.00%
+  82  G030946665   43.18%    failed      0.00%
+  83  G946479895   26.94%    failed      0.00%
+  84  G026706635    8.55%    failed      0.00%
+  85  G937983085   43.71%    failed      0.00%
+  86  G024710705   20.96%    failed      0.00%
+  87  G013003805   30.02%    failed      0.45%
+  88  G003221005   12.49%    failed      0.00%
+  89  G903882745    3.45%    failed      0.00%
+  90  G025931335   22.97%    passed      8.05%
+  91  G031127085   33.16%    failed      0.00%
+  92  G025361705   15.57%    failed      0.00%
+  93  G003220905   24.68%    failed      0.00%
+  94  G022822325   13.03%    failed      0.00%
+  95  G016712265    5.29%    failed      0.00%
+  96  G027307165    4.21%    failed      0.00%
+  97  G013042495   33.69%    failed      0.00%
+  98  G946479805   26.13%    failed      0.00%
+  99  G028287205   40.04%    failed      0.02%
+ 100  G003223415   11.17%    failed      0.00%
+ 101  G025362035   20.22%    failed      0.00%
+ 102  G022360695   15.46%    failed      0.00%
+ 103  G025453855   43.13%    failed      0.00%
+ 104  G026387895   11.82%    failed      0.00%
+ 105  G003220855   33.73%    failed      0.00%
+ 106  G003221895   12.44%    failed      0.00%
+ 107  G019973575    3.74%    failed      0.00%
+ 108  G025359135   12.89%    failed      0.00%
+ 109  G026387935    4.76%    failed      0.00%
+ 110  G002311875   14.04%    failed      0.00%
+ 111  G030699545   17.79%    failed      0.00%
+ 112  G022562295   15.46%    failed      0.59%
+ 113  G003169895    7.52%    failed      0.00%
+ 114  G003134685    3.68%    failed      0.00%
+ 115  G026713345   16.67%    failed      0.00%
+ 116  G030774785   17.88%    failed      0.00%
+ 117  G947504615   18.92%    failed      0.00%
+ 118  G029862925   20.54%    failed      0.00%
+ 119  G009844885   13.36%    failed      0.00%
+ 120  G025450815   36.47%    failed      0.00%
+ 121  G003222195    5.83%    failed      0.00%
+ 122  G016209985   23.60%    failed      0.00%
+ 123  G002737115   55.31%    failed      0.00%
+ 124  G016649455   16.01%    failed      0.00%
+ 125  G017881685   24.70%    failed      0.00%
+ 126  G003567615   39.84%    failed      0.00%
+ 127  G025358055   10.11%    failed      0.00%
+ 128  G013816855   16.58%    failed      0.00%
+ 129  G013140635    9.52%    failed      0.00%
+ 130  G026786185   14.63%    failed      0.00%
+ 131  G018224305   23.02%    failed      0.00%
+ 132  G030947165   50.47%    failed      0.88%
+ 133  G014377535   14.14%    failed      0.00%
+ 134  G007125845    9.65%    failed      0.00%
+ 135  G022560615    8.45%    failed      0.00%
+ 136  G025934075   30.35%    failed      0.00%
+ 137  G012027055   32.07%    failed      0.00%
+ 138  G030647905    3.49%    failed      0.00%
+ 139  G009845855    6.80%    failed      0.00%
+ 140  G028823235    7.05%    failed      0.00%
+ 141  G030430625   18.48%    failed      0.00%
+ 142  G013043565   21.11%    failed      0.00%
+ 143  G028874995   15.87%    failed      0.00%
+ 144  G030835125    5.08%    passed      5.77%
+ 145  G017881445    8.27%    failed      0.00%
+ 146  G903906325   21.65%    failed      0.00%
+ 147  G016177465   22.33%    failed      0.00%
+ 148  G002724575   18.34%    failed      0.00%
+ 149  G020351775   10.61%    failed      0.06%
+ 150  G027346425   20.24%    passed     37.87%
+ 151  G958296005   15.84%    failed      0.00%
+ 152  G007695225   13.86%    failed      0.00%
+ 153  G003222055   13.18%    failed      0.00%
+ 154  G009836005    6.65%    failed      0.00%
+ 155  G021802745   34.65%    failed      0.00%
+ 156  G025929805   32.56%    failed      0.00%
+ 157  G902826755   19.33%    failed      0.00%
+ 158  G016794835   26.61%    failed      0.00%
+ 159  G019347645   52.89%    failed      0.00%
+ 160  G021298835    5.36%    failed      0.00%
+ 161  G946479015   53.81%    failed      0.00%
+ 162  G025356185   22.35%    failed      0.00%
+ 163  G012270965   10.42%    failed      0.00%
+ 164  G001917665   39.60%    failed      0.00%
+ 165  G007118565    9.06%    failed      0.00%
+ 166  G011774835   20.50%    failed      0.00%
+ 167  G028876725   32.39%    failed      0.00%
+ 168  G020161135    6.46%    failed      0.00%
+ 169  G007692665   11.29%    failed      0.00%
+ 170  G937867645    6.79%    failed      0.00%
+ 171  G027294815   38.13%    failed      0.01%
+ 172  G009841165    7.39%    failed      0.00%
+ 173  G030774675   13.23%    failed      0.00%
+ 174  G030598525   25.58%    failed      0.00%
+ 175  G947581735    6.37%    failed      0.00%
+ 176  G947581785    7.95%    failed      0.00%
+ 177  G013820855   16.63%    failed      0.61%
+ 178  G024278175    8.61%    failed      0.00%
+ 179  G025451425   55.71%    failed      0.00%
+ 180  G025927495   35.43%    failed      0.22%
+ 181  G021154325   15.53%    failed      0.00%
+ 182  G030833075    7.56%    failed      0.00%
+ 183  G025935995   34.00%    failed      0.00%
+ 184  G013694695    9.83%    failed      0.00%
+ 185  G003222065   30.87%    failed      0.00%
+ 186  G024638325   26.78%    failed      0.00%
+ 187  G013820915   16.16%    failed      0.00%
+ 188  G025453745   46.01%    failed      0.00%
+ 189  G003222115    7.80%    failed      0.00%
+ 190  G023249395   47.22%    failed      0.00%
+ 191  G007124095   12.30%    failed      0.00%
+ 192  G021299375    6.15%    failed      0.00%
+ 193  G028280525   26.72%    failed      0.00%
+ 194  G947581845   47.44%    failed      0.00%
+ 195  G003248075   10.32%    failed      0.00%
+ 196  G022710485   18.14%    failed      0.00%
+ 197  G013822285   47.85%    failed      0.00%
+ 198  G003221045   29.69%    failed      0.00%
+ 199  G014192065    3.52%    failed      0.00%
+ 200  G020852815    7.95%    failed      0.08%
+ 201  G003155795    9.17%    failed      0.00%
+ 202  G002347035   12.32%    failed      0.00%
+ 203  G031260285    9.70%    failed      0.00%
+ 204  G938030915   45.45%    failed      0.00%
+ 205  G030859365   27.36%    failed      0.00%
+ 206  G023554445   12.28%    failed      0.00%
+ 207  G016794805   11.31%    failed      0.00%
+ 208  G903894655   40.24%    failed      0.19%
+ 209  G009841475   10.38%    failed      0.00%
+ 210  G025350665    5.98%    failed      0.01%
+ 211  G022564535   53.17%    failed      0.01%
+ 212  G029262195    4.86%    failed      0.00%
+ 213  G013361745   34.79%    passed     10.51%
+ 214  G913043255    8.49%    failed      0.00%
+ 215  G947463135   10.09%    failed      0.00%
+ 216  G021324635    5.39%    failed      0.00%
+ 217  G001724275    5.06%    failed      4.67%
+ 218  G019347975   27.23%    failed      0.00%
+ 219  G001780825   15.43%    failed      0.00%
+ 220  G028287235    5.15%    failed      0.00%
+ 221  G013816695   45.68%    failed      0.00%
+ 222  G016209905   13.46%    failed      0.00%
+ 223  G011390885    9.56%    failed      0.00%
+ 224  G903876745   37.51%    failed      0.00%
+ 225  G013361935   15.33%    passed      9.36%
+ 226  G028873595    6.73%    failed      0.00%
+ 227  G020344375   18.75%    failed      0.00%
+ 228  G027531815    4.74%    failed      0.00%
+ 229  G947581645   11.84%    failed      0.00%
+ 230  G029863645   23.24%    failed      0.01%
+ 231  G022563405   11.36%    failed      0.00%
+ 232  G947462095   24.90%    failed      0.00%
+ 233  G029863245    4.70%    failed      0.00%
+ 234  G018969225   11.87%    failed      0.00%
+ 235  G958295645    8.91%    failed      0.00%
+ 236  G003222035   13.52%    failed      0.00%
+ 237  G007127575   18.80%    failed      0.00%
+ 238  G943330235   11.17%    failed      0.00%
+ 239  G019637315   11.28%    failed      0.03%
+ 240  G913045345   16.44%    failed      0.00%
+ 241  G937136445   34.68%    failed      0.00%
+ 242  G012267435   45.87%    failed      0.00%
+ 243  G022823225    7.99%    failed      0.00%
+ 244  G030697825    9.99%    failed      0.00%
+ 245  G003220795   14.59%    failed      0.00%
+ 246  G003221985   31.35%    failed      0.00%
+ 247  G946479995   60.20%    failed      0.00%
+ 248  G003695865   17.74%    failed      0.00%
+ 249  G014202995    6.00%    failed      0.03%
+ 250  G019745365   13.61%    failed      0.00%
+ 251  G029879725   10.26%    failed      0.00%
+ 252  G022566515    9.08%    failed      0.00%
+ 253  G027294455    6.61%    passed     18.47%
+ 254  G025357975   22.30%    failed      0.00%
+ 255  G023554435   32.97%    failed      0.00%
+ 256  G022827345    7.13%    failed      0.00%
+ 257  G025928185   19.00%    failed      0.00%
+ 258  G025453875   40.44%    failed      0.04%
+ 259  G007120305   27.16%    failed      0.00%
+ 260  G028287185   10.98%    failed      0.66%
+ 261  G029262155   14.68%    failed      0.00%
+ 262  G021295815    9.95%    failed      0.00%
+ 263  G028876525   22.93%    failed      0.00%
+ 264  G022826685   19.67%    failed      0.00%
+ 265  G947461225   19.36%    failed      0.00%
+ 266  G020853635   35.96%    failed      0.00%
+ 267  G003562075   16.90%    failed      0.00%
+ 268  G030854055   14.53%    failed      0.00%
+ 269  G937919655   10.27%    failed      0.00%
+ 270  G025361465   22.48%    failed      0.01%
+ 271  G000522985    3.28%    failed      0.02%
+ 272  G028284495   13.92%    failed      0.00%
+ 273  G013813875   23.71%    failed      0.00%
+ 274  G002404375   50.04%    failed      0.00%
+ 275  G016874005    3.31%    failed      0.03%
+ 276  G002346665   12.54%    failed      0.00%
+ 277  G030550695   12.12%    failed      0.00%
+ 278  G030159095    3.48%    failed      0.00%
+ 279  G003559555   17.91%    failed      0.00%
+ 280  G011390935    9.59%    failed      0.00%
+ 281  G947471365   11.71%    failed      0.00%
+ 282  G018678395   26.38%    failed      0.00%
+ 283  G030852985   17.96%    failed      0.00%
+ 284  G022820995    7.42%    failed      0.00%
+ 285  G027623325   10.25%    failed      0.00%
+ 286  G955652635   35.17%    failed      0.00%
+ 287  G025935545   45.12%    failed      0.00%
+ 288  G024640185   29.74%    failed      0.00%
+ 289  G002348465   17.97%    failed      0.00%
+ 290  G025928955   30.20%    failed      0.00%
+ 291  G028822645    9.89%    failed      0.00%
+ 292  G021372515    8.44%    failed      0.00%
+ 293  G009840525    7.51%    failed      0.00%
+ 294  G013004105    4.65%    failed      0.00%
+ 295  G031127225   14.09%    failed      0.00%
+ 296  G022843265   10.58%    failed      0.00%
+ 297  G028873825   12.59%    failed      0.00%
+ 298  G002501085   20.49%    failed      0.00%
+ 299  G945869195    3.81%    failed      0.00%
+ 300  G028821195   12.04%    failed      0.00%
+ 301  G016180765   26.46%    failed      0.00%
+ 302  G029211165    4.68%    failed      0.00%
+ 303  G002731735   27.96%    failed      0.00%
+ 304  G020431485   45.93%    failed      0.00%
+ 305  G022826005   10.44%    failed      0.00%
+ 306  G025924275   46.21%    failed      0.00%
+ 307  G016880225   46.27%    failed      0.00%
+ 308  G029859185   35.90%    failed      0.00%
+ 309  G030948255   12.00%    failed      0.11%
+ 310  G001915025   29.35%    failed      0.00%
+ 311  G025929535   17.83%    failed      0.07%
+ 312  G903900795   19.49%    failed      0.01%
+ 313  G016209945   21.68%    failed      0.00%
+ 314  G022823365    6.54%    failed      0.00%
+ 315  G016742275    5.20%    failed      0.00%
+ 316  G020344755   21.17%    failed      0.00%
+ 317  G002238865    7.41%    failed      0.00%
+ 318  G012267505   19.87%    failed      0.00%
+ 319  G022826025   18.56%    failed      0.00%
+ 320  G016218305   18.65%    failed      0.00%
+ 321  G028287305    9.08%    failed      0.00%
+ 322  G030775065   13.97%    failed      0.00%
+ 323  G020851455    6.78%    failed      0.00%
+ 324  G014379205   19.88%    failed      0.00%
+ 325  G025927545   27.26%    failed      0.00%
+ 326  G003564295   10.71%    failed      0.00%
+ 327  G016194585   12.34%    failed      0.00%
+ 328  G012959595   31.03%    failed      0.00%
+ 329  G021295785   18.33%    failed      0.00%
+ 330  G002348265   10.81%    failed      0.00%
+ 331  G003223455   11.78%    failed      0.00%
+ 332  G019689775    7.13%    failed      0.00%
+ 333  G029863105   31.60%    failed      0.00%
+ 334  G024641745   15.02%    failed      0.00%
+ 335  G028278645    8.28%    failed      0.00%
+ 336  G003251175   45.39%    failed      0.00%
+ 337  G030860435   21.38%    passed     20.65%
+ 338  G002923375    6.28%    failed      0.00%
+ 339  G022823145   12.82%    failed      0.00%
+ 340  G007121455    8.95%    failed      0.00%
+ 341  G029884275   40.44%    failed      0.03%
+ 342  G030146875   16.33%    failed      0.00%
+ 343  G025937815   13.70%    failed      0.00%
+ 344  G025934775    6.21%    failed      0.00%
+ 345  G025362095   18.85%    failed      0.00%
+ 346  G003221075   26.52%    failed      0.00%
+ 347  G013817305   20.83%    failed      0.00%
+ 348  G022340755   15.80%    failed      0.01%
+ 349  G016713785    5.41%    failed      0.00%
+ 350  G003221995   31.68%    failed      0.00%
+ 351  G902812375   20.44%    failed      0.00%
+ 352  G007129525   44.83%    failed      0.00%
+ 353  G946479825   26.30%    failed      0.00%
+ 354  G022825725    6.39%    failed      0.00%
+ 355  G014379705   42.44%    failed      0.00%
+ 356  G025937755   43.50%    failed      0.00%
+ 357  G029262175    8.68%    failed      0.00%
+ 358  G947581615    6.02%    failed      0.00%
+ 359  G946887155   26.01%    failed      0.01%
+ 360  G023554335   11.11%    failed      0.00%
+ 361  G947457545   27.73%    failed      0.05%
+ 362  G000695095    7.00%    failed      0.00%
+ 363  G016191225   17.64%    failed      0.00%
+ 364  G009841015    9.43%    failed      0.00%
+ 365  G011390645   24.41%    failed      0.00%
+ 366  G002313925   24.58%    failed      0.00%
+ 367  G946478895   16.27%    failed      0.00%
+ 368  G016704275    6.69%    failed      0.00%
+ 369  G025357945    4.04%    failed      0.00%
+ 370  G937871775   21.11%    failed      0.00%
+ 371  G009843625   21.44%    failed      0.00%
+ 372  G002718595    9.99%    failed      0.00%
+ 373  G016874035    3.59%    failed      0.00%
+ 374  G013813605   33.39%    failed      0.00%
+ 375  G019347995   52.94%    failed      0.00%
+ 376  G021787855   10.81%    failed      0.00%
+ 377  G028873815    9.68%    failed      0.00%
+ 378  G024638305   20.58%    failed      0.00%
+ 379  G029245345    8.21%    failed      0.00%
+ 380  G012960225   11.33%    failed      0.00%
+ 381  G003222155   10.83%    failed      0.00%
+ 382  G007695195    9.74%    failed      0.00%
+ 383  G013813435   14.24%    failed      0.00%
+ 384  G022825135    9.24%    failed      0.00%
+ 385  G022822425   22.32%    failed      0.00%
+ 386  G963170075   13.98%    failed      0.00%
+ 387  G009841185    8.04%    failed      0.00%
+ 388  G002346625   56.21%    failed      0.00%
+ 389  G016871915   12.43%    failed      0.00%
+ 390  G030641505   41.95%    failed      0.00%
+ 391  G030827315    9.49%    failed      0.00%
+ 392  G014378185   36.59%    failed      0.00%
+ 393  G014379355   27.77%    failed      0.00%
+ 394  G019752115    4.79%    failed      0.00%
+ 395  G003152485   11.09%    failed      0.00%
+ 396  G019348265   38.02%    failed      0.02%
+ 397  G902825965   12.96%    failed      0.00%
+ 398  G003221085   34.48%    failed      0.00%
+ 399  G004357415   40.82%    failed      0.11%
+ 400  G013002885   18.69%    failed      0.00%
+ 401  G003221825   39.94%    failed      0.00%
+ 402  G030600085   16.55%    failed      0.00%
+ 403  G003136975   27.32%    failed      0.00%
+ 404  G026387915    6.05%    failed      0.00%
+ 405  G902805735   21.20%    failed      0.00%
+ 406  G003246755   16.59%    failed      0.18%
+ 407  G009838975    9.43%    failed      0.00%
+ 408  G029262115   11.23%    failed      0.00%
+ 409  G025931135   34.75%    failed      0.00%
+ 410  G027307005   22.14%    failed      0.48%
+ 411  G003221805   16.55%    failed      0.00%
+ 412  G021295835   11.17%    failed      0.00%
+ 413  G016719105    5.78%    failed      0.00%
+ 414  G020344215   11.83%    failed      0.00%
+ 415  G937907535    9.90%    failed      0.00%
+ 416  G030948945   48.23%    failed      0.00%
+ 417  G016713435   10.80%    failed      0.00%
+ 418  G003171215   18.69%    failed      0.00%
+ 419  G019240375   48.24%    passed      7.58%
+ 420  G003222135   17.94%    failed      0.00%
+ 421  G007692605   14.49%    failed      0.00%
+ 422  G016794825   12.07%    failed      0.00%
+ 423  G947581815   15.05%    failed      0.00%
+ 424  G003221035   10.96%    failed      0.00%
+ 425  G020633775   35.93%    failed      0.00%
+ 426  G028287345   34.20%    failed      0.00%
+ 427  G007126035    3.99%    failed      0.00%
+ 428  G028874985    9.35%    failed      0.00%
+ 429  G946887295   10.91%    failed      0.03%
+ 430  G020346845   43.28%    failed      0.00%
+ 431  G913009915   33.22%    failed      0.46%
+ 432  G937982605   38.01%    failed      0.12%
+ 433  G016720905    7.87%    failed      0.00%
+ 434  G028875075   21.98%    failed      0.00%
+ 435  G013813145   35.13%    failed      0.00%
+ 436  G947457715   49.57%    failed      0.00%
+ 437  G016200495   21.01%    failed      0.00%
+ 438  G031127185   39.84%    failed      0.00%
+ 439  G003242735   22.96%    failed      0.00%
+ 440  G015492755   25.80%    failed      0.00%
+ 441  G019637355    5.02%    failed      0.00%
+ 442  G013822425    8.42%    failed      0.00%
+ 443  G013697785    6.53%    failed      0.00%
+ 444  G027622655    6.62%    failed      0.00%
+ 445  G003142495   24.38%    failed      0.00%
+ 446  G025936015   42.04%    failed      0.19%
+ 447  G030946285   19.48%    failed      0.00%
+ 448  G023249305   26.30%    failed      0.00%
+ 449  G947499465    6.77%    passed      7.90%
+ 450  G030447645   28.72%    failed      0.00%
+ 451  G020344015   10.13%    failed      0.00%
+ 452  G025928335   28.60%    failed      0.16%
+ 453  G945870175   35.02%    failed      0.00%
+ 454  G020350785   10.94%    failed      0.00%
+ 455  G024638395   28.59%    failed      0.00%
+ 456  G030618065   33.33%    failed      0.00%
+ 457  G947581915    6.34%    failed      0.00%
+ 458  G020851035   11.49%    failed      0.00%
+ 459  G029884515   33.41%    failed      0.00%
+ 460  G903910555    3.96%    failed      0.00%
+ 461  G021813725   17.12%    failed      0.00%
+ 462  G024654005   10.18%    failed      0.00%
+ 463  G007121775   15.61%    failed      0.00%
+ 464  G022564055   21.84%    failed      0.00%
+ 465  G025928645   13.95%    failed      0.00%
+ 466  G030636765   17.20%    failed      0.00%
+ 467  G020846935    5.04%    failed      0.12%
+ 468  G016741895   13.35%    failed      0.00%
+ 469  G023249375   11.32%    failed      0.00%
+ 470  G013360595   33.37%    passed      9.90%
+ 471  G024638345   30.96%    failed      0.00%
+ 472  G017881585    9.56%    failed      0.00%
+ 473  G022563595    5.78%    failed      0.04%
+ 474  G002500925   13.33%    failed      0.00%
+ 475  G022561145   16.07%    failed      0.00%
+ 476  G003222085   14.77%    failed      0.00%
+ 477  G951828585    6.90%    failed      0.00%
+ 478  G019186945    5.90%    failed      0.05%
+ 479  G025449955   38.33%    failed      0.00%
+ 480  G009692115    2.97%    failed      0.00%
+ 481  G028279425   21.33%    failed      0.00%
+ 482  G021324775    4.75%    failed      0.00%
+ 483  G030854615   16.57%    failed      0.00%
+ 484  G030604975   24.82%    failed      0.00%
+ 485  G021298855    5.74%    failed      0.00%
+ 486  G007125125   11.09%    failed      0.00%
+ 487  G028874905   22.53%    failed      0.00%
+ 488  G947475795   55.12%    failed      0.00%
+ 489  G013820975   31.49%    failed      0.59%
+ 490  G030948535   27.25%    failed      0.00%
+ 491  G030946775   21.75%    failed      0.00%
+ 492  G020351855   17.53%    failed      0.00%
+ 493  G029862935   26.68%    failed      0.00%
+ 494  G003223395    9.74%    failed      0.00%
+ 495  G937995995   20.83%    failed      0.00%
+ 496  G025362635   25.98%    failed      0.00%
+ 497  G029861425   27.99%    failed      0.00%
+ 498  G007692505   12.90%    failed      0.00%
+ 499  G013816685   39.08%    failed      1.03%
+ 500  G028820325    6.52%    failed      0.00%
+ 501  G016209965   15.16%    failed      0.00%
+ 502  G011525845    4.98%    failed      0.00%
+ 503  G024641735   10.57%    failed      0.00%
+ 504  G030428885    9.97%    failed      0.00%
+ 505  G013817545   17.22%    failed      0.00%
+ 506  G000010305    5.27%    failed      0.00%
+ 507  G003223425   23.55%    failed      0.00%
+ 508  G022428035   35.18%    failed      0.00%
+ 509  G029863525   37.42%    failed      0.00%
+ 510  G025358315   27.84%    failed      0.00%
+ 511  G028287285   29.90%    failed      0.00%
+ 512  G003222235   27.54%    failed      0.00%
+ 513  G030856585   32.19%    failed      0.11%
+ 514  G002390225   13.76%    failed      0.00%
+ 515  G902826615    7.23%    failed      0.00%
+ 516  G022340865   11.08%    failed      0.00%
+ 517  G030608825   33.12%    failed      0.00%
+ 518  G013696835   15.50%    failed      0.00%
+ 519  G009692205    9.48%    passed     14.45%
+ 520  G009840215   13.83%    failed      0.00%
+ 521  G021154285   32.68%    failed      0.67%
+ 522  G947259405   38.92%    failed      1.01%
+ 523  G028873845    9.85%    failed      0.00%
+ 524  G003157095   30.70%    failed      0.00%
+ 525  G001919865   19.93%    failed      0.00%
+ 526  G030856845   40.04%    failed      0.00%
+ 527  G947259585   10.27%    failed      0.00%
+ 528  G021298395    8.60%    failed      0.00%
+ 529  G016934095   24.38%    failed      0.00%
+ 530  G007130605   17.43%    failed      0.00%
+ 531  G947259315   23.39%    failed      0.00%
+ 532  G025360995   30.05%    failed      0.00%
+ 533  G016720805    9.04%    failed      0.00%
+ 534  G002238605    6.66%    failed      0.00%
+ 535  G016714015    4.79%    failed      0.00%
+WARNING: 12 sequences contain more than 50% gaps/ambiguity
+****  TOTAL        19.62%  522 sequences failed composition chi2 test (p-value<5%; df=19)
+Reading model definition file /home/tim/project/GTDB_TREE/Result_rona/test_tree_update/p__Gemmatimonadota_150/trained_models/trained_model.nex ... 88 models and 214 frequency vectors loaded
+Reading input tree file /home/tim/project/GTDB_TREE/Result_rona/test_tree_update/p__Gemmatimonadota_150/ref_tree.tre ... rooted tree
+
+NOTE: 10796 MB RAM (10 GB) is required!
+Estimate model parameters (epsilon = 0.100)
+Thoroughly optimizing +I+G parameters from 10 start values...
+Init pinv, alpha: 0.000, 1.000 / Estimate: 0.120, 0.729 / LogL: -8504746.826
+Init pinv, alpha: 0.013, 1.000 / Estimate: 0.120, 0.730 / LogL: -8504746.846
+Init pinv, alpha: 0.027, 1.000 / Estimate: 0.120, 0.730 / LogL: -8504746.848
+Init pinv, alpha: 0.040, 1.000 / Estimate: 0.120, 0.729 / LogL: -8504746.841
+Init pinv, alpha: 0.054, 1.000 / Estimate: 0.120, 0.729 / LogL: -8504746.835
+Init pinv, alpha: 0.067, 1.000 / Estimate: 0.120, 0.729 / LogL: -8504746.830
+Init pinv, alpha: 0.081, 1.000 / Estimate: 0.120, 0.729 / LogL: -8504746.828
+Init pinv, alpha: 0.094, 1.000 / Estimate: 0.120, 0.729 / LogL: -8504746.826
+Init pinv, alpha: 0.107, 1.000 / Estimate: 0.120, 0.729 / LogL: -8504746.825
+Init pinv, alpha: 0.121, 1.000 / Estimate: 0.120, 0.729 / LogL: -8504746.823
+Optimal pinv,alpha: 0.120, 0.729 / LogL: -8504746.823
+
+Parameters optimization took 4383.864 sec
+Wrote distance file to... 
+
+Do NNI search on 1 best initial trees
+Estimate model parameters (epsilon = 0.100)
+BETTER TREE FOUND at iteration 1: -8499654.221
+Finish initializing candidate tree set (2)
+Current best tree score: -8499654.221 / CPU time: 334.969
+Number of iterations: 1
+--------------------------------------------------------------------
+|               OPTIMIZING CANDIDATE TREE SET                      |
+--------------------------------------------------------------------
+Estimate model parameters (epsilon = 0.100)
+BETTER TREE FOUND at iteration 2: -8499532.453
+Estimate model parameters (epsilon = 0.100)
+BETTER TREE FOUND at iteration 4: -8499479.825
+Estimate model parameters (epsilon = 0.100)
+BETTER TREE FOUND at iteration 5: -8499336.615
+Estimate model parameters (epsilon = 0.100)
+BETTER TREE FOUND at iteration 9: -8499285.896
+Iteration 10 / LogL: -8499347.058 / Time: 2h:22m:3s
+Iteration 20 / LogL: -8499320.259 / Time: 3h:9m:33s
+Iteration 30 / LogL: -8499382.647 / Time: 4h:0m:37s (10h:55m:30s left)
+Estimate model parameters (epsilon = 0.100)
+BETTER TREE FOUND at iteration 38: -8499283.961
+Iteration 40 / LogL: -8499306.693 / Time: 4h:56m:56s (12h:26m:8s left)
+Iteration 50 / LogL: -8499404.505 / Time: 5h:46m:19s (10h:21m:57s left)
+Iteration 60 / LogL: -8499727.374 / Time: 6h:27m:30s (8h:32m:17s left)
+Iteration 70 / LogL: -8499641.917 / Time: 7h:12m:45s (7h:6m:29s left)
+Estimate model parameters (epsilon = 0.100)
+BETTER TREE FOUND at iteration 74: -8499262.765
+Iteration 80 / LogL: -8499291.183 / Time: 8h:3m:48s (9h:35m:40s left)
+Iteration 90 / LogL: -8499335.080 / Time: 8h:48m:32s (8h:18m:50s left)
+Iteration 100 / LogL: -8499293.437 / Time: 9h:33m:41s (7h:8m:48s left)
+Estimate model parameters (epsilon = 0.100)
+BETTER TREE FOUND at iteration 107: -8499244.681
+Iteration 110 / LogL: -8499507.281 / Time: 10h:23m:51s (9h:15m:10s left)
+Iteration 120 / LogL: -8499270.697 / Time: 11h:11m:11s (8h:10m:41s left)
+Iteration 130 / LogL: -8499395.034 / Time: 12h:4m:29s (7h:12m:26s left)
+Iteration 140 / LogL: -8499468.292 / Time: 13h:2m:8s (6h:16m:59s left)
+Iteration 150 / LogL: -8499882.330 / Time: 16h:44m:31s (6h:24m:16s left)
+Iteration 160 / LogL: -8499285.981 / Time: 25h:58m:39s (7h:40m:44s left)
+Iteration 170 / LogL: -8499271.538 / Time: 27h:32m:25s (6h:1m:46s left)
+Iteration 180 / LogL: -8499295.541 / Time: 29h:40m:41s (4h:28m:35s left)
+Iteration 190 / LogL: -8499329.985 / Time: 30h:56m:5s (2h:46m:57s left)
+Iteration 200 / LogL: -8499331.996 / Time: 32h:2m:45s (1h:7m:38s left)
+TREE SEARCH COMPLETED AFTER 208 ITERATIONS / Time: 32h:43m:34s
+
+--------------------------------------------------------------------
+|                    FINALIZING TREE SEARCH                        |
+--------------------------------------------------------------------
+Performs final model parameters optimization
+Estimate model parameters (epsilon = 0.010)
+1. Initial log-likelihood: -8499244.681
+Optimal log-likelihood: -8499244.672
+Proportion of invariable sites: 0.120
+Gamma shape alpha: 0.729
+Parameters optimization took 1 rounds (58.689 sec)
+BEST SCORE FOUND : -8499244.672
+Total tree length: 110.047
+
+Total number of iterations: 208
+CPU time used for tree search: 2196210.256 sec (610h:3m:30s)
+Wall-clock time used for tree search: 113430.352 sec (31h:30m:30s)
+Total CPU time used: 2288726.481 sec (635h:45m:26s)
+Total wall-clock time used: 117874.424 sec (32h:44m:34s)
+
+Analysis results written to: 
+  IQ-TREE report:                /home/tim/project/GTDB_TREE/Result_rona/test_tree_update/new_tree_test/iqtree/IQ_I_G4.iqtree
+  Maximum-likelihood tree:       /home/tim/project/GTDB_TREE/Result_rona/test_tree_update/new_tree_test/iqtree/IQ_I_G4.treefile
+  Screen log file:               /home/tim/project/GTDB_TREE/Result_rona/test_tree_update/new_tree_test/iqtree/IQ_I_G4.log
+
+Date and Time: Sat Jun 22 08:32:35 2024

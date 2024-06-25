@@ -1,0 +1,5 @@
+    148 p__Gemmatimonadota_150_2
+      8 LG
+      6 Q.PFAM
+      5 Q.INSECT
+      4 MTART

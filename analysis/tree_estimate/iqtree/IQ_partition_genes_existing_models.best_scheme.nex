@@ -1,0 +1,200 @@
+#nexus
+begin sets;
+  charset bac120_r220_reps_TIGR01029.faa = /home/tim/project/GTDB_TREE/Result_rona/test_tree_update/p__Gemmatimonadota_150/loci/training_loci/bac120_r220_reps_TIGR01029.faa: ;
+  charset bac120_r220_reps_TIGR00344.faa = /home/tim/project/GTDB_TREE/Result_rona/test_tree_update/p__Gemmatimonadota_150/loci/training_loci/bac120_r220_reps_TIGR00344.faa: ;
+  charset bac120_r220_reps_TIGR01044.faa = /home/tim/project/GTDB_TREE/Result_rona/test_tree_update/p__Gemmatimonadota_150/loci/training_loci/bac120_r220_reps_TIGR01044.faa: ;
+  charset bac120_r220_reps_TIGR00088.faa = /home/tim/project/GTDB_TREE/Result_rona/test_tree_update/p__Gemmatimonadota_150/loci/training_loci/bac120_r220_reps_TIGR00088.faa: ;
+  charset bac120_r220_reps_TIGR00061.faa = /home/tim/project/GTDB_TREE/Result_rona/test_tree_update/p__Gemmatimonadota_150/loci/training_loci/bac120_r220_reps_TIGR00061.faa: ;
+  charset bac120_r220_reps_TIGR00631.faa = /home/tim/project/GTDB_TREE/Result_rona/test_tree_update/p__Gemmatimonadota_150/loci/training_loci/bac120_r220_reps_TIGR00631.faa: ;
+  charset bac120_r220_reps_TIGR00445.faa = /home/tim/project/GTDB_TREE/Result_rona/test_tree_update/p__Gemmatimonadota_150/loci/training_loci/bac120_r220_reps_TIGR00445.faa: ;
+  charset bac120_r220_reps_TIGR01032.faa = /home/tim/project/GTDB_TREE/Result_rona/test_tree_update/p__Gemmatimonadota_150/loci/training_loci/bac120_r220_reps_TIGR01032.faa: ;
+  charset bac120_r220_reps_TIGR01017.faa = /home/tim/project/GTDB_TREE/Result_rona/test_tree_update/p__Gemmatimonadota_150/loci/training_loci/bac120_r220_reps_TIGR01017.faa: ;
+  charset bac120_r220_reps_TIGR00643.faa = /home/tim/project/GTDB_TREE/Result_rona/test_tree_update/p__Gemmatimonadota_150/loci/training_loci/bac120_r220_reps_TIGR00643.faa: ;
+  charset bac120_r220_reps_TIGR00194.faa = /home/tim/project/GTDB_TREE/Result_rona/test_tree_update/p__Gemmatimonadota_150/loci/training_loci/bac120_r220_reps_TIGR00194.faa: ;
+  charset bac120_r220_reps_TIGR01953.faa = /home/tim/project/GTDB_TREE/Result_rona/test_tree_update/p__Gemmatimonadota_150/loci/training_loci/bac120_r220_reps_TIGR01953.faa: ;
+  charset bac120_r220_reps_TIGR03953.faa = /home/tim/project/GTDB_TREE/Result_rona/test_tree_update/p__Gemmatimonadota_150/loci/training_loci/bac120_r220_reps_TIGR03953.faa: ;
+  charset bac120_r220_reps_TIGR01164.faa = /home/tim/project/GTDB_TREE/Result_rona/test_tree_update/p__Gemmatimonadota_150/loci/training_loci/bac120_r220_reps_TIGR01164.faa: ;
+  charset bac120_r220_reps_TIGR00095.faa = /home/tim/project/GTDB_TREE/Result_rona/test_tree_update/p__Gemmatimonadota_150/loci/training_loci/bac120_r220_reps_TIGR00095.faa: ;
+  charset bac120_r220_reps_TIGR00043.faa = /home/tim/project/GTDB_TREE/Result_rona/test_tree_update/p__Gemmatimonadota_150/loci/training_loci/bac120_r220_reps_TIGR00043.faa: ;
+  charset bac120_r220_reps_TIGR00392.faa = /home/tim/project/GTDB_TREE/Result_rona/test_tree_update/p__Gemmatimonadota_150/loci/training_loci/bac120_r220_reps_TIGR00392.faa: ;
+  charset bac120_r220_reps_TIGR00019.faa = /home/tim/project/GTDB_TREE/Result_rona/test_tree_update/p__Gemmatimonadota_150/loci/training_loci/bac120_r220_reps_TIGR00019.faa: ;
+  charset bac120_r220_reps_TIGR00083.faa = /home/tim/project/GTDB_TREE/Result_rona/test_tree_update/p__Gemmatimonadota_150/loci/training_loci/bac120_r220_reps_TIGR00083.faa: ;
+  charset bac120_r220_reps_TIGR00029.faa = /home/tim/project/GTDB_TREE/Result_rona/test_tree_update/p__Gemmatimonadota_150/loci/training_loci/bac120_r220_reps_TIGR00029.faa: ;
+  charset bac120_r220_reps_TIGR02350.faa = /home/tim/project/GTDB_TREE/Result_rona/test_tree_update/p__Gemmatimonadota_150/loci/training_loci/bac120_r220_reps_TIGR02350.faa: ;
+  charset bac120_r220_reps_TIGR00362.faa = /home/tim/project/GTDB_TREE/Result_rona/test_tree_update/p__Gemmatimonadota_150/loci/training_loci/bac120_r220_reps_TIGR00362.faa: ;
+  charset bac120_r220_reps_TIGR03263.faa = /home/tim/project/GTDB_TREE/Result_rona/test_tree_update/p__Gemmatimonadota_150/loci/training_loci/bac120_r220_reps_TIGR03263.faa: ;
+  charset bac120_r220_reps_TIGR02386.faa = /home/tim/project/GTDB_TREE/Result_rona/test_tree_update/p__Gemmatimonadota_150/loci/training_loci/bac120_r220_reps_TIGR02386.faa: ;
+  charset bac120_r220_reps_TIGR01393.faa = /home/tim/project/GTDB_TREE/Result_rona/test_tree_update/p__Gemmatimonadota_150/loci/training_loci/bac120_r220_reps_TIGR01393.faa: ;
+  charset bac120_r220_reps_TIGR00414.faa = /home/tim/project/GTDB_TREE/Result_rona/test_tree_update/p__Gemmatimonadota_150/loci/training_loci/bac120_r220_reps_TIGR00414.faa: ;
+  charset bac120_r220_reps_TIGR00059.faa = /home/tim/project/GTDB_TREE/Result_rona/test_tree_update/p__Gemmatimonadota_150/loci/training_loci/bac120_r220_reps_TIGR00059.faa: ;
+  charset bac120_r220_reps_TIGR00082.faa = /home/tim/project/GTDB_TREE/Result_rona/test_tree_update/p__Gemmatimonadota_150/loci/training_loci/bac120_r220_reps_TIGR00082.faa: ;
+  charset bac120_r220_reps_TIGR00456.faa = /home/tim/project/GTDB_TREE/Result_rona/test_tree_update/p__Gemmatimonadota_150/loci/training_loci/bac120_r220_reps_TIGR00456.faa: ;
+  charset bac120_r220_reps_TIGR01009.faa = /home/tim/project/GTDB_TREE/Result_rona/test_tree_update/p__Gemmatimonadota_150/loci/training_loci/bac120_r220_reps_TIGR01009.faa: ;
+  charset bac120_r220_reps_TIGR01632.faa = /home/tim/project/GTDB_TREE/Result_rona/test_tree_update/p__Gemmatimonadota_150/loci/training_loci/bac120_r220_reps_TIGR01632.faa: ;
+  charset bac120_r220_reps_TIGR00964.faa = /home/tim/project/GTDB_TREE/Result_rona/test_tree_update/p__Gemmatimonadota_150/loci/training_loci/bac120_r220_reps_TIGR00964.faa: ;
+  charset bac120_r220_reps_TIGR00431.faa = /home/tim/project/GTDB_TREE/Result_rona/test_tree_update/p__Gemmatimonadota_150/loci/training_loci/bac120_r220_reps_TIGR00431.faa: ;
+  charset bac120_r220_reps_TIGR00420.faa = /home/tim/project/GTDB_TREE/Result_rona/test_tree_update/p__Gemmatimonadota_150/loci/training_loci/bac120_r220_reps_TIGR00420.faa: ;
+  charset bac120_r220_reps_TIGR03725.faa = /home/tim/project/GTDB_TREE/Result_rona/test_tree_update/p__Gemmatimonadota_150/loci/training_loci/bac120_r220_reps_TIGR03725.faa: ;
+  charset bac120_r220_reps_TIGR01011.faa = /home/tim/project/GTDB_TREE/Result_rona/test_tree_update/p__Gemmatimonadota_150/loci/training_loci/bac120_r220_reps_TIGR01011.faa: ;
+  charset bac120_r220_reps_TIGR00442.faa = /home/tim/project/GTDB_TREE/Result_rona/test_tree_update/p__Gemmatimonadota_150/loci/training_loci/bac120_r220_reps_TIGR00442.faa: ;
+  charset bac120_r220_reps_TIGR00496.faa = /home/tim/project/GTDB_TREE/Result_rona/test_tree_update/p__Gemmatimonadota_150/loci/training_loci/bac120_r220_reps_TIGR00496.faa: ;
+  charset bac120_r220_reps_TIGR02012.faa = /home/tim/project/GTDB_TREE/Result_rona/test_tree_update/p__Gemmatimonadota_150/loci/training_loci/bac120_r220_reps_TIGR02012.faa: ;
+  charset bac120_r220_reps_TIGR00717.faa = /home/tim/project/GTDB_TREE/Result_rona/test_tree_update/p__Gemmatimonadota_150/loci/training_loci/bac120_r220_reps_TIGR00717.faa: ;
+  charset bac120_r220_reps_TIGR00755.faa = /home/tim/project/GTDB_TREE/Result_rona/test_tree_update/p__Gemmatimonadota_150/loci/training_loci/bac120_r220_reps_TIGR00755.faa: ;
+  charset bac120_r220_reps_TIGR00539.faa = /home/tim/project/GTDB_TREE/Result_rona/test_tree_update/p__Gemmatimonadota_150/loci/training_loci/bac120_r220_reps_TIGR00539.faa: ;
+  charset bac120_r220_reps_TIGR01169.faa = /home/tim/project/GTDB_TREE/Result_rona/test_tree_update/p__Gemmatimonadota_150/loci/training_loci/bac120_r220_reps_TIGR01169.faa: ;
+  charset bac120_r220_reps_TIGR00593.faa = /home/tim/project/GTDB_TREE/Result_rona/test_tree_update/p__Gemmatimonadota_150/loci/training_loci/bac120_r220_reps_TIGR00593.faa: ;
+  charset bac120_r220_reps_TIGR00922.faa = /home/tim/project/GTDB_TREE/Result_rona/test_tree_update/p__Gemmatimonadota_150/loci/training_loci/bac120_r220_reps_TIGR00922.faa: ;
+  charset bac120_r220_reps_TIGR01059.faa = /home/tim/project/GTDB_TREE/Result_rona/test_tree_update/p__Gemmatimonadota_150/loci/training_loci/bac120_r220_reps_TIGR01059.faa: ;
+  charset bac120_r220_reps_TIGR00615.faa = /home/tim/project/GTDB_TREE/Result_rona/test_tree_update/p__Gemmatimonadota_150/loci/training_loci/bac120_r220_reps_TIGR00615.faa: ;
+  charset bac120_r220_reps_TIGR00084.faa = /home/tim/project/GTDB_TREE/Result_rona/test_tree_update/p__Gemmatimonadota_150/loci/training_loci/bac120_r220_reps_TIGR00084.faa: ;
+  charset bac120_r220_reps_TIGR01394.faa = /home/tim/project/GTDB_TREE/Result_rona/test_tree_update/p__Gemmatimonadota_150/loci/training_loci/bac120_r220_reps_TIGR01394.faa: ;
+  charset bac120_r220_reps_PF00466.21.faa = /home/tim/project/GTDB_TREE/Result_rona/test_tree_update/p__Gemmatimonadota_150/loci/training_loci/bac120_r220_reps_PF00466.21.faa: ;
+  charset bac120_r220_reps_TIGR00006.faa = /home/tim/project/GTDB_TREE/Result_rona/test_tree_update/p__Gemmatimonadota_150/loci/training_loci/bac120_r220_reps_TIGR00006.faa: ;
+  charset bac120_r220_reps_TIGR00472.faa = /home/tim/project/GTDB_TREE/Result_rona/test_tree_update/p__Gemmatimonadota_150/loci/training_loci/bac120_r220_reps_TIGR00472.faa: ;
+  charset bac120_r220_reps_TIGR02273.faa = /home/tim/project/GTDB_TREE/Result_rona/test_tree_update/p__Gemmatimonadota_150/loci/training_loci/bac120_r220_reps_TIGR02273.faa: ;
+  charset bac120_r220_reps_TIGR00398.faa = /home/tim/project/GTDB_TREE/Result_rona/test_tree_update/p__Gemmatimonadota_150/loci/training_loci/bac120_r220_reps_TIGR00398.faa: ;
+  charset bac120_r220_reps_TIGR00158.faa = /home/tim/project/GTDB_TREE/Result_rona/test_tree_update/p__Gemmatimonadota_150/loci/training_loci/bac120_r220_reps_TIGR00158.faa: ;
+  charset bac120_r220_reps_TIGR00090.faa = /home/tim/project/GTDB_TREE/Result_rona/test_tree_update/p__Gemmatimonadota_150/loci/training_loci/bac120_r220_reps_TIGR00090.faa: ;
+  charset bac120_r220_reps_TIGR01146.faa = /home/tim/project/GTDB_TREE/Result_rona/test_tree_update/p__Gemmatimonadota_150/loci/training_loci/bac120_r220_reps_TIGR01146.faa: ;
+  charset bac120_r220_reps_TIGR00396.faa = /home/tim/project/GTDB_TREE/Result_rona/test_tree_update/p__Gemmatimonadota_150/loci/training_loci/bac120_r220_reps_TIGR00396.faa: ;
+  charset bac120_r220_reps_TIGR03625.faa = /home/tim/project/GTDB_TREE/Result_rona/test_tree_update/p__Gemmatimonadota_150/loci/training_loci/bac120_r220_reps_TIGR03625.faa: ;
+  charset bac120_r220_reps_TIGR00065.faa = /home/tim/project/GTDB_TREE/Result_rona/test_tree_update/p__Gemmatimonadota_150/loci/training_loci/bac120_r220_reps_TIGR00065.faa: ;
+  charset bac120_r220_reps_TIGR02397.faa = /home/tim/project/GTDB_TREE/Result_rona/test_tree_update/p__Gemmatimonadota_150/loci/training_loci/bac120_r220_reps_TIGR02397.faa: ;
+  charset bac120_r220_reps_TIGR03654.faa = /home/tim/project/GTDB_TREE/Result_rona/test_tree_update/p__Gemmatimonadota_150/loci/training_loci/bac120_r220_reps_TIGR03654.faa: ;
+  charset bac120_r220_reps_TIGR00967.faa = /home/tim/project/GTDB_TREE/Result_rona/test_tree_update/p__Gemmatimonadota_150/loci/training_loci/bac120_r220_reps_TIGR00967.faa: ;
+  charset bac120_r220_reps_TIGR00435.faa = /home/tim/project/GTDB_TREE/Result_rona/test_tree_update/p__Gemmatimonadota_150/loci/training_loci/bac120_r220_reps_TIGR00435.faa: ;
+  charset bac120_r220_reps_PF00410.20.faa = /home/tim/project/GTDB_TREE/Result_rona/test_tree_update/p__Gemmatimonadota_150/loci/training_loci/bac120_r220_reps_PF00410.20.faa: ;
+  charset bac120_r220_reps_TIGR03594.faa = /home/tim/project/GTDB_TREE/Result_rona/test_tree_update/p__Gemmatimonadota_150/loci/training_loci/bac120_r220_reps_TIGR03594.faa: ;
+  charset bac120_r220_reps_TIGR02027.faa = /home/tim/project/GTDB_TREE/Result_rona/test_tree_update/p__Gemmatimonadota_150/loci/training_loci/bac120_r220_reps_TIGR02027.faa: ;
+  charset bac120_r220_reps_TIGR00634.faa = /home/tim/project/GTDB_TREE/Result_rona/test_tree_update/p__Gemmatimonadota_150/loci/training_loci/bac120_r220_reps_TIGR00634.faa: ;
+  charset bac120_r220_reps_TIGR00054.faa = /home/tim/project/GTDB_TREE/Result_rona/test_tree_update/p__Gemmatimonadota_150/loci/training_loci/bac120_r220_reps_TIGR00054.faa: ;
+  charset bac120_r220_reps_PF03726.15.faa = /home/tim/project/GTDB_TREE/Result_rona/test_tree_update/p__Gemmatimonadota_150/loci/training_loci/bac120_r220_reps_PF03726.15.faa: ;
+  charset bac120_r220_reps_TIGR01128.faa = /home/tim/project/GTDB_TREE/Result_rona/test_tree_update/p__Gemmatimonadota_150/loci/training_loci/bac120_r220_reps_TIGR01128.faa: ;
+  charset bac120_r220_reps_TIGR01087.faa = /home/tim/project/GTDB_TREE/Result_rona/test_tree_update/p__Gemmatimonadota_150/loci/training_loci/bac120_r220_reps_TIGR01087.faa: ;
+  charset bac120_r220_reps_TIGR00166.faa = /home/tim/project/GTDB_TREE/Result_rona/test_tree_update/p__Gemmatimonadota_150/loci/training_loci/bac120_r220_reps_TIGR00166.faa: ;
+  charset bac120_r220_reps_TIGR03723.faa = /home/tim/project/GTDB_TREE/Result_rona/test_tree_update/p__Gemmatimonadota_150/loci/training_loci/bac120_r220_reps_TIGR03723.faa: ;
+  charset bac120_r220_reps_TIGR00116.faa = /home/tim/project/GTDB_TREE/Result_rona/test_tree_update/p__Gemmatimonadota_150/loci/training_loci/bac120_r220_reps_TIGR00116.faa: ;
+  charset bac120_r220_reps_TIGR00459.faa = /home/tim/project/GTDB_TREE/Result_rona/test_tree_update/p__Gemmatimonadota_150/loci/training_loci/bac120_r220_reps_TIGR00459.faa: ;
+  charset bac120_r220_reps_TIGR00115.faa = /home/tim/project/GTDB_TREE/Result_rona/test_tree_update/p__Gemmatimonadota_150/loci/training_loci/bac120_r220_reps_TIGR00115.faa: ;
+  charset bac120_r220_reps_TIGR01071.faa = /home/tim/project/GTDB_TREE/Result_rona/test_tree_update/p__Gemmatimonadota_150/loci/training_loci/bac120_r220_reps_TIGR01071.faa: ;
+  charset bac120_r220_reps_TIGR01021.faa = /home/tim/project/GTDB_TREE/Result_rona/test_tree_update/p__Gemmatimonadota_150/loci/training_loci/bac120_r220_reps_TIGR01021.faa: ;
+  charset bac120_r220_reps_TIGR00580.faa = /home/tim/project/GTDB_TREE/Result_rona/test_tree_update/p__Gemmatimonadota_150/loci/training_loci/bac120_r220_reps_TIGR00580.faa: ;
+  charset bac120_r220_reps_TIGR00020.faa = /home/tim/project/GTDB_TREE/Result_rona/test_tree_update/p__Gemmatimonadota_150/loci/training_loci/bac120_r220_reps_TIGR00020.faa: ;
+  charset bac120_r220_reps_TIGR02075.faa = /home/tim/project/GTDB_TREE/Result_rona/test_tree_update/p__Gemmatimonadota_150/loci/training_loci/bac120_r220_reps_TIGR02075.faa: ;
+  charset bac120_r220_reps_TIGR01302.faa = /home/tim/project/GTDB_TREE/Result_rona/test_tree_update/p__Gemmatimonadota_150/loci/training_loci/bac120_r220_reps_TIGR01302.faa: ;
+  charset bac120_r220_reps_TIGR03632.faa = /home/tim/project/GTDB_TREE/Result_rona/test_tree_update/p__Gemmatimonadota_150/loci/training_loci/bac120_r220_reps_TIGR03632.faa: ;
+  charset bac120_r220_reps_TIGR00468.faa = /home/tim/project/GTDB_TREE/Result_rona/test_tree_update/p__Gemmatimonadota_150/loci/training_loci/bac120_r220_reps_TIGR00468.faa: ;
+  charset bac120_r220_reps_TIGR01951.faa = /home/tim/project/GTDB_TREE/Result_rona/test_tree_update/p__Gemmatimonadota_150/loci/training_loci/bac120_r220_reps_TIGR01951.faa: ;
+  charset bac120_r220_reps_TIGR00963.faa = /home/tim/project/GTDB_TREE/Result_rona/test_tree_update/p__Gemmatimonadota_150/loci/training_loci/bac120_r220_reps_TIGR00963.faa: ;
+  charset bac120_r220_reps_TIGR00250.faa = /home/tim/project/GTDB_TREE/Result_rona/test_tree_update/p__Gemmatimonadota_150/loci/training_loci/bac120_r220_reps_TIGR00250.faa: ;
+  charset bac120_r220_reps_TIGR01066.faa = /home/tim/project/GTDB_TREE/Result_rona/test_tree_update/p__Gemmatimonadota_150/loci/training_loci/bac120_r220_reps_TIGR01066.faa: ;
+  charset bac120_r220_reps_TIGR00928.faa = /home/tim/project/GTDB_TREE/Result_rona/test_tree_update/p__Gemmatimonadota_150/loci/training_loci/bac120_r220_reps_TIGR00928.faa: ;
+  charset bac120_r220_reps_TIGR02729.faa = /home/tim/project/GTDB_TREE/Result_rona/test_tree_update/p__Gemmatimonadota_150/loci/training_loci/bac120_r220_reps_TIGR02729.faa: ;
+  charset bac120_r220_reps_TIGR00382.faa = /home/tim/project/GTDB_TREE/Result_rona/test_tree_update/p__Gemmatimonadota_150/loci/training_loci/bac120_r220_reps_TIGR00382.faa: ;
+  charset bac120_r220_reps_TIGR00168.faa = /home/tim/project/GTDB_TREE/Result_rona/test_tree_update/p__Gemmatimonadota_150/loci/training_loci/bac120_r220_reps_TIGR00168.faa: ;
+  charset bac120_r220_reps_TIGR00086.faa = /home/tim/project/GTDB_TREE/Result_rona/test_tree_update/p__Gemmatimonadota_150/loci/training_loci/bac120_r220_reps_TIGR00086.faa: ;
+  charset bac120_r220_reps_TIGR01063.faa = /home/tim/project/GTDB_TREE/Result_rona/test_tree_update/p__Gemmatimonadota_150/loci/training_loci/bac120_r220_reps_TIGR01063.faa: ;
+  charset bac120_r220_reps_TIGR02432.faa = /home/tim/project/GTDB_TREE/Result_rona/test_tree_update/p__Gemmatimonadota_150/loci/training_loci/bac120_r220_reps_TIGR02432.faa: ;
+  charset bac120_r220_reps_TIGR01171.faa = /home/tim/project/GTDB_TREE/Result_rona/test_tree_update/p__Gemmatimonadota_150/loci/training_loci/bac120_r220_reps_TIGR01171.faa: ;
+  charset bac120_r220_reps_TIGR00416.faa = /home/tim/project/GTDB_TREE/Result_rona/test_tree_update/p__Gemmatimonadota_150/loci/training_loci/bac120_r220_reps_TIGR00416.faa: ;
+  charpartition mymodels =
+    Q.INSECT+I+R6: bac120_r220_reps_TIGR01029.faa,
+    LG+F+I+R10: bac120_r220_reps_TIGR00344.faa,
+    Q.PFAM+I+G4: bac120_r220_reps_TIGR01044.faa,
+    LG+F+R9: bac120_r220_reps_TIGR00088.faa,
+    LG+I+R7: bac120_r220_reps_TIGR00061.faa,
+    Q.YEAST+F+I+R9: bac120_r220_reps_TIGR00631.faa,
+    LG+F+R10: bac120_r220_reps_TIGR00445.faa,
+    Q.INSECT+R6: bac120_r220_reps_TIGR01032.faa,
+    Q.INSECT+F+R8: bac120_r220_reps_TIGR01017.faa,
+    LG+F+R10: bac120_r220_reps_TIGR00643.faa,
+    Q.YEAST+F+R9: bac120_r220_reps_TIGR00194.faa,
+    Q.INSECT+R9: bac120_r220_reps_TIGR01953.faa,
+    LG+F+I+R7: bac120_r220_reps_TIGR03953.faa,
+    Q.INSECT+R7: bac120_r220_reps_TIGR01164.faa,
+    Q.PFAM+F+I+R9: bac120_r220_reps_TIGR00095.faa,
+    LG+F+R8: bac120_r220_reps_TIGR00043.faa,
+    Q.PFAM+F+I+R10: bac120_r220_reps_TIGR00392.faa,
+    Q.YEAST+F+I+R9: bac120_r220_reps_TIGR00019.faa,
+    Q.PFAM+F+I+R10: bac120_r220_reps_TIGR00083.faa,
+    Q.PFAM+R6: bac120_r220_reps_TIGR00029.faa,
+    Q.INSECT+F+R8: bac120_r220_reps_TIGR02350.faa,
+    Q.INSECT+F+R8: bac120_r220_reps_TIGR00362.faa,
+    Q.PFAM+F+I+R8: bac120_r220_reps_TIGR03263.faa,
+    Q.INSECT+F+I+R10: bac120_r220_reps_TIGR02386.faa,
+    Q.YEAST+F+I+R10: bac120_r220_reps_TIGR01393.faa,
+    LG+F+I+R9: bac120_r220_reps_TIGR00414.faa,
+    Q.INSECT+I+R7: bac120_r220_reps_TIGR00059.faa,
+    LG+F+R7: bac120_r220_reps_TIGR00082.faa,
+    Q.PFAM+F+I+R10: bac120_r220_reps_TIGR00456.faa,
+    Q.INSECT+I+R6: bac120_r220_reps_TIGR01009.faa,
+    LG+I+R5: bac120_r220_reps_TIGR01632.faa,
+    Q.INSECT+F+R6: bac120_r220_reps_TIGR00964.faa,
+    Q.PFAM+F+R10: bac120_r220_reps_TIGR00431.faa,
+    LG+F+I+R10: bac120_r220_reps_TIGR00420.faa,
+    Q.PFAM+F+I+R10: bac120_r220_reps_TIGR03725.faa,
+    Q.INSECT+R7: bac120_r220_reps_TIGR01011.faa,
+    Q.PFAM+F+R10: bac120_r220_reps_TIGR00442.faa,
+    Q.INSECT+F+R8: bac120_r220_reps_TIGR00496.faa,
+    Q.INSECT+I+R8: bac120_r220_reps_TIGR02012.faa,
+    Q.INSECT+R8: bac120_r220_reps_TIGR00717.faa,
+    Q.PFAM+F+R10: bac120_r220_reps_TIGR00755.faa,
+    Q.PFAM+F+I+R10: bac120_r220_reps_TIGR00539.faa,
+    Q.INSECT+I+R8: bac120_r220_reps_TIGR01169.faa,
+    Q.PFAM+F+I+R10: bac120_r220_reps_TIGR00593.faa,
+    Q.INSECT+R8: bac120_r220_reps_TIGR00922.faa,
+    Q.YEAST+F+I+R8: bac120_r220_reps_TIGR01059.faa,
+    Q.INSECT+F+R8: bac120_r220_reps_TIGR00615.faa,
+    Q.INSECT+F+I+R9: bac120_r220_reps_TIGR00084.faa,
+    Q.YEAST+F+R10: bac120_r220_reps_TIGR01394.faa,
+    Q.PFAM+R7: bac120_r220_reps_PF00466.21.faa,
+    Q.PFAM+F+I+R10: bac120_r220_reps_TIGR00006.faa,
+    Q.PFAM+F+I+R10: bac120_r220_reps_TIGR00472.faa,
+    LG+F+I+R9: bac120_r220_reps_TIGR02273.faa,
+    Q.PFAM+F+I+R9: bac120_r220_reps_TIGR00398.faa,
+    Q.INSECT+F+R8: bac120_r220_reps_TIGR00158.faa,
+    LG+F+R7: bac120_r220_reps_TIGR00090.faa,
+    Q.INSECT+F+R9: bac120_r220_reps_TIGR01146.faa,
+    LG+F+I+R10: bac120_r220_reps_TIGR00396.faa,
+    Q.PFAM+R7: bac120_r220_reps_TIGR03625.faa,
+    Q.INSECT+R8: bac120_r220_reps_TIGR00065.faa,
+    Q.INSECT+F+I+R9: bac120_r220_reps_TIGR02397.faa,
+    Q.INSECT+I+R8: bac120_r220_reps_TIGR03654.faa,
+    LG+F+R10: bac120_r220_reps_TIGR00967.faa,
+    Q.PFAM+F+I+R10: bac120_r220_reps_TIGR00435.faa,
+    Q.INSECT+R6: bac120_r220_reps_PF00410.20.faa,
+    LG+F+I+R10: bac120_r220_reps_TIGR03594.faa,
+    Q.INSECT+F+R8: bac120_r220_reps_TIGR02027.faa,
+    LG+F+I+R10: bac120_r220_reps_TIGR00634.faa,
+    Q.PFAM+F+I+R10: bac120_r220_reps_TIGR00054.faa,
+    Q.YEAST+F+R8: bac120_r220_reps_PF03726.15.faa,
+    Q.PFAM+F+R10: bac120_r220_reps_TIGR01128.faa,
+    Q.PFAM+F+I+R10: bac120_r220_reps_TIGR01087.faa,
+    Q.INSECT+F+R8: bac120_r220_reps_TIGR00166.faa,
+    LG+F+R10: bac120_r220_reps_TIGR03723.faa,
+    Q.INSECT+F+R9: bac120_r220_reps_TIGR00116.faa,
+    LG+F+I+R10: bac120_r220_reps_TIGR00459.faa,
+    Q.YEAST+F+R9: bac120_r220_reps_TIGR00115.faa,
+    Q.PFAM+I+R7: bac120_r220_reps_TIGR01071.faa,
+    LG+R7: bac120_r220_reps_TIGR01021.faa,
+    Q.YEAST+F+I+R10: bac120_r220_reps_TIGR00580.faa,
+    Q.YEAST+F+I+R9: bac120_r220_reps_TIGR00020.faa,
+    LG+R8: bac120_r220_reps_TIGR02075.faa,
+    LG+F+R9: bac120_r220_reps_TIGR01302.faa,
+    Q.INSECT+R6: bac120_r220_reps_TIGR03632.faa,
+    LG+F+R10: bac120_r220_reps_TIGR00468.faa,
+    Q.YEAST+F+R9: bac120_r220_reps_TIGR01951.faa,
+    Q.INSECT+F+I+R10: bac120_r220_reps_TIGR00963.faa,
+    LG+F+I+R7: bac120_r220_reps_TIGR00250.faa,
+    LG+R6: bac120_r220_reps_TIGR01066.faa,
+    LG+F+I+R10: bac120_r220_reps_TIGR00928.faa,
+    LG+F+R9: bac120_r220_reps_TIGR02729.faa,
+    Q.INSECT+R10: bac120_r220_reps_TIGR00382.faa,
+    Q.INSECT+I+R7: bac120_r220_reps_TIGR00168.faa,
+    Q.INSECT+I+R6: bac120_r220_reps_TIGR00086.faa,
+    Q.YEAST+F+I+R9: bac120_r220_reps_TIGR01063.faa,
+    Q.PFAM+F+R9: bac120_r220_reps_TIGR02432.faa,
+    Q.INSECT+R8: bac120_r220_reps_TIGR01171.faa,
+    Q.INSECT+F+R10: bac120_r220_reps_TIGR00416.faa;
+end;

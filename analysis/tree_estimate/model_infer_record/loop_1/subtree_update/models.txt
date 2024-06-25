@@ -1,0 +1,4 @@
+    247 LG
+    192 Q.PFAM
+    177 Q.INSECT
+     69 Q.YEAST

@@ -1,0 +1,111 @@
+
+RAxML-NG v. 1.2.2 released on 11.04.2024 by The Exelixis Lab.
+Developed by: Alexey M. Kozlov and Alexandros Stamatakis.
+Contributors: Diego Darriba, Tomas Flouri, Benoit Morel, Sarah Lutteropp, Ben Bettisworth, Julia Haag, Anastasis Togkousidis.
+Latest version: https://github.com/amkozlov/raxml-ng
+Questions/problems/suggestions? Please visit: https://groups.google.com/forum/#!forum/raxml
+
+System: AMD EPYC 7742 64-Core Processor, 128 cores, 1007 GB RAM
+
+RAxML-NG was called at 21-Jun-2024 13:24:26 as follows:
+
+/home/tim/project/tool/raxml-ng/raxml-ng_v1.2.2_linux_x86_64_MPI/bin/raxml-ng --search --threads 20 --msa /home/tim/project/GTDB_TREE/Result_rona/test_tree_update/p__Gemmatimonadota_150/loci/concat_training_loci.faa --model PROTGTR{/home/tim/project/GTDB_TREE/Result_rona/test_tree_update/p__Gemmatimonadota_150/trained_models/model_raxml.txt}+G20 --tree /home/tim/project/GTDB_TREE/Result_rona/test_tree_update/p__Gemmatimonadota_150/ref_tree.tre --prefix /home/tim/project/GTDB_TREE/Result_rona/test_tree_update/new_tree_test/raxml/RX_G20
+
+Analysis options:
+  run mode: ML tree search
+  start tree(s): user
+  random seed: 1718940266
+  tip-inner: OFF
+  pattern compression: ON
+  per-rate scalers: OFF
+  site repeats: ON
+  logLH epsilon: general: 10.000000, brlen-triplet: 1000.000000
+  fast spr radius: AUTO
+  spr subtree cutoff: 1.000000
+  fast CLV updates: ON
+  branch lengths: proportional (ML estimate, algorithm: NR-FAST)
+  SIMD kernels: AVX2
+  parallelization: coarse-grained (auto), PTHREADS (20 threads), thread pinning: OFF
+
+[00:00:00] Reading alignment from file: /home/tim/project/GTDB_TREE/Result_rona/test_tree_update/p__Gemmatimonadota_150/loci/concat_training_loci.faa
+[00:00:00] Loaded alignment with 535 taxa and 33550 sites
+
+Alignment comprises 1 partitions and 32634 patterns
+
+Partition 0: noname
+Model: PROTGTR{0.307405/0.418851/0.493934/1.46826/1.03989/1.0198/1.62253/0.286975/0.023644/0.159212/0.366409/0.485679/0.080332/1.39755/4.21496/2.13379/0.141326/0.064447/1.23282/0.584174/0.07242/1.09224/2.90188/0.203747/0.481807/2.10605/0.036216/0.226971/5.22233/0.217133/0.0204/0.304402/0.662587/0.465851/0.300203/0.030898/0.098086/5.26317/0.554609/2.08785/0.216382/2.03275/7.97738/0.195017/0.06443/3.24468/0.456305/0.081938/0.129739/6.56677/3.09707/0.04126/0.307259/0.080188/0.108028/0.401438/5.39083/1.29392/0.73767/0.013446/0.032154/0.118819/0.052182/0.028091/0.377254/0.820113/0.292239/0.053421/0.065769/0.040382/0.130684/0.003121/0.635756/1.18647/0.186454/0.595177/0.049223/0.843087/1.47189/0.074433/3.06799/1.08421/1.47371/1.76723/1.3051/3.71155/0.486362/5.63811/0.043741/0.592873/3.61331/1.60953/0.031342/0.682492/1.27262/1.27076/0.125812/0.076354/0.214818/0.544034/0.183423/0.017056/0.036378/0.697425/0.097791/0.022372/0.327266/0.359125/0.508412/0.043655/0.02571/0.165092/0.323889/0.018992/0.044786/0.377205/0.098298/0.049587/0.305665/2.12462/0.282384/0.160036/0.037676/0.073953/0.065591/0.409224/0.440443/0.278013/0.902127/0.407975/0.702647/0.439986/0.742487/6.10806/0.120056/3.36951/0.066008/4.77833/0.543564/0.059767/0.057058/0.815558/0.061177/0.090258/9.78039/0.062276/6.95033/1.60129/0.202852/0.099592/0.184312/0.388156/0.137945/1.43904/0.716966/0.018699/0.236267/0.609031/1.43863/0.030401/0.012358/0.075469/0.88626/0.103139/0.265319/2.41135/0.509477/0.236446/2.03118/0.06844/0.188844/0.058566/1.72416/11.3633/0.334238/1.59995/0.526542/0.111289/0.046911/0.204632/7.01372/0.302421/0.133086/0.057809/0.097727/0.065975/1.34993/2.74498/0.140117/0.102004}+FU{0.130855/0.10113/0.014155/0.059219/0.004515/0.030606/0.086114/0.06934/0.019864/0.04311/0.104519/0.030579/0.015537/0.031007/0.037005/0.051029/0.050943/0.009527/0.018679/0.092267}+G20m
+Alignment sites / patterns: 33550 / 32634
+Gaps: 19.62 %
+Invariant sites: 12.09 %
+
+
+NOTE: Binary MSA file created: /home/tim/project/GTDB_TREE/Result_rona/test_tree_update/new_tree_test/raxml/RX_G20.raxml.rba
+
+Parallelization scheme autoconfig: 1 worker(s) x 20 thread(s)
+
+[00:00:01] Loading user starting tree(s) from: /home/tim/project/GTDB_TREE/Result_rona/test_tree_update/p__Gemmatimonadota_150/ref_tree.tre
+Parallel reduction/worker buffer size: 1 KB  / 0 KB
+
+[00:00:01] Data distribution: max. partitions/sites/weight per thread: 1 / 1632 / 652800
+[00:00:01] Data distribution: max. searches per worker: 1
+
+Starting ML tree search with 1 distinct starting trees
+
+[00:00:33 -8489124.460295] Initial branch length optimization
+[00:44:47 -8461757.331939] Model parameter optimization (eps = 10.000000)
+[00:55:10 -8449511.672401] AUTODETECT spr round 1 (radius: 5)
+[02:18:29 -8445440.108221] AUTODETECT spr round 2 (radius: 10)
+[07:00:07 -8445436.699534] AUTODETECT spr round 3 (radius: 15)
+[16:18:15 -8445433.727054] AUTODETECT spr round 4 (radius: 20)
+[23:45:17 -8445431.137357] AUTODETECT spr round 5 (radius: 25)
+[29:18:21 -8445428.890552] SPR radius for FAST iterations: 25 (autodetect)
+[29:18:21 -8445428.890552] Model parameter optimization (eps = 3.000000)
+[29:19:39 -8445426.947412] FAST spr round 1 (radius: 25)
+[30:27:05 -8445263.995349] FAST spr round 2 (radius: 25)
+[31:01:38 -8445118.636595] FAST spr round 3 (radius: 25)
+[31:34:08 -8445027.488776] FAST spr round 4 (radius: 25)
+[32:03:43 -8444963.729166] FAST spr round 5 (radius: 25)
+[32:30:52 -8444905.432037] FAST spr round 6 (radius: 25)
+[32:57:04 -8444850.393072] FAST spr round 7 (radius: 25)
+[33:22:41 -8444806.368802] FAST spr round 8 (radius: 25)
+[33:48:28 -8444777.216571] FAST spr round 9 (radius: 25)
+[34:13:50 -8444754.406312] FAST spr round 10 (radius: 25)
+[34:38:31 -8444675.813074] FAST spr round 11 (radius: 25)
+[35:04:34 -8444653.572077] FAST spr round 12 (radius: 25)
+[35:29:06 -8444634.236016] FAST spr round 13 (radius: 25)
+[35:53:50 -8444621.608445] FAST spr round 14 (radius: 25)
+[36:18:48 -8444618.820902] Model parameter optimization (eps = 1.000000)
+[36:19:30 -8444618.683670] SLOW spr round 1 (radius: 5)
+[37:16:38 -8444253.055679] SLOW spr round 2 (radius: 5)
+[38:08:31 -8444231.595247] SLOW spr round 3 (radius: 5)
+[38:55:39 -8444223.065983] SLOW spr round 4 (radius: 10)
+[39:57:51 -8444223.063565] SLOW spr round 5 (radius: 15)
+[42:57:55 -8444223.061939] SLOW spr round 6 (radius: 20)
+[45:53:44 -8444223.060714] SLOW spr round 7 (radius: 25)
+[48:22:45 -8444223.059790] Model parameter optimization (eps = 0.100000)
+
+[48:23:14] ML tree search #1, logLikelihood: -8444223.059418
+
+
+Optimized model parameters:
+
+   Partition 0: noname
+   Rate heterogeneity: GAMMA (20 cats, mean),  alpha: 0.445318 (ML),  weights&rates: (0.050000,0.000631) (0.050000,0.005365) (0.050000,0.016420) (0.050000,0.034840) (0.050000,0.061534) (0.050000,0.097446) (0.050000,0.143652) (0.050000,0.201444) (0.050000,0.272430) (0.050000,0.358669) (0.050000,0.462866) (0.050000,0.588674) (0.050000,0.741177) (0.050000,0.927741) (0.050000,1.159583) (0.050000,1.454971) (0.050000,1.846654) (0.050000,2.402733) (0.050000,3.308844) (0.050000,5.914328) 
+   Base frequencies (user): 0.130855 0.101130 0.014155 0.059219 0.004515 0.030606 0.086114 0.069340 0.019864 0.043110 0.104519 0.030579 0.015537 0.031007 0.037005 0.051029 0.050943 0.009527 0.018679 0.092267 
+   Substitution rates (user): 0.307405 0.418851 0.493934 1.468261 1.039888 1.019801 1.622526 0.286975 0.023644 0.159212 0.366409 0.485679 0.080332 1.397551 4.214960 2.133788 0.141326 0.064447 1.232823 0.584174 0.072420 1.092238 2.901881 0.203747 0.481807 2.106054 0.036216 0.226971 5.222334 0.217133 0.020400 0.304402 0.662587 0.465851 0.300203 0.030898 0.098086 5.263172 0.554609 2.087851 0.216382 2.032754 7.977375 0.195017 0.064430 3.244684 0.456305 0.081938 0.129739 6.566773 3.097068 0.041260 0.307259 0.080188 0.108028 0.401438 5.390831 1.293922 0.737670 0.013446 0.032154 0.118819 0.052182 0.028091 0.377254 0.820113 0.292239 0.053421 0.065769 0.040382 0.130684 0.003121 0.635756 1.186469 0.186454 0.595177 0.049223 0.843087 1.471895 0.074433 3.067985 1.084205 1.473705 1.767227 1.305103 3.711546 0.486362 5.638107 0.043741 0.592873 3.613310 1.609530 0.031342 0.682492 1.272619 1.270759 0.125812 0.076354 0.214818 0.544034 0.183423 0.017056 0.036378 0.697425 0.097791 0.022372 0.327266 0.359125 0.508412 0.043655 0.025710 0.165092 0.323889 0.018992 0.044786 0.377205 0.098298 0.049587 0.305665 2.124622 0.282384 0.160036 0.037676 0.073953 0.065591 0.409224 0.440443 0.278013 0.902127 0.407975 0.702647 0.439986 0.742487 6.108057 0.120056 3.369508 0.066008 4.778328 0.543564 0.059767 0.057058 0.815558 0.061177 0.090258 9.780386 0.062276 6.950332 1.601295 0.202852 0.099592 0.184312 0.388156 0.137945 1.439038 0.716966 0.018699 0.236267 0.609031 1.438625 0.030401 0.012358 0.075469 0.886260 0.103139 0.265319 2.411348 0.509477 0.236446 2.031184 0.068440 0.188844 0.058566 1.724160 11.363298 0.334238 1.599953 0.526542 0.111289 0.046911 0.204632 7.013715 0.302421 0.133086 0.057809 0.097727 0.065975 1.349930 2.744984 0.140117 0.102004 
+
+
+Final LogLikelihood: -8444223.059418
+
+AIC score: 16890582.118835 / AICc score: 16890652.417903 / BIC score: 16899575.524843
+Free parameters (model + branch lengths): 1068
+
+Best ML tree saved to: /home/tim/project/GTDB_TREE/Result_rona/test_tree_update/new_tree_test/raxml/RX_G20.raxml.bestTree
+Optimized model saved to: /home/tim/project/GTDB_TREE/Result_rona/test_tree_update/new_tree_test/raxml/RX_G20.raxml.bestModel
+
+Execution log saved to: /home/tim/project/GTDB_TREE/Result_rona/test_tree_update/new_tree_test/raxml/RX_G20.raxml.log
+
+Analysis started: 21-Jun-2024 13:24:26 / finished: 23-Jun-2024 13:47:42
+
+Elapsed time: 174196.241 seconds
+

@@ -1,0 +1,5 @@
+    727 p__Gemmatimonadota_150_1
+     89 LG
+     44 Q.INSECT
+     19 Q.PFAM
+      3 Q.YEAST

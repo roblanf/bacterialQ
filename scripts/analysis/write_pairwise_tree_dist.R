@@ -183,7 +183,7 @@ plot_NMDS <- function(csv_file, metric_column, output_path) {
             axis.text.x = element_blank(), # remove x-axis text
             axis.text.y = element_blank()
         ) + # remove y-axis text
-        geom_text_repel(max.overlaps = Inf)
+        geom_text_repel(max.overlaps = Inf, size = 3)
     
     # Save the plot
     ggsave(filename = paste0(output_path, "/../NMDS_", metric_column, ".png"), plot = p)

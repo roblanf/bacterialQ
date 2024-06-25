@@ -1,0 +1,627 @@
+IQ-TREE multicore version 2.3.4 COVID-edition for Linux x86 64-bit built Jun 18 2024
+Developed by Bui Quang Minh, James Barbetti, Nguyen Lam Tung, Olga Chernomor,
+Heiko Schmidt, Dominik Schrempf, Michael Woodhams, Ly Trong Nhan, Thomas Wong
+
+Host:    rona.rsb.anu.edu.au (AVX2, FMA3, 1007 GB RAM)
+Command: iqtree -T 50 -s /home/tim/project/GTDB_TREE/Result_rona/test_tree_update/p__Gemmatimonadota_150/loci/concat_testing_loci.faa -m TESTONLY -mset LG,Q.PFAM,Q.INSECT,Q.YEAST,MTMET,MTART,p__Gemmatimonadota_150_2 -mdef /home/tim/project/GTDB_TREE/Result_rona/test_tree_update/p__Gemmatimonadota_150/trained_models/trained_model.nex -te /home/tim/project/GTDB_TREE/Result_rona/test_tree_update/p__Gemmatimonadota_150/ref_tree.tre -pre /home/tim/project/GTDB_TREE/Result_rona/test_tree_update/p__Gemmatimonadota_150/final_test/p__Gemmatimonadota_150_test_ref
+Seed:    398014 (Using SPRNG - Scalable Parallel Random Number Generator)
+Time:    Fri Jun 21 14:37:34 2024
+Kernel:  AVX+FMA - 50 threads (256 CPU cores detected)
+
+Reading alignment file /home/tim/project/GTDB_TREE/Result_rona/test_tree_update/p__Gemmatimonadota_150/loci/concat_testing_loci.faa ... Fasta format detected
+Reading fasta file: done in 0.131992 secs using 74.05% CPU
+Alignment most likely contains protein sequences
+Alignment has 535 sequences with 6678 columns, 6491 distinct patterns
+5391 parsimony-informative, 339 singleton sites, 948 constant sites
+            Gap/Ambiguity  Composition  p-value
+Analyzing sequences: done in 0.0788761 secs using 1110% CPU
+   1  G007121555    8.82%    failed      0.59%
+   2  G947581745   22.04%    passed      5.79%
+   3  G017881465   11.31%    failed      0.03%
+   4  G019348475   39.34%    failed      0.77%
+   5  G003220975   39.04%    failed      0.02%
+   6  G955652265   52.22%    passed      9.01%
+   7  G019637445    1.29%    passed     47.99%
+   8  G025450035   36.96%    passed      5.68%
+   9  G023910675   16.28%    passed     71.64%
+  10  G031127095    2.37%    passed     34.61%
+  11  G016207445   31.66%    failed      0.00%
+  12  G030597435   36.93%    passed     33.25%
+  13  G022822445    1.99%    failed      1.53%
+  14  G007122885   30.52%    failed      0.00%
+  15  G021413975   10.23%    passed     36.37%
+  16  G009692105   19.15%    failed      0.29%
+  17  G009692185    1.74%    passed     42.64%
+  18  G013813715    2.17%    passed     15.92%
+  19  G030601605   22.37%    passed     12.24%
+  20  G016704465   13.25%    passed     98.46%
+  21  G017889745   46.47%    failed      0.03%
+  22  G020350425   28.08%    failed      0.92%
+  23  G016873995    6.47%    passed     61.16%
+  24  G016179225   51.48%    failed      0.05%
+  25  G022573095   22.40%    passed     14.14%
+  26  G030601615    9.64%    passed     63.84%
+  27  G017881545   21.64%    failed      2.53%
+  28  G029941275   20.14%    passed      7.54%
+  29  G028280205   31.43%    passed     30.42%
+  30  G946480295   27.52%    passed     83.91%
+  31  G007126575    1.18%    failed      1.79%
+  32  G029288095   22.55%    passed     60.59%
+  33  G030623445    1.59%    failed      4.13%
+  34  G013812695   30.76%    failed      0.70%
+  35  G007132965   26.13%    failed      2.65%
+  36  G026705295   26.47%    failed      0.00%
+  37  G937889645   20.34%    failed      0.48%
+  38  G025360265   33.32%    passed      5.36%
+  39  G002404335   30.41%    failed      3.64%
+  40  G022571515    1.54%    passed     57.56%
+  41  G030446945   19.03%    failed      0.88%
+  42  G011772755   25.14%    passed     24.76%
+  43  G016209885    5.66%    failed      0.01%
+  44  G003220935   12.79%    failed      0.21%
+  45  G022826565   12.37%    passed     48.27%
+  46  G011390805   21.65%    passed     47.77%
+  47  G019694735    1.44%    passed     36.38%
+  48  G003220955   33.98%    passed     12.58%
+  49  G019689955   14.78%    passed     90.48%
+  50  G026914155    1.74%    failed      0.00%
+  51  G015664885    1.48%    passed     19.79%
+  52  G004525055   46.05%    passed      9.11%
+  53  G003141205   34.95%    passed     66.60%
+  54  G031127075    9.09%    passed     13.02%
+  55  G016199245   37.39%    passed     43.06%
+  56  G019510405   15.30%    passed     80.65%
+  57  G019456185    8.37%    failed      0.00%
+  58  G937961295   40.85%    failed      0.00%
+  59  G951813395    1.65%    failed      0.37%
+  60  G016871895    6.78%    passed     10.56%
+  61  G013813675   20.10%    passed     18.16%
+  62  G016182795   11.95%    passed     60.51%
+  63  G028287225   24.90%    passed     87.37%
+  64  G025934955    7.35%    failed      0.62%
+  65  G027295155   40.91%    failed      0.00%
+  66  G025358925    1.32%    passed     17.10%
+  67  G002215645    1.86%    passed     96.73%
+  68  G017881505    8.83%    failed      0.26%
+  69  G016794735   22.04%    passed     99.94%
+  70  G003222205   11.84%    passed     16.90%
+  71  G937906875    2.92%    passed     94.63%
+  72  G009380025    1.14%    failed      0.37%
+  73  G003220985   38.38%    passed      9.00%
+  74  G025930755    7.88%    passed     93.26%
+  75  G027484025   14.84%    passed     73.91%
+  76  G013361335   19.30%    passed     85.73%
+  77  G003131365   30.65%    passed      9.14%
+  78  G016871855   27.49%    passed     30.93%
+  79  G002483225    1.30%    passed     72.89%
+  80  G946480845   55.00%    failed      0.00%
+  81  G016209995   48.89%    failed      2.36%
+  82  G030946665   42.11%    passed     78.80%
+  83  G946479895   36.33%    passed     27.68%
+  84  G026706635    1.53%    failed      0.00%
+  85  G937983085   41.63%    passed     80.80%
+  86  G024710705   29.63%    passed     29.14%
+  87  G013003805   31.39%    passed     47.11%
+  88  G003221005   22.76%    failed      1.53%
+  89  G903882745    1.53%    failed      0.04%
+  90  G025931335   19.38%    passed     99.09%
+  91  G031127085   25.55%    passed     65.14%
+  92  G025361705   23.11%    passed     19.59%
+  93  G003220905   40.73%    passed      8.84%
+  94  G022822325   19.75%    failed      0.00%
+  95  G016712265    1.71%    passed     99.96%
+  96  G027307165    2.70%    passed     31.28%
+  97  G013042495   26.83%    passed     26.31%
+  98  G946479805   29.38%    passed      5.21%
+  99  G028287205   56.77%    failed      2.95%
+ 100  G003223415    7.64%    failed      1.58%
+ 101  G025362035   21.46%    passed     85.90%
+ 102  G022360695   25.43%    failed      0.34%
+ 103  G025453855   48.28%    failed      3.92%
+ 104  G026387895   12.52%    failed      0.06%
+ 105  G003220855   38.98%    failed      0.00%
+ 106  G003221895    2.64%    passed      5.67%
+ 107  G019973575    1.44%    failed      1.27%
+ 108  G025359135   20.99%    passed     15.94%
+ 109  G026387935    7.77%    passed      6.61%
+ 110  G002311875   13.25%    failed      0.00%
+ 111  G030699545   12.14%    passed     21.86%
+ 112  G022562295    6.99%    passed     93.26%
+ 113  G003169895   10.72%    failed      0.50%
+ 114  G003134685    1.74%    failed      0.10%
+ 115  G026713345   10.17%    failed      3.31%
+ 116  G030774785   12.05%    failed      0.13%
+ 117  G947504615   13.48%    passed     45.46%
+ 118  G029862925   18.58%    failed      0.00%
+ 119  G009844885    6.35%    failed      2.39%
+ 120  G025450815   35.32%    passed     83.56%
+ 121  G003222195    1.80%    failed      1.35%
+ 122  G016209985   25.35%    passed     39.34%
+ 123  G002737115   68.46%    passed     18.72%
+ 124  G016649455    4.97%    failed      0.36%
+ 125  G017881685   25.89%    failed      3.42%
+ 126  G003567615   33.86%    passed      8.86%
+ 127  G025358055    6.69%    passed     13.82%
+ 128  G013816855   10.05%    failed      0.00%
+ 129  G013140635   27.24%    failed      3.77%
+ 130  G026786185   23.38%    passed     62.88%
+ 131  G018224305   22.00%    passed     70.39%
+ 132  G030947165   60.23%    passed     23.26%
+ 133  G014377535   26.45%    failed      1.10%
+ 134  G007125845    1.71%    failed      0.86%
+ 135  G022560615    3.86%    passed     42.75%
+ 136  G025934075   38.42%    passed     96.64%
+ 137  G012027055   19.42%    passed      8.41%
+ 138  G030647905    1.35%    failed      0.86%
+ 139  G009845855    1.69%    failed      0.00%
+ 140  G028823235    7.10%    failed      0.67%
+ 141  G030430625    1.41%    failed      3.34%
+ 142  G013043565    7.67%    passed      5.05%
+ 143  G028874995    8.60%    failed      0.61%
+ 144  G030835125    6.87%    passed     97.72%
+ 145  G017881445    6.02%    passed     57.47%
+ 146  G903906325   14.21%    passed     92.19%
+ 147  G016177465   40.37%    passed     21.88%
+ 148  G002724575   23.53%    failed      0.00%
+ 149  G020351775   16.77%    passed     98.77%
+ 150  G027346425   27.43%    passed     42.47%
+ 151  G958296005   12.49%    passed     12.91%
+ 152  G007695225    1.30%    failed      3.46%
+ 153  G003222055   12.38%    failed      0.01%
+ 154  G009836005    1.74%    failed      0.00%
+ 155  G021802745   40.61%    passed     23.11%
+ 156  G025929805   21.16%    passed     14.90%
+ 157  G902826755   15.08%    failed      4.27%
+ 158  G016794835   37.65%    failed      2.90%
+ 159  G019347645   54.48%    failed      0.00%
+ 160  G021298835    1.53%    passed     38.76%
+ 161  G946479015   57.74%    failed      0.00%
+ 162  G025356185   17.60%    passed     11.12%
+ 163  G012270965   12.49%    failed      0.00%
+ 164  G001917665   36.66%    failed      0.00%
+ 165  G007118565    6.44%    failed      0.10%
+ 166  G011774835   36.67%    failed      0.01%
+ 167  G028876725   43.35%    passed     73.11%
+ 168  G020161135    4.54%    passed     63.92%
+ 169  G007692665   14.48%    passed      6.29%
+ 170  G937867645   15.81%    passed     51.20%
+ 171  G027294815   42.59%    passed     95.33%
+ 172  G009841165    1.96%    passed     11.10%
+ 173  G030774675   27.97%    passed     51.50%
+ 174  G030598525   20.19%    failed      3.19%
+ 175  G947581735    1.80%    failed      0.00%
+ 176  G947581785    1.78%    failed      0.00%
+ 177  G013820855    9.51%    passed     29.70%
+ 178  G024278175    8.28%    failed      0.00%
+ 179  G025451425   70.43%    passed     80.89%
+ 180  G025927495   47.35%    passed     53.36%
+ 181  G021154325   14.39%    passed     48.67%
+ 182  G030833075    6.72%    passed     34.04%
+ 183  G025935995   30.37%    passed      6.20%
+ 184  G013694695   11.96%    passed     90.68%
+ 185  G003222065   17.25%    passed     86.63%
+ 186  G024638325   34.41%    passed     22.72%
+ 187  G013820915    9.90%    passed     11.06%
+ 188  G025453745   38.96%    passed     26.78%
+ 189  G003222115   14.71%    passed      7.83%
+ 190  G023249395   43.97%    failed      2.49%
+ 191  G007124095   12.13%    failed      0.00%
+ 192  G021299375   23.39%    passed     92.57%
+ 193  G028280525   21.46%    passed     40.19%
+ 194  G947581845   56.84%    passed      7.07%
+ 195  G003248075    5.17%    passed     44.34%
+ 196  G022710485   26.21%    passed     57.73%
+ 197  G013822285   34.85%    passed     26.89%
+ 198  G003221045   31.81%    passed     85.83%
+ 199  G014192065    1.15%    passed      7.18%
+ 200  G020852815    1.48%    passed     99.47%
+ 201  G003155795   19.36%    failed      0.39%
+ 202  G002347035   12.37%    failed      0.00%
+ 203  G031260285   15.92%    failed      0.45%
+ 204  G938030915   56.93%    passed      8.66%
+ 205  G030859365   24.08%    failed      2.40%
+ 206  G023554445    1.29%    failed      0.35%
+ 207  G016794805    6.48%    failed      3.22%
+ 208  G903894655   33.80%    failed      1.55%
+ 209  G009841475   12.35%    passed     33.58%
+ 210  G025350665    7.94%    passed      6.94%
+ 211  G022564535   58.66%    passed     70.57%
+ 212  G029262195    2.25%    failed      0.00%
+ 213  G013361745   48.70%    passed     21.91%
+ 214  G913043255    1.89%    failed      0.00%
+ 215  G947463135   11.23%    passed     42.42%
+ 216  G021324635    1.69%    failed      1.29%
+ 217  G001724275   15.84%    passed     98.95%
+ 218  G019347975   31.45%    passed     27.60%
+ 219  G001780825    6.50%    failed      0.00%
+ 220  G028287235    4.90%    passed     20.77%
+ 221  G013816695   61.28%    passed     17.69%
+ 222  G016209905   26.22%    failed      0.00%
+ 223  G011390885   14.02%    passed     65.96%
+ 224  G903876745   40.49%    passed      7.08%
+ 225  G013361935    4.12%    passed     60.69%
+ 226  G028873595    2.74%    failed      0.06%
+ 227  G020344375   15.42%    failed      2.14%
+ 228  G027531815    1.29%    passed     44.76%
+ 229  G947581645    1.08%    failed      0.00%
+ 230  G029863645    6.80%    passed     42.78%
+ 231  G022563405    1.62%    failed      0.09%
+ 232  G947462095   25.47%    passed     47.74%
+ 233  G029863245    1.48%    passed     84.77%
+ 234  G018969225   17.64%    failed      0.07%
+ 235  G958295645    3.50%    failed      0.01%
+ 236  G003222035   19.87%    failed      0.00%
+ 237  G007127575   18.28%    failed      0.20%
+ 238  G943330235    4.57%    passed     30.53%
+ 239  G019637315   20.90%    failed      4.40%
+ 240  G913045345   26.52%    failed      0.00%
+ 241  G937136445   22.06%    failed      1.27%
+ 242  G012267435   44.73%    failed      0.00%
+ 243  G022823225    1.75%    failed      0.06%
+ 244  G030697825    8.54%    passed     83.00%
+ 245  G003220795   11.73%    passed      9.24%
+ 246  G003221985   22.72%    passed      7.77%
+ 247  G946479995   60.60%    passed     51.03%
+ 248  G003695865   18.42%    passed     22.65%
+ 249  G014202995    6.86%    passed     59.22%
+ 250  G019745365   19.23%    passed      6.23%
+ 251  G029879725   24.05%    passed     31.58%
+ 252  G022566515    2.26%    passed     99.67%
+ 253  G027294455    5.14%    passed     95.77%
+ 254  G025357975   44.59%    failed      4.69%
+ 255  G023554435   31.52%    failed      1.69%
+ 256  G022827345    1.66%    passed     14.98%
+ 257  G025928185   35.32%    failed      1.34%
+ 258  G025453875   34.07%    failed      4.40%
+ 259  G007120305   15.17%    passed      7.46%
+ 260  G028287185    8.24%    passed     61.65%
+ 261  G029262155    6.47%    failed      1.31%
+ 262  G021295815    5.66%    failed      0.08%
+ 263  G028876525   37.71%    failed      1.02%
+ 264  G022826685   20.07%    failed      0.00%
+ 265  G947461225   22.85%    passed     42.31%
+ 266  G020853635   40.75%    passed     34.87%
+ 267  G003562075   18.19%    failed      0.01%
+ 268  G030854055    7.08%    passed     81.33%
+ 269  G937919655    6.48%    passed      5.78%
+ 270  G025361465   51.75%    failed      1.01%
+ 271  G000522985    1.47%    passed     62.81%
+ 272  G028284495   19.83%    failed      4.52%
+ 273  G013813875   10.02%    passed      5.10%
+ 274  G002404375   63.45%    passed      7.33%
+ 275  G016874005    7.86%    failed      4.25%
+ 276  G002346665    1.59%    passed     10.82%
+ 277  G030550695   27.40%    failed      0.00%
+ 278  G030159095    1.09%    passed     67.67%
+ 279  G003559555    5.14%    passed      7.34%
+ 280  G011390935   19.44%    passed     34.94%
+ 281  G947471365   12.53%    passed      8.57%
+ 282  G018678395   34.02%    passed      7.09%
+ 283  G030852985   26.49%    passed     93.41%
+ 284  G022820995    1.72%    failed      0.00%
+ 285  G027623325    7.04%    passed     26.34%
+ 286  G955652635   50.61%    failed      1.11%
+ 287  G025935545   29.37%    failed      0.00%
+ 288  G024640185   38.69%    failed      0.98%
+ 289  G002348465   27.10%    failed      0.05%
+ 290  G025928955   25.79%    passed      9.39%
+ 291  G028822645   17.10%    failed      0.00%
+ 292  G021372515    2.16%    failed      0.00%
+ 293  G009840525    2.74%    failed      3.74%
+ 294  G013004105    1.35%    passed      5.79%
+ 295  G031127225    6.93%    passed     60.11%
+ 296  G022843265   16.97%    passed     48.74%
+ 297  G028873825    1.75%    failed      0.00%
+ 298  G002501085   11.68%    failed      0.00%
+ 299  G945869195    1.60%    passed     44.32%
+ 300  G028821195    2.71%    failed      4.80%
+ 301  G016180765   41.87%    failed      2.05%
+ 302  G029211165    1.29%    passed     81.56%
+ 303  G002731735   49.03%    passed     31.28%
+ 304  G020431485   37.96%    failed      0.02%
+ 305  G022826005    8.21%    failed      1.22%
+ 306  G025924275   65.51%    failed      0.00%
+ 307  G016880225   51.63%    passed     44.28%
+ 308  G029859185   30.74%    failed      1.68%
+ 309  G030948255    6.68%    passed     84.94%
+ 310  G001915025   39.67%    passed      6.94%
+ 311  G025929535    3.94%    passed     15.63%
+ 312  G903900795    8.15%    passed     30.46%
+ 313  G016209945   30.44%    failed      0.00%
+ 314  G022823365    2.76%    failed      3.03%
+ 315  G016742275    1.11%    passed     27.06%
+ 316  G020344755   16.20%    passed      5.66%
+ 317  G002238865    1.66%    failed      0.35%
+ 318  G012267505   24.47%    failed      0.00%
+ 319  G022826025   14.54%    failed      2.98%
+ 320  G016218305   13.75%    passed     51.64%
+ 321  G028287305    1.56%    passed     80.33%
+ 322  G030775065    5.75%    passed      5.12%
+ 323  G020851455    6.99%    passed     63.72%
+ 324  G014379205   25.83%    passed     60.15%
+ 325  G025927545   24.09%    failed      0.00%
+ 326  G003564295    7.61%    passed     33.14%
+ 327  G016194585   11.71%    passed     17.49%
+ 328  G012959595   36.90%    failed      0.00%
+ 329  G021295785   36.67%    failed      0.01%
+ 330  G002348265   17.04%    failed      0.00%
+ 331  G003223455   23.33%    passed     94.34%
+ 332  G019689775    3.17%    passed      5.44%
+ 333  G029863105   28.00%    passed     23.71%
+ 334  G024641745    2.70%    passed     56.71%
+ 335  G028278645    8.22%    passed      9.93%
+ 336  G003251175   80.83%    failed      1.04%
+ 337  G030860435   29.04%    passed     91.53%
+ 338  G002923375    1.24%    failed      0.40%
+ 339  G022823145   19.92%    failed      0.01%
+ 340  G007121455    6.39%    failed      0.23%
+ 341  G029884275   70.20%    failed      0.17%
+ 342  G030146875   19.63%    passed     22.25%
+ 343  G025937815   28.06%    failed      4.67%
+ 344  G025934775   19.74%    passed     95.55%
+ 345  G025362095   12.92%    failed      0.04%
+ 346  G003221075   37.30%    failed      4.98%
+ 347  G013817305   15.72%    passed     83.34%
+ 348  G022340755   11.77%    passed     24.65%
+ 349  G016713785    8.15%    failed      1.99%
+ 350  G003221995   39.71%    failed      2.67%
+ 351  G902812375   25.41%    failed      3.41%
+ 352  G007129525   44.28%    failed      0.76%
+ 353  G946479825   29.02%    failed      0.00%
+ 354  G022825725    2.76%    failed      0.00%
+ 355  G014379705   45.12%    passed     89.04%
+ 356  G025937755   52.95%    failed      0.06%
+ 357  G029262175    9.40%    passed     24.65%
+ 358  G947581615    7.68%    failed      0.00%
+ 359  G946887155   53.68%    passed     50.78%
+ 360  G023554335   10.72%    passed     59.02%
+ 361  G947457545   28.80%    passed     79.34%
+ 362  G000695095    1.51%    passed     37.05%
+ 363  G016191225   14.45%    passed     73.15%
+ 364  G009841015    1.81%    failed      0.00%
+ 365  G011390645    8.33%    passed     13.37%
+ 366  G002313925   30.13%    failed      0.00%
+ 367  G946478895   19.83%    passed      7.11%
+ 368  G016704275    3.68%    failed      1.82%
+ 369  G025357945    2.62%    passed      7.23%
+ 370  G937871775   15.14%    failed      2.38%
+ 371  G009843625   50.87%    failed      0.02%
+ 372  G002718595   13.82%    failed      0.00%
+ 373  G016874035    1.47%    passed     56.26%
+ 374  G013813605   21.73%    passed     12.08%
+ 375  G019347995   38.02%    failed      2.91%
+ 376  G021787855   17.52%    failed      3.00%
+ 377  G028873815    2.74%    failed      0.53%
+ 378  G024638305   27.75%    passed     10.52%
+ 379  G029245345    6.77%    failed      0.59%
+ 380  G012960225   13.66%    failed      0.00%
+ 381  G003222155    8.40%    failed      0.00%
+ 382  G007695195    1.09%    passed     13.09%
+ 383  G013813435   13.81%    passed     12.80%
+ 384  G022825135    8.04%    failed      2.69%
+ 385  G022822425   12.10%    failed      0.74%
+ 386  G963170075   21.02%    passed     49.43%
+ 387  G009841185    2.67%    passed      5.77%
+ 388  G002346625   49.99%    failed      0.00%
+ 389  G016871915   10.66%    passed     84.47%
+ 390  G030641505   35.01%    passed     56.99%
+ 391  G030827315    1.44%    passed     78.75%
+ 392  G014378185   32.51%    passed     87.20%
+ 393  G014379355   33.63%    passed      5.40%
+ 394  G019752115    1.48%    passed     29.14%
+ 395  G003152485    5.51%    passed     32.23%
+ 396  G019348265   45.21%    passed     45.61%
+ 397  G902825965   19.62%    passed     13.35%
+ 398  G003221085   42.87%    failed      2.23%
+ 399  G004357415   41.58%    passed     42.93%
+ 400  G013002885   18.99%    failed      1.49%
+ 401  G003221825   17.36%    passed      6.27%
+ 402  G030600085   14.11%    passed     12.46%
+ 403  G003136975   38.30%    passed      7.73%
+ 404  G026387915    1.54%    failed      3.78%
+ 405  G902805735   14.60%    passed     15.85%
+ 406  G003246755    9.69%    passed     77.66%
+ 407  G009838975    1.98%    passed      9.27%
+ 408  G029262115    7.47%    failed      1.42%
+ 409  G025931135   56.05%    passed     35.91%
+ 410  G027307005   16.40%    passed     49.53%
+ 411  G003221805   16.64%    failed      0.01%
+ 412  G021295835    1.74%    failed      0.00%
+ 413  G016719105    8.10%    passed     74.74%
+ 414  G020344215   18.52%    failed      0.23%
+ 415  G937907535    1.18%    failed      2.76%
+ 416  G030948945   47.42%    passed     63.11%
+ 417  G016713435   12.04%    failed      0.45%
+ 418  G003171215   10.12%    passed     19.97%
+ 419  G019240375   34.70%    passed      8.72%
+ 420  G003222135   18.28%    passed     29.24%
+ 421  G007692605    5.09%    failed      2.65%
+ 422  G016794825   14.35%    failed      4.99%
+ 423  G947581815   15.95%    passed     12.83%
+ 424  G003221035    2.71%    passed     14.11%
+ 425  G020633775   61.77%    failed      1.92%
+ 426  G028287345   42.26%    passed     32.69%
+ 427  G007126035    1.45%    failed      3.41%
+ 428  G028874985    3.80%    failed      0.00%
+ 429  G946887295   13.25%    passed     12.62%
+ 430  G020346845   26.64%    passed     18.00%
+ 431  G913009915   29.48%    passed     62.76%
+ 432  G937982605   43.83%    passed     18.69%
+ 433  G016720905    2.50%    passed     83.10%
+ 434  G028875075    8.33%    passed     17.99%
+ 435  G013813145   19.11%    failed      1.70%
+ 436  G947457715   51.63%    passed     16.20%
+ 437  G016200495   38.51%    failed      1.13%
+ 438  G031127185   45.42%    failed      2.25%
+ 439  G003242735   20.78%    failed      0.01%
+ 440  G015492755   19.27%    failed      0.66%
+ 441  G019637355    1.68%    passed     23.44%
+ 442  G013822425   14.05%    passed     87.95%
+ 443  G013697785    1.51%    failed      1.39%
+ 444  G027622655    5.27%    passed     20.02%
+ 445  G003142495   29.81%    failed      1.66%
+ 446  G025936015   41.81%    passed     34.54%
+ 447  G030946285   12.52%    passed     19.90%
+ 448  G023249305   25.80%    passed     32.74%
+ 449  G947499465    1.44%    passed     13.30%
+ 450  G030447645   19.77%    passed     24.47%
+ 451  G020344015   19.38%    passed      7.05%
+ 452  G025928335   35.01%    passed     41.00%
+ 453  G945870175   30.22%    passed     67.01%
+ 454  G020350785   18.63%    passed      7.25%
+ 455  G024638395   55.09%    failed      1.78%
+ 456  G030618065   26.94%    failed      0.13%
+ 457  G947581915    1.68%    failed      0.00%
+ 458  G020851035   19.51%    failed      1.02%
+ 459  G029884515   22.70%    passed     90.85%
+ 460  G903910555    1.18%    failed      0.16%
+ 461  G021813725   15.75%    passed     92.52%
+ 462  G024654005   17.30%    passed     84.58%
+ 463  G007121775   11.13%    passed     26.98%
+ 464  G022564055    7.34%    failed      0.82%
+ 465  G025928645    7.89%    passed     20.34%
+ 466  G030636765   22.18%    failed      0.00%
+ 467  G020846935    7.05%    passed     79.49%
+ 468  G016741895   16.80%    passed     23.44%
+ 469  G023249375   23.38%    passed     11.60%
+ 470  G013360595   23.26%    passed     59.22%
+ 471  G024638345   26.83%    failed      2.11%
+ 472  G017881585   11.31%    failed      2.19%
+ 473  G022563595    1.53%    passed     86.53%
+ 474  G002500925    9.42%    failed      0.00%
+ 475  G022561145   14.11%    passed     36.34%
+ 476  G003222085   29.38%    failed      0.00%
+ 477  G951828585    1.50%    passed     15.07%
+ 478  G019186945    2.10%    passed     80.99%
+ 479  G025449955   33.81%    failed      1.87%
+ 480  G009692115    2.76%    passed      5.12%
+ 481  G028279425   30.02%    passed     41.24%
+ 482  G021324775    2.32%    passed     30.33%
+ 483  G030854615   27.99%    passed     14.45%
+ 484  G030604975   17.95%    failed      0.00%
+ 485  G021298855    3.83%    passed     60.77%
+ 486  G007125125   13.99%    failed      0.00%
+ 487  G028874905    9.39%    passed      5.72%
+ 488  G947475795   38.14%    passed     29.34%
+ 489  G013820975   22.58%    passed     90.27%
+ 490  G030948535   26.49%    passed     38.53%
+ 491  G030946775   45.72%    failed      0.68%
+ 492  G020351855    7.67%    failed      0.00%
+ 493  G029862935   53.91%    passed     41.88%
+ 494  G003223395    2.49%    failed      1.66%
+ 495  G937995995   31.10%    passed     37.02%
+ 496  G025362635   18.18%    passed     50.73%
+ 497  G029861425   30.07%    passed      8.27%
+ 498  G007692505   14.85%    failed      1.62%
+ 499  G013816685   34.98%    failed      3.32%
+ 500  G028820325    2.80%    failed      3.27%
+ 501  G016209965   43.62%    failed      0.00%
+ 502  G011525845    2.04%    passed     80.01%
+ 503  G024641735    2.35%    passed     15.30%
+ 504  G030428885    0.93%    passed     55.15%
+ 505  G013817545    1.96%    passed     75.00%
+ 506  G000010305    5.36%    passed     77.14%
+ 507  G003223425   11.47%    failed      0.05%
+ 508  G022428035   60.03%    passed     33.71%
+ 509  G029863525   34.83%    passed     31.07%
+ 510  G025358315   31.43%    failed      1.02%
+ 511  G028287285   29.04%    passed     28.41%
+ 512  G003222235   24.39%    failed      0.00%
+ 513  G030856585   22.04%    passed     63.40%
+ 514  G002390225   22.91%    passed     22.61%
+ 515  G902826615    1.62%    passed     64.83%
+ 516  G022340865    3.61%    passed     18.33%
+ 517  G030608825   47.14%    failed      0.26%
+ 518  G013696835    9.82%    failed      1.93%
+ 519  G009692205   13.63%    passed     79.32%
+ 520  G009840215    3.80%    failed      1.24%
+ 521  G021154285   44.14%    passed     70.98%
+ 522  G947259405   44.16%    passed     16.47%
+ 523  G028873845    8.45%    failed      0.03%
+ 524  G003157095   45.37%    passed     33.81%
+ 525  G001919865    3.34%    failed      0.08%
+ 526  G030856845   59.13%    passed     39.46%
+ 527  G947259585    1.36%    failed      0.88%
+ 528  G021298395    7.44%    passed     90.41%
+ 529  G016934095   44.09%    failed      0.00%
+ 530  G007130605   12.32%    passed     12.12%
+ 531  G947259315   21.52%    passed     12.75%
+ 532  G025360995   45.49%    failed      1.00%
+ 533  G016720805    1.51%    failed      0.86%
+ 534  G002238605    2.64%    passed      6.72%
+ 535  G016714015    1.44%    passed     11.22%
+WARNING: 31 sequences contain more than 50% gaps/ambiguity
+****  TOTAL        19.80%  228 sequences failed composition chi2 test (p-value<5%; df=19)
+
+Reading model definition file /home/tim/project/GTDB_TREE/Result_rona/test_tree_update/p__Gemmatimonadota_150/trained_models/trained_model.nex ... 88 models and 214 frequency vectors loaded
+Reading input tree file /home/tim/project/GTDB_TREE/Result_rona/test_tree_update/p__Gemmatimonadota_150/ref_tree.tre ... rooted tree
+Perform fast likelihood tree search using LG+I+G model...
+Estimate model parameters (epsilon = 5.000)
+Time for fast ML tree search: 1290.788 seconds
+
+NOTE: ModelFinder requires 2152 MB RAM!
+ModelFinder will test up to 56 protein models (sample size: 6678) ...
+ No. Model         -LnL         df  AIC          AICc         BIC
+  1  LG            1695033.815  1067 3392201.629  3392607.888  3399464.243
+  2  LG+I          1655872.105  1068 3313880.211  3314287.303  3321149.631
+  3  LG+G4         1518043.747  1068 3038223.493  3038630.586  3045492.914
+  4  LG+I+G4       1515054.725  1069 3032247.450  3032655.378  3039523.677
+  8  LG+F+I+G4     1500287.702  1088 3002751.404  3003175.391  3010156.956
+WARNING: Normalizing state frequencies so that sum of them equals to 1
+ 12  Q.PFAM+I+G4   1510298.648  1069 3022735.295  3023143.223  3030011.523
+WARNING: Normalizing state frequencies so that sum of them equals to 1
+ 16  Q.PFAM+F+I+G4 1501351.846  1088 3004879.691  3005303.679  3012285.244
+ 20  Q.INSECT+I+G4 1521245.678  1069 3044629.357  3045037.285  3051905.584
+ 24  Q.INSECT+F+I+G4 1503263.721  1088 3008703.442  3009127.429  3016108.994
+WARNING: Normalizing state frequencies so that sum of them equals to 1
+ 28  Q.YEAST+I+G4  1526235.521  1069 3054609.042  3055016.970  3061885.270
+WARNING: Normalizing state frequencies so that sum of them equals to 1
+ 32  Q.YEAST+F+I+G4 1501949.678  1088 3006075.357  3006499.344  3013480.909
+ 36  MTMET+I+G4    1643797.908  1069 3289733.816  3290141.744  3297010.044
+ 40  MTMET+F+I+G4  1555174.396  1088 3112524.792  3112948.779  3119930.345
+ 44  MTART+I+G4    1677496.568  1069 3357131.137  3357539.065  3364407.364
+ 48  MTART+F+I+G4  1593524.170  1088 3189224.341  3189648.328  3196629.893
+ 52  p__Gemmatimonadota_150_2+I+G4 1492305.399  1069 2986748.797  2987156.725  2994025.025
+ 56  p__Gemmatimonadota_150_2+F+I+G4 1496006.968  1088 2994189.936  2994613.924  3001595.489
+Akaike Information Criterion:           p__Gemmatimonadota_150_2+I+G4
+Corrected Akaike Information Criterion: p__Gemmatimonadota_150_2+I+G4
+Bayesian Information Criterion:         p__Gemmatimonadota_150_2+I+G4
+Best-fit model: p__Gemmatimonadota_150_2+I+G4 chosen according to BIC
+
+All model information printed to /home/tim/project/GTDB_TREE/Result_rona/test_tree_update/p__Gemmatimonadota_150/final_test/p__Gemmatimonadota_150_test_ref.model.gz
+CPU time for ModelFinder: 399825.705 seconds (111h:3m:45s)
+Wall-clock time for ModelFinder: 26933.346 seconds (7h:28m:53s)
+Reading model definition file /home/tim/project/GTDB_TREE/Result_rona/test_tree_update/p__Gemmatimonadota_150/trained_models/trained_model.nex ... 88 models and 214 frequency vectors loaded
+
+NOTE: 2153 MB RAM (2 GB) is required!
+Estimate model parameters (epsilon = 0.010)
+Thoroughly optimizing +I+G parameters from 10 start values...
+Init pinv, alpha: 0.000, 0.738 / Estimate: 0.140, 0.738 / LogL: -1492305.387
+Init pinv, alpha: 0.016, 0.738 / Estimate: 0.140, 0.738 / LogL: -1492305.388
+Init pinv, alpha: 0.032, 0.738 / Estimate: 0.140, 0.738 / LogL: -1492305.387
+Init pinv, alpha: 0.047, 0.738 / Estimate: 0.140, 0.738 / LogL: -1492305.390
+Init pinv, alpha: 0.063, 0.738 / Estimate: 0.140, 0.738 / LogL: -1492305.386
+Init pinv, alpha: 0.079, 0.738 / Estimate: 0.140, 0.737 / LogL: -1492305.389
+Init pinv, alpha: 0.095, 0.738 / Estimate: 0.140, 0.738 / LogL: -1492305.390
+Init pinv, alpha: 0.110, 0.738 / Estimate: 0.140, 0.738 / LogL: -1492305.389
+Init pinv, alpha: 0.126, 0.738 / Estimate: 0.140, 0.738 / LogL: -1492305.391
+Init pinv, alpha: 0.142, 0.738 / Estimate: 0.141, 0.738 / LogL: -1492305.391
+Optimal pinv,alpha: 0.140, 0.738 / LogL: -1492305.386
+
+Parameters optimization took 12819.706 sec
+Wrote distance file to... 
+BEST SCORE FOUND : -1492305.386
+Total tree length: 91.814
+
+Total number of iterations: 0
+CPU time used for tree search: 0.000 sec (0h:0m:0s)
+Wall-clock time used for tree search: 0.000 sec (0h:0m:0s)
+Total CPU time used: 621931.059 sec (172h:45m:31s)
+Total wall-clock time used: 39753.300 sec (11h:2m:33s)
+
+Analysis results written to: 
+  IQ-TREE report:                /home/tim/project/GTDB_TREE/Result_rona/test_tree_update/p__Gemmatimonadota_150/final_test/p__Gemmatimonadota_150_test_ref.iqtree
+  Tree used for ModelFinder:     /home/tim/project/GTDB_TREE/Result_rona/test_tree_update/p__Gemmatimonadota_150/final_test/p__Gemmatimonadota_150_test_ref.treefile
+  Screen log file:               /home/tim/project/GTDB_TREE/Result_rona/test_tree_update/p__Gemmatimonadota_150/final_test/p__Gemmatimonadota_150_test_ref.log
+
+Date and Time: Sat Jun 22 01:40:08 2024

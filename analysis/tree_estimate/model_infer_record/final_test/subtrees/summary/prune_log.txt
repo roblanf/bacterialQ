@@ -1,0 +1,5 @@
+Original number of taxa: 535   
+Number of pruned subtrees: 9   
+Number of taxa after pruning: 535   
+Pruned node IDs (degree): 6 (12) 166 (43) 10 (14) 23 (144) 209 (118) 511 (19) 482 (30) 329 (39) 367 (116)   
+Pruning mode: random   
