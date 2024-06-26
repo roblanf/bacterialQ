@@ -334,7 +334,7 @@ def test_model(args, output_dir, test_loci_dir, model_name_set, trained_model_ne
             model_table = content[model_table_start:model_table_end].strip()
 
             log_message('result', f"Model testing results ({mode}):")
-            log_message('result', "| Model | LogL | BIC |")
+            log_message('result', "| Model | LogL | BIC |", new_line = True)
             log_message('result', "|-------|------|-----|")
 
             model_data = []
@@ -356,7 +356,7 @@ def test_model(args, output_dir, test_loci_dir, model_name_set, trained_model_ne
         with open(output_dir / 'models.txt', 'r') as f:
             best_models = [line.strip().split() for line in f]
         
-        log_message('result', "| Model | Count |")
+        log_message('result', "| Model | Count |", new_line = True)
         log_message('result', "|-------|-------|")
         
         model_data = []
@@ -415,17 +415,31 @@ def logging_cross_test_table(ref_concat_result, final_concat_result):
     tree_diff2 = round(bic21 - bic22, 4)
     model_diff1 = round(bic11 - bic21, 4)
     model_diff2 = round(bic12 - bic22, 4)
-    min_bic = round(min(bic11, bic12, bic21, bic22), 4)
-    max_bic = round(max(bic11, bic12, bic21, bic22), 4)
-    model_tree_diff = round(max_bic - min_bic, 4)
+
+    # Determine the signs for tree and model differences
+    tree_diff_sign = 'T~'
+    if tree_diff1 > 0 and tree_diff2 > 0:
+        tree_diff_sign = 'T-'
+    elif tree_diff1 < 0 and tree_diff2 < 0:
+        tree_diff_sign = 'T+'
+    
+    model_diff_sign = 'M~'
+    if model_diff1 > 0 and model_diff2 > 0:
+        model_diff_sign = 'M-'
+    elif model_diff1 < 0 and model_diff2 < 0:
+        model_diff_sign = 'M+'
+    
+    # Format the final model_tree_diff
+    model_tree_diff = f"{model_diff_sign}/{tree_diff_sign}"
     
     # Print the 2x2 table
     log_message('result', "BIC difference between different models and trees:")
-    log_message('result', "| Model | Final tree | Reference tree | Tree diff |")
+    log_message('result', "| Model | Final tree | Reference tree | Tree diff |", new_line = True)
     log_message('result', "|-------|------------|----------------|-----------|")
     log_message('result', f"| Inferred model | {bic11:.4f} | {bic12:.4f} | {tree_diff1:.4f} |")
     log_message('result', f"| Existed model | {bic21:.4f} | {bic22:.4f} | {tree_diff2:.4f} |")
-    log_message('result', f"| Model diff | {model_diff1:.4f} | {model_diff2:.4f} | {model_tree_diff:.4f} |")
+    log_message('result', f"| Model diff | {model_diff1:.4f} | {model_diff2:.4f} | {model_tree_diff} |")
+    log_message('result', f"{model_tree_diff} means weather model(M) and tree(T) have same trend in BIC change.(+ final better, - final worse, ~ no trend)")
 
 def main(args: argparse.Namespace) -> None:
     """
