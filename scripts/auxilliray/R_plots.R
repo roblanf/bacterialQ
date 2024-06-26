@@ -206,3 +206,71 @@ marginal_scatter_plot <- function(data, x, y, add_smooth = TRUE) {
 
   return(combined_plot)
 }
+
+library(tidyverse)
+library(ggplot2)
+library(dendextend)
+
+#' @description Generate a heatmap from a CSV file with hierarchical clustering
+#' @param csv_path Path to the CSV file
+#' @param value_col Column name for the values to be clustered
+#' @param output_path Path to save the output heatmap
+#' @param cluster_col1 Column name for the first tree
+#' @param cluster_col2 Column name for the second tree
+generate_heatmap <- function(csv_path, value_col, output_path, cluster_col1 = "Tree1", cluster_col2 = "Tree2") {
+  # Read the CSV file
+  summary_df <- read.csv(csv_path)
+  
+  # Create a symmetric dataframe
+  summary_df_sym <- summary_df %>%
+    rename(!!sym(cluster_col1) := !!sym(cluster_col2), !!sym(cluster_col2) := !!sym(cluster_col1))
+  summary_df <- rbind(summary_df, summary_df_sym)
+  
+  # Create the distance matrix
+  dist_matrix <- summary_df %>%
+    select(!!sym(cluster_col1), !!sym(cluster_col2), !!sym(value_col)) %>%
+    spread(!!sym(cluster_col2), !!sym(value_col)) %>%
+    column_to_rownames(var = cluster_col1) %>%
+    as.matrix()
+  
+  dist_matrix[is.na(dist_matrix)] <- 0  # Replace NA values with 0
+  
+  # Perform hierarchical clustering
+  hc <- hclust(as.dist(dist_matrix), method = "complete")
+  
+  # Create a dendrogram
+  dend <- as.dendrogram(hc)
+  
+  # Generate heatmap with clustering
+  summary_df <- summary_df %>%
+    mutate(!!sym(cluster_col1) := factor(!!sym(cluster_col1), levels = hc$labels[hc$order]),
+           !!sym(cluster_col2) := factor(!!sym(cluster_col2), levels = hc$labels[hc$order]))
+  
+  # Filter to only lower triangle
+  summary_df <- summary_df %>%
+    filter(as.numeric(!!sym(cluster_col1)) >= as.numeric(!!sym(cluster_col2)))
+  
+  # Generate heatmap
+  heatmap <- ggplot(summary_df, aes_string(x = cluster_col1, y = cluster_col2, fill = value_col)) +
+    geom_tile() +
+    geom_text(aes_string(label = value_col), size = 3) +  # Add text annotations
+    coord_equal() +
+    scale_fill_gradient(low = "white", high = "red") +
+    labs(x = cluster_col1, y = cluster_col2, fill = value_col) +
+    theme_light() +
+    theme(
+      axis.text = element_text(size = 10),
+      panel.background = element_rect(fill = "white"),
+      panel.grid.major = element_blank(), # Remove major grid lines
+      panel.grid.minor = element_blank(),
+      axis.text.x = element_text(angle = 45, hjust = 1)
+    ) +
+    scale_x_discrete(limits = hc$labels[hc$order]) +  # Reorder x-axis
+    scale_y_discrete(limits = hc$labels[hc$order])    # Reorder y-axis
+  
+  num_x_labels <- length(hc$labels)
+  # Calculate the width of the heatmap based on the number of x-axis labels
+  fig_size <- num_x_labels / 1.5
+  # Save the heatmap
+  ggsave(output_path, heatmap, width = fig_size, height = fig_size)
+}

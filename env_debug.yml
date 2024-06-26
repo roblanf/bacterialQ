@@ -25,6 +25,7 @@ dependencies:
         - r-kableextra
         - r-jsonlite
         - r-vegan
+        - r-dendextend
         - r-nlme
         - r-rtsne
         - r-ggcorrplot

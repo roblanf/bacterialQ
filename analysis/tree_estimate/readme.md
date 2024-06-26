@@ -10,7 +10,7 @@ We apply this test on the *phylum Gemmatimonadota*(535 taxa). Finally, we should
 | Model diff | -4849.7630 | -4852.1010 | M+/T- |
 
 The table indicates that the new model achieved better BIC values under both the new tree and the GTDB reference tree. However, the new tree we obtained had worse BIC values compared to the reference tree. This suggests that while our new model better fits the alignment of the test set, the new tree does not.  
-To check if this is caused by overfitting, tools(we estimate the new tree by FastTree with gamma rate option) or the difference between training and test dataset, we estimated a bunch of new trees to find the reason. v
+To check if this is caused by overfitting, tools(we estimate the new tree by FastTree with gamma rate option) or the difference between training and test dataset, we estimated a bunch of new trees to find the reason.
 ## More trees
 First, to obtain the best tree inference under the training set, we use the `-p` option in IQ-TREE to establish a separate partition for each site in the training set, allowing each partition to use an independent evolutionary model to infer a unified tree. We use the `-t` option to set the GTDB reference tree as the starting tree. We refer to this tree as `IQ_partition_genes`, and we consider it the best tree inference outside the reference tree.  
 
@@ -89,5 +89,21 @@ In summary, we found that the primary reason for the poor performance of the pre
 
 ## Todo
 - [ ] Allow IQ-TREE to estimate tree in model infer pipeline.
-- [ ] Distinguish how the model is different to both testing and training set with all the data concatenated to infer the tree in FastTree and IQ-TREE.
+- [x] Distinguish how the model is different to both testing and training set with all the data concatenated to infer the tree in FastTree and IQ-TREE.
 - [ ] Check the tree output for the best tree for each loci in topology test.
+
+P.S.
+Three new trees was added to the analysis:
+1. IQ_All_I_G4: The tree inferred by IQ-TREE using the Final model and all loci with I+G4 rate parameter.
+2. FT_All_Final_G20: The tree inferred by FastTree using the Final model and all loci with G20 rate parameter.
+3. FT_All_WAG_G20: The tree inferred by FastTree using the WAG model and all loci with G20 rate parameter.
+The new RF distance and nRF distance are shown below(axis was resorted by hierarchical clustering):
+
+![RF disntance](./RF_dist_alldata.png)  
+The second page is about nRF distance:  
+![nRF disntance](./nRF_dist_alldata.png)  
+
+The combination of training and test loci cause ~5% difference on the tree topology comparing with only using training loci. This impact is compariable with the difference caused by tool and the model:
+FT_All_Final_G20 ~ FT_All_WAG_G20, nRF=0.0282, 
+FT_All_Final_G20 ~ FT_Train_Final_G20, nRF=0.0263,
+FT_All_Final_G20 ~ IQ_All_I_G4, nRF = 0.0376
