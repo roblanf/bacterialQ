@@ -43,22 +43,22 @@ We empolyed the tree topology test with IQ-TREE in `-z` option with 14 trees des
 
 The result is:
 
-| Tree Name           | Dataset | Model | RHAS | LogL |
-| ------------------- | ------- | --------------- | --------------- | --------------- |
-| FT_Test_Final_G20   |    testing      |    Final model   |   G20   |  -1479565.356  |
-| FT_Test_LG_G20      |    testing      |    LG   |   G20   |  -1479548.801  |
-| FT_Test_WAG_G20     |    testing      |    WAG   |   G20   |  -1479457.017  |
-| FT_Train_Final_G20  |    training     |    Final model   |   G20   |  -1483892.757  |
-| FT_Train_WAG_G20    |    training     |    WAG   |   G20   |  -1484000.940  |
-| GTDB_reference_tree |  All taxa data  |    WAG   |   G20   |  -1482463.267  |
-| IQ_G4               |    training     |    Final model   |   G4   |  -1484105.129  |
-| IQ_I_G4             |    training     |    Final model   |   I+G4   |  1484169.520  |
-| IQ_partition_genes  |    training     |    Flexible on loci   |   Flexible on loci   |  -1484085.721  |
-| IQ_concat_test_G20  |    testing      |    Final model   |   G20   |  -1479180.269  |
-| RX_G4               |    training     |    Final model   |   G4   |  -1484076.312  |
-| RX_G20              |    training     |    Final model   |   G20   |  -1484093.907  |
-| RX_I_G4             |    training     |    Final model   |   I+G4   |  -1484055.592  |
-| RX_I_G20            |    training     |    Final model   |   G20   |  -1484128.683  |
+| Tree Name           | Dataset       | Model            | RHAS              | LogL          |
+|---------------------|---------------|------------------|-------------------|---------------|
+| IQ_concat_test_G20  | testing       | Final model      | G20               | -1479180.269  |
+| FT_Test_WAG_G20     | testing       | WAG              | G20               | -1479457.017  |
+| FT_Test_LG_G20      | testing       | LG               | G20               | -1479548.801  |
+| FT_Test_Final_G20   | testing       | Final model      | G20               | -1479565.356  |
+| GTDB_reference_tree | All taxa data | WAG              | G20               | -1482463.267  |
+| FT_Train_Final_G20  | training      | Final model      | G20               | -1483892.757  |
+| FT_Train_WAG_G20    | training      | WAG              | G20               | -1484000.940  |
+| RX_I_G4             | training      | Final model      | I+G4              | -1484055.592  |
+| RX_G4               | training      | Final model      | G4                | -1484076.312  |
+| IQ_partition_genes  | training      | Flexible on loci | Flexible on loci  | -1484085.721  |
+| RX_G20              | training      | Final model      | G20               | -1484093.907  |
+| IQ_G4               | training      | Final model      | G4                | -1484105.129  |
+| RX_I_G20            | training      | Final model      | G20               | -1484128.683  |
+| IQ_I_G4             | training      | Final model      | I+G4              | -1484169.520  |
 
 While the tree searched in this test in IQTREE is named as IQ_concat_test_G20.  
 We get the order of those trees are:  
