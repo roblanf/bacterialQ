@@ -11,7 +11,7 @@ def plot_loci_statistic(iqtree_result_path, output_path):
     It also creates a histogram of the proportion of informative sites on the right side of the scatter plot.
 
     Parameters:
-    iqtree_result_path (str): The path to the IQ-TREE result file.
+    iqtree_result_path (str): The path to the IQ-TREE result file(.iqtree).
     output_path (str): The path where the plot will be saved.
 
     Returns:
@@ -77,7 +77,7 @@ def write_iqtree_statistic(iqtree_result_path, result_name, output_path, extra_i
     This function extracts certain statistics from an IQ-TREE result file and writes them to a CSV file.
 
     Parameters:
-    iqtree_result_path (str): The path to the IQ-TREE result file.
+    iqtree_result_path (str): The path to the IQ-TREE result file(.iqtree).
     result_name (str): The name of the result, which will be written to the 'result_name' column of the CSV file.
     output_path (str): The path where the CSV file will be saved.
     extra_info (dict): A dictionary containing additional information to be written to the CSV file.
@@ -131,3 +131,17 @@ def write_iqtree_statistic(iqtree_result_path, result_name, output_path, extra_i
         writer.writerow(iqtree_summarise)
 
     return iqtree_summarise
+
+def extract_gamma20loglk(file_path):
+    """
+    This function extracts the Gamma20LogLk value from an FastTree log file.
+    """
+    with open(file_path, 'r') as file:
+        for line in file:
+            if 'Gamma20LogLk' in line:
+                # Split the line by whitespace and extract the value
+                parts = line.split()
+                for i, part in enumerate(parts):
+                    if part == 'Gamma20LogLk':
+                        # The value is the next part in the list
+                        return float(parts[i + 1])

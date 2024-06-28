@@ -67,6 +67,7 @@ def fasta_to_array(fasta_file):
     
     seq_lengths = [len(seq) for seq in sequences]
     if len(set(seq_lengths)) != 1:
+        print("Error File: ", fasta_file)
         raise ValueError("Input sequences are not aligned.")
     
     return SequenceData(np.array(sequences), np.array(names))

@@ -79,7 +79,7 @@ calculate_tree_distances <- function(tree1_file, tree2_file, dir_path) {
     )
 
     # Define the summary file path
-    summary_path <- paste0(dir_path, "/../tree_pairwise_compare.csv")
+    summary_path <- paste0(dir_path, "/tree_pairwise_compare.csv")
 
     # If the csv file doesn't exist or is empty, write the column names
     if (!file.exists(summary_path) || file.size(summary_path) == 0) {
@@ -104,95 +104,97 @@ library(dendextend)
 #' @param cluster_col1 Column name for the first tree
 #' @param cluster_col2 Column name for the second tree
 generate_heatmap <- function(csv_path, value_col, output_path, cluster_col1 = "Tree1", cluster_col2 = "Tree2") {
-  # Read the CSV file
-  summary_df <- read.csv(csv_path)
-  
-  # Create a symmetric dataframe
-  summary_df_sym <- summary_df %>%
-    rename(!!sym(cluster_col1) := !!sym(cluster_col2), !!sym(cluster_col2) := !!sym(cluster_col1))
-  summary_df <- rbind(summary_df, summary_df_sym)
-  
-  # Create the distance matrix
-  dist_matrix <- summary_df %>%
-    select(!!sym(cluster_col1), !!sym(cluster_col2), !!sym(value_col)) %>%
-    spread(!!sym(cluster_col2), !!sym(value_col)) %>%
-    column_to_rownames(var = cluster_col1) %>%
-    as.matrix()
-  
-  dist_matrix[is.na(dist_matrix)] <- 0  # Replace NA values with 0
-  
-  # Perform hierarchical clustering
-  hc <- hclust(as.dist(dist_matrix), method = "complete")
-  
-  # Create a dendrogram
-  dend <- as.dendrogram(hc)
-  
-  # Generate heatmap with clustering
-  summary_df <- summary_df %>%
-    mutate(!!sym(cluster_col1) := factor(!!sym(cluster_col1), levels = hc$labels[hc$order]),
-           !!sym(cluster_col2) := factor(!!sym(cluster_col2), levels = hc$labels[hc$order]))
-  
-  # Filter to only lower triangle
-  summary_df <- summary_df %>%
-    filter(as.numeric(!!sym(cluster_col1)) >= as.numeric(!!sym(cluster_col2)))
-  
-  # Generate heatmap
-  heatmap <- ggplot(summary_df, aes_string(x = cluster_col1, y = cluster_col2, fill = value_col)) +
-    geom_tile() +
-    geom_text(aes_string(label = value_col), size = 3) +  # Add text annotations
-    coord_equal() +
-    scale_fill_gradient(low = "white", high = "red") +
-    labs(x = cluster_col1, y = cluster_col2, fill = value_col) +
-    theme_light() +
-    theme(
-      axis.text = element_text(size = 10),
-      panel.background = element_rect(fill = "white"),
-      panel.grid.major = element_blank(), # Remove major grid lines
-      panel.grid.minor = element_blank(),
-      axis.text.x = element_text(angle = 45, hjust = 1)
-    ) +
-    scale_x_discrete(limits = hc$labels[hc$order]) +  # Reorder x-axis
-    scale_y_discrete(limits = hc$labels[hc$order])    # Reorder y-axis
-  
-  num_x_labels <- length(hc$labels)
-  # Calculate the width of the heatmap based on the number of x-axis labels
-  fig_size <- num_x_labels / 1.5
-  # Save the heatmap
-  ggsave(output_path, heatmap, width = fig_size, height = fig_size)
+    # Read the CSV file
+    summary_df <- read.csv(csv_path)
+
+    # Create a symmetric dataframe
+    summary_df_sym <- summary_df %>%
+        rename(!!sym(cluster_col1) := !!sym(cluster_col2), !!sym(cluster_col2) := !!sym(cluster_col1))
+    summary_df <- rbind(summary_df, summary_df_sym)
+
+    # Create the distance matrix
+    dist_matrix <- summary_df %>%
+        select(!!sym(cluster_col1), !!sym(cluster_col2), !!sym(value_col)) %>%
+        spread(!!sym(cluster_col2), !!sym(value_col)) %>%
+        column_to_rownames(var = cluster_col1) %>%
+        as.matrix()
+
+    dist_matrix[is.na(dist_matrix)] <- 0 # Replace NA values with 0
+
+    # Perform hierarchical clustering
+    hc <- hclust(as.dist(dist_matrix), method = "complete")
+
+    # Create a dendrogram
+    dend <- as.dendrogram(hc)
+
+    # Generate heatmap with clustering
+    summary_df <- summary_df %>%
+        mutate(
+            !!sym(cluster_col1) := factor(!!sym(cluster_col1), levels = hc$labels[hc$order]),
+            !!sym(cluster_col2) := factor(!!sym(cluster_col2), levels = hc$labels[hc$order])
+        )
+
+    # Filter to only lower triangle
+    summary_df <- summary_df %>%
+        filter(as.numeric(!!sym(cluster_col1)) >= as.numeric(!!sym(cluster_col2)))
+
+    # Generate heatmap
+    heatmap <- ggplot(summary_df, aes_string(x = cluster_col1, y = cluster_col2, fill = value_col)) +
+        geom_tile() +
+        geom_text(aes_string(label = value_col), size = 3) + # Add text annotations
+        coord_equal() +
+        scale_fill_gradient(low = "white", high = "red") +
+        labs(x = cluster_col1, y = cluster_col2, fill = value_col) +
+        theme_light() +
+        theme(
+            axis.text = element_text(size = 10),
+            panel.background = element_rect(fill = "white"),
+            panel.grid.major = element_blank(), # Remove major grid lines
+            panel.grid.minor = element_blank(),
+            axis.text.x = element_text(angle = 45, hjust = 1)
+        ) +
+        scale_x_discrete(limits = hc$labels[hc$order]) + # Reorder x-axis
+        scale_y_discrete(limits = hc$labels[hc$order]) # Reorder y-axis
+
+    num_x_labels <- length(hc$labels)
+    # Calculate the width of the heatmap based on the number of x-axis labels
+    fig_size <- max(6, num_x_labels / 1.5)
+    # Save the heatmap
+    ggsave(output_path, heatmap, width = fig_size, height = fig_size)
 }
 
 # Define a function to generate heatmaps
 generate_heatmaps <- function(dir_path) {
     # Define the summary file path
-    summary_path <- paste0(dir_path, "/../tree_pairwise_compare.csv")
+    summary_path <- paste0(dir_path, "/tree_pairwise_compare.csv")
 
     # Generate heatmaps with hierarchical clustering
-    generate_heatmap(summary_path, "RF_dist", paste0(dir_path, "/../RF_dist.png"))
-    generate_heatmap(summary_path, "nRF", paste0(dir_path, "/../nRF_dist.png"))
+    generate_heatmap(summary_path, "RF_dist", paste0(dir_path, "/RF_dist.png"))
+    generate_heatmap(summary_path, "nRF", paste0(dir_path, "/nRF_dist.png"))
 }
 
 # Define a function to generate NMDS plots
 plot_NMDS <- function(csv_file, metric_column, output_path) {
     # Read the summary file
     summary_df <- read.csv(csv_file)
-    
+
     # Prepare data for NMDS
     summary_df_2 <- summary_df %>%
         rename(Tree2 = Tree1, Tree1 = Tree2)
-    
+
     summary_df <- rbind(summary_df, summary_df_2)
-    
+
     nRF_matrix <- summary_df %>%
         select(Tree1, Tree2, !!sym(metric_column)) %>%
         spread(Tree2, !!sym(metric_column))
-    
+
     namerow <- nRF_matrix %>% pull(Tree1)
     nRF_matrix <- nRF_matrix %>%
         select(-Tree1) %>%
         as.matrix()
     rownames(nRF_matrix) <- namerow
     # nRF_matrix[is.nan(nRF_matrix)] <- 0
-    
+
     # Perform NMDS
     z <- metaMDS(
         comm = nRF_matrix,
@@ -206,10 +208,10 @@ plot_NMDS <- function(csv_file, metric_column, output_path) {
         try = 50,
         trymax = 100
     )
-    
+
     # Prepare data for plot
     z.points <- data.frame(z$points)
-    
+
     # Create the plot
     p <- ggplot(data = z.points, aes(x = MDS1, y = MDS2, label = rownames(nRF_matrix))) +
         geom_point() +
@@ -220,9 +222,9 @@ plot_NMDS <- function(csv_file, metric_column, output_path) {
             axis.text.y = element_blank()
         ) + # remove y-axis text
         geom_text_repel(max.overlaps = Inf, size = 3)
-    
+
     # Save the plot
-    ggsave(filename = paste0(output_path, "/../NMDS_", metric_column, ".png"), plot = p)
+    ggsave(filename = paste0(output_path, "/NMDS_", metric_column, ".png"), plot = p)
 }
 
 # Get command line arguments
@@ -252,5 +254,5 @@ for (i in seq(ncol(tree_pairs))) {
 generate_heatmaps(dir_path)
 
 # Generate NMDS plot
-summary_path <- paste0(dir_path, "/../tree_pairwise_compare.csv")
+summary_path <- paste0(dir_path, "/tree_pairwise_compare.csv")
 plot_NMDS(summary_path, "nRF", dir_path)

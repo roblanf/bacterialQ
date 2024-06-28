@@ -81,8 +81,8 @@ class AminoAcidSubstitutionModel:
         """Check the precision of Q matrix and state frequency vector."""
         if self.Q_matrix is None:
             self.create_Q_matrix()
-        q_precision = np.all(np.round(self.Q_matrix, int(-np.log10(threshold))) > threshold)
-        freq_precision = np.all(np.round(self.state_freq, int(-np.log10(threshold))) > threshold)
+        q_precision = np.all(np.round(self.Q_matrix, int(-np.log10(threshold))) > 0)
+        freq_precision = np.all(np.round(self.state_freq, int(-np.log10(threshold))) > 0)
 
         if not q_precision:
             print(f"Warning: Q matrix doesn't meet precision requirement (threshold {threshold}).")

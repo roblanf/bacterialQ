@@ -15,15 +15,12 @@ from typing import Tuple
 from Q_convert import *
 from grep_iqtree_output import *
 from quality_trimming import *
-from concat_seq import concatenate_sequences
+from concat_seq import concatenate_seq_dict, concatenate_seq_list
 from get_subtree import prune_tree, remove_redundant_nodes
 from mdlogger import *
 from fasta_filter import drop_rubbish_aln
 
 # Define constants
-t_drop_species = 0.2
-t_drop_loc = 0.2
-initial_model_set = "LG,Q.PFAM,Q.INSECT,Q.PLANT,Q.YEAST,MTMET,MTART"
 keep_model_thres = 0.05
 
 def log_and_handle_error(func):
@@ -69,17 +66,17 @@ def run_command(cmd: str, log_file: str, log_any: bool = True, log_output: bool 
     if log_any:
         with open(log_file, 'a') as f:
             if stderr and exit_code != 0:
-                f.write(f"  Error:\n{stderr}")
+                f.write(f"  Error:\n{stderr}  \n")
             if log_output and stdout:
                 # Sometimes it's annoying some output was interpreted as error(e.g. Rscript)
                 if stderr and exit_code == 0:
-                    f.write(f"  Output:\n{stderr}\n{stdout}")
+                    f.write(f"  Output:\n{stderr}  \n{stdout}  \n")
                 else:
-                    f.write(f"  Output:\n{stdout}")
+                    f.write(f"  Output:\n{stdout}  \n")
             if exit_code != 0:
-                f.write(f"  Exit code: {exit_code}\n")
+                f.write(f"  Exit code: {exit_code}  \n")
             if log_time:
-                f.write(f"  Runtime: {run_time:.2f} seconds\n")
+                f.write(f"  Runtime: {run_time:.2f} seconds  \n")
 
     if exit_code > 0:
         log_message('error', stderr)
@@ -243,10 +240,10 @@ def initial_data_extraction(args: argparse.Namespace) -> Tuple[Path, Path]:
     
     concat_training_loci = args.output_dir / "loci" / "concat_training_loci.faa"
     log_message('process', "Concatenating training loci...")
-    concatenate_sequences(str(args.output_dir / "loci" / "training_loci"), str(concat_training_loci))
+    concatenate_seq_dict(str(args.output_dir / "loci" / "training_loci"), str(concat_training_loci))
     concat_testing_loci = args.output_dir / "loci" / "concat_testing_loci.faa"
     log_message('process', "Concatenating testing loci...")
-    concatenate_sequences(str(args.output_dir / "loci" / "testing_loci"), str(concat_testing_loci))
+    concatenate_seq_dict(str(args.output_dir / "loci" / "testing_loci"), str(concat_testing_loci))
 
     return concat_training_loci, concat_testing_loci
 
@@ -284,7 +281,8 @@ def prune_subtrees(args, ref_tree, subtree_dir, num_subtrees, prune_mode):
             log_message('error', f"Error remove mono-furcation nodes in {file}: {e}")
     return subtree_dir
 
-def test_model(args, output_dir, test_loci_dir, model_name_set, trained_model_nex, mode, loop_id, te=None):
+@log_and_handle_error
+def test_model(args, output_dir, test_loci_dir, model_name_set, trained_model_nex, mode, loop_id, te=None, pre = None):
     """
     Test the model performance on test loci or concatenated alignment.
 
@@ -304,7 +302,7 @@ def test_model(args, output_dir, test_loci_dir, model_name_set, trained_model_ne
         else:
             # Concatenate test loci into a single alignment
             concat_test_loci = output_dir / "concat_test_loci.faa"
-            concatenate_sequences(str(test_loci_dir), str(concat_test_loci))
+            concatenate_seq_dict(str(test_loci_dir), str(concat_test_loci))
         # Test models on the concatenated alignment
         cmd = f"iqtree -T {args.max_threads} -s {concat_test_loci} -m TESTONLY -mset {model_name_set} -mdef {trained_model_nex}"
     elif mode == "partition":
@@ -316,7 +314,10 @@ def test_model(args, output_dir, test_loci_dir, model_name_set, trained_model_ne
     if te:
         cmd += f" -te {te}"
     test_prefix = f"{output_dir / args.prefix}_test_{mode}"
-    cmd += " -pre " + test_prefix
+    if pre:
+        cmd += f" -pre {pre}"
+    else:
+        cmd += " -pre " + test_prefix
 
     run_command(cmd, f"{args.output_dir}/log.md", log_output=args.keep_cmd_output, log_time=True)
     test_iqtree_file = f"{test_prefix}.iqtree"
@@ -349,7 +350,7 @@ def test_model(args, output_dir, test_loci_dir, model_name_set, trained_model_ne
     if mode == "partition":
         partition_test_nex = f"{test_prefix}.best_scheme.nex"
         best_model_name = run_command(f"./analyze_best_models.sh {partition_test_nex} {output_dir / 'models.txt'}", f"{args.output_dir}/log.md", log_any=False)[0].strip()
-        log_message('result', f"Best models for test data:")
+        log_message('result', f"Best model for test data:")
         log_message('result', best_model_name)
 
         # Print best models output as a table
@@ -366,12 +367,12 @@ def test_model(args, output_dir, test_loci_dir, model_name_set, trained_model_ne
         
     return model_data
 
-def compare_trees(args, prev_tree, new_tree, iteration_dir, name):
+def compare_trees(args, prev_tree, new_tree, html_output_dir, name):
     cmd_R = f"""
-    Rscript -e "rmarkdown::render('tree_comparison.Rmd', output_dir= '{iteration_dir}', params = list(tree1_path = '{prev_tree}', tree2_path = '{new_tree}', root = FALSE, summary_path = '{args.output_dir}/tree_summary.csv', name = '{name}'))"
+    Rscript -e "rmarkdown::render('tree_comparison.Rmd', output_dir= '{html_output_dir}', params = list(tree1_path = '{prev_tree}', tree2_path = '{new_tree}', root = FALSE, summary_path = '{args.output_dir}/tree_summary.csv', cophylo_path = '{html_output_dir}/cophylo_plot.pdf', name = '{name}'))"
     """
     run_command(cmd_R, f"{args.output_dir}/log.md")
-    log_link('result', "Tree comparison report", str(iteration_dir / "tree_comparison.html"))
+    log_link('result', "Tree comparison report", str(html_output_dir / "tree_comparison.html"))
 
     summary_df = pd.read_csv(f"{args.output_dir}/tree_summary.csv")
     current_loop_df = summary_df[summary_df['name'] == name]
@@ -434,12 +435,40 @@ def logging_cross_test_table(ref_concat_result, final_concat_result):
     
     # Print the 2x2 table
     log_message('result', "BIC difference between different models and trees:")
-    log_message('result', "| Model | Final tree | Reference tree | Tree diff |", new_line = True)
+    log_message('result', "| Model | Final best tree | Existing model tree | Tree diff |", new_line = True)
     log_message('result', "|-------|------------|----------------|-----------|")
     log_message('result', f"| Inferred model | {bic11:.4f} | {bic12:.4f} | {tree_diff1:.4f} |")
-    log_message('result', f"| Existed model | {bic21:.4f} | {bic22:.4f} | {tree_diff2:.4f} |")
+    log_message('result', f"| Existing model | {bic21:.4f} | {bic22:.4f} | {tree_diff2:.4f} |")
     log_message('result', f"| Model diff | {model_diff1:.4f} | {model_diff2:.4f} | {model_tree_diff} |")
     log_message('result', f"{model_tree_diff} means weather model(M) and tree(T) have same trend in BIC change.(+ final better, - final worse, ~ no trend)")
+
+def create_nexus_partition(input_dir, output_file):
+    """
+    Creates a NEXUS partition file for IQ-TREE from a directory or list of directories of sequence files.
+
+    Args:
+        input_dir (str or list): The directory or list of directories containing sequence files.
+        output_file (str): The path to the output NEXUS file.
+
+    Returns:
+        None
+    """
+    # Ensure input_dir is a list
+    if isinstance(input_dir, str):
+        input_dir = [input_dir]
+    
+    files = []
+    for directory in input_dir:
+        files.extend(os.listdir(directory))
+    
+    with open(output_file, 'w') as f:
+        f.write("#nexus\nbegin sets;\n")
+        for directory in input_dir:
+            for file in os.listdir(directory):
+                abs_path = os.path.abspath(os.path.join(directory, file))
+                f.write(f"charset {file} = {abs_path}: ;\n")
+        f.write("end;\n")
+
 
 def main(args: argparse.Namespace) -> None:
     """
@@ -449,6 +478,7 @@ def main(args: argparse.Namespace) -> None:
         args (argparse.Namespace): Command line arguments.
     """
     PATH_FASTTREEMP = args.FastTreeMP_path
+    initial_model_set = args.initial_model_set
 
     setup_logging(args.output_dir, args.verbose)
     files_to_remove = []
@@ -460,8 +490,8 @@ def main(args: argparse.Namespace) -> None:
     log_message('result', f"  File prefix: {args.prefix}")
     log_message('result', f"  Taxa name: {args.taxa_name}")
     log_message('result', f"  Number of training loci: {args.num_aln}")
-    log_message('result', f"  Drop species threshold: {t_drop_species}")
-    log_message('result', f"  Drop locus threshold: {t_drop_loc}")
+    log_message('result', f"  Drop species threshold: {args.t_drop_species}")
+    log_message('result', f"  Drop locus threshold: {args.t_drop_loc}")
     log_message('result', f"  Initial model set: {initial_model_set}")
     log_message('result', f"  Keep model threshold: {keep_model_thres}")
     log_message('result', f"  Pruning mode: {args.prune_mode}")
@@ -469,7 +499,7 @@ def main(args: argparse.Namespace) -> None:
     log_message('result', f"  Upper limit for subtree size: {args.tree_size_upper_lim}")
 
     log_message('process', "### Quality trimming")
-    quality_trimming(args.taxa_file, args.taxa_scale, args.taxa_name, args.output_dir, t_drop_loc, t_drop_species)
+    quality_trimming(args.taxa_file, args.taxa_scale, args.taxa_name, args.output_dir, args.t_drop_loc, args.t_drop_species)
 
     log_message('process', "### Initial data extraction")
     concat_training_loci, concat_testing_loci = initial_data_extraction(args)
@@ -491,7 +521,13 @@ def main(args: argparse.Namespace) -> None:
     prev_tree = filtered_allspc_tree
     initial_best_model_name = None
 
-    (args.output_dir / "trained_models").mkdir(exist_ok=True)
+    # Create the directory for the output of models
+    models_dir = args.output_dir / "inferred_models"
+    models_dir.mkdir(exist_ok=True)
+    # Create the directory for the output of trees
+    trees_dir = args.output_dir / "estimated_tree"
+    trees_dir.mkdir(exist_ok=True)
+    shutil.copy(filtered_allspc_tree, trees_dir / "pruned_reference_tree.tre")
     
     while True:
         loop_start_time = time.time()
@@ -591,7 +627,7 @@ def main(args: argparse.Namespace) -> None:
         log_message('result', f"BIC of the new model: {model_stats['BIC']}")  
         log_message('result', f"Likelihood of the new model: {model_stats['log_likelihood']}")
 
-        trained_model_nex = args.output_dir / "trained_models" / "trained_model.nex"
+        trained_model_nex = models_dir / "trained_model.nex"
 
         # Extract the Q matrix from the IQ-TREE output file
         new_model = extract_Q_from_iqtree(f"{args.prefix}_{iteration_id}", model_iqtree_file)
@@ -609,11 +645,11 @@ def main(args: argparse.Namespace) -> None:
         else:
             model_set += f",{new_model.model_name}"
 
-        log_link('result', "New model", str(args.output_dir / "trained_models" / f"{new_model.model_name}"))
+        log_link('result', "New model", str(models_dir / f"{new_model.model_name}"))
         log_message('result', f"Model set for next iteration: {model_set}")
 
         # Save the model parameters to a file in the output directory
-        with open(args.output_dir / "trained_models" / f"{new_model.model_name}", 'w') as f:
+        with open(models_dir / f"{new_model.model_name}", 'w') as f:
             f.write(new_model.print_parameter())
 
         # Compare the current model with the previous model using bubble plot
@@ -633,7 +669,19 @@ def main(args: argparse.Namespace) -> None:
             log_message('process', "Generated summary for model update, see" + str(summary_dir))
             run_command(cmd, f"{args.output_dir}/log.md")
 
-        # 5. Re-estimate the tree using FastTree on the concatenated loci
+        # 5. Check for model convergence
+        log_message('process', "### Check model convergence")
+        log_message('process', f"Iteration {iteration_id}: Checking convergence")
+        ifconverge, corr, dist = prev_model.check_convergence(new_model, threshold=args.converge_thres)
+        log_message('result', f"Pearson's correlation: {corr}")  
+        log_message('result', f"Euclidean distance: {dist}")
+
+        if ifconverge:
+            # If convergence is reached, stop the iteration
+            log_message('result', f"Convergence of model reached at iteration {iteration_id}")
+            break
+        
+        # 6. Re-estimate the tree using FastTree on the concatenated loci
         log_message('process', "### Tree update")
         tree_update_dir = iteration_dir / "tree_update"
         tree_update_dir.mkdir(parents=True, exist_ok=True)
@@ -646,25 +694,10 @@ def main(args: argparse.Namespace) -> None:
         log_link('result', "FastTree log", str(tree_update_dir / "fasttree.log"))
 
         new_tree = tree_update_dir / f"{args.prefix}_{iteration_id}.treefile"
+        shutil.copy(new_tree, trees_dir / f"Loop_{iteration_id}_FT_Train_G20.treefile")
         compare_trees(args, prev_tree, new_tree, iteration_dir, f"loop_{iteration_id}")
 
-        # 7. Check for model convergence
-        log_message('process', "### Check convergence")
-        log_message('process', f"Iteration {iteration_id}: Checking convergence")
-        ifconverge, corr, dist = prev_model.check_convergence(new_model, threshold=args.converge_thres)
-        log_message('result', f"Pearson's correlation: {corr}")  
-        log_message('result', f"Euclidean distance: {dist}")
-
-        loop_end_time = time.time()
-        loop_time = loop_end_time - loop_start_time
-        log_message('process', f"Time usage for Loop_{iteration_id}: {loop_time:.2f} seconds ({loop_time/3600:.2f} h)")
-
-        if ifconverge:
-            # If convergence is reached, stop the iteration
-            log_message('result', f"Convergence reached at iteration {iteration_id}")
-            break
-
-        # 6. Verify the performance of new and old models using ModelFinder
+        # 7. Verify the performance of new and old models using ModelFinder
         if args.test_in_loop:
             inloop_test_dir = iteration_dir / "test_model"
             inloop_test_dir.mkdir(parents=True, exist_ok=True)
@@ -675,21 +708,51 @@ def main(args: argparse.Namespace) -> None:
         prev_model = new_model
         prev_tree = new_tree
 
+        loop_end_time = time.time()
+        loop_time = loop_end_time - loop_start_time
+        log_message('process', f"Time usage for Loop_{iteration_id}: {loop_time:.2f} seconds ({loop_time/3600:.2f} h)")
+
         if iteration_id > args.max_iterate:
             # If the maximum number of iterations is reached, stop the iteration
             log_message('result', f"Stop loop after {args.max_iterate} times of iteration")
             break
-
+    
     # Final model testing
     log_message('process', "## Final test", new_line = True)
     final_test_dir = args.output_dir / "final_test"
     final_test_dir.mkdir(parents=True, exist_ok=True)
+    final_test_logdir = final_test_dir / "logfiles"
+    final_test_logdir.mkdir(exist_ok=True)
 
-    # 1. Compare the reference tree and the final tree
+    # 1. Estimate the best final tree on the concatenated loci
+    if args.estimate_best_final_tree or args.test_final_tree or args.cross_validation:
+        log_message('process', "### Final tree estimation on all loci")
+        if args.final_tree_tool == "IQ" or args.final_tree_tool == "IQFAST":
+            all_loci_partition_nex = final_test_logdir / "all_loci_partition.nex"
+            create_nexus_partition([training_loci_path, testing_loci_path], all_loci_partition_nex)
+            cmd = f"iqtree -T {args.max_threads} -p {all_loci_partition_nex} -t {new_tree} -m MFP -mset {model_set} -mdef {trained_model_nex} -pre {final_test_logdir}/best_final_tree"
+            if args.final_tree_tool == "IQFAST":
+                cmd += " -fast" 
+        else:
+            concat_all_loci = final_test_dir / "all_loci.faa"
+            concatenate_seq_list([concat_training_loci, concat_testing_loci], concat_all_loci)
+            files_to_remove.append(concat_all_loci)
+            cmd = f"{PATH_FASTTREEMP} -trans {model_update_dir}/Q_matrix_fasttree.txt -gamma -spr 4 -sprlength 1000 -boot 100 -log {final_test_logdir}/best_final_tree.log -intree {new_tree} {concat_training_loci} > {final_test_logdir}/best_final_tree.treefile"
+        run_command(cmd, f"{args.output_dir}/log.md", log_output=args.keep_cmd_output, log_time=True)
+        new_tree = final_test_logdir / "best_final_tree.treefile"
+        if args.final_tree_tool == "IQ" or args.final_tree_tool == "IQFAST":
+            final_tree_info = write_iqtree_statistic(f"{final_test_logdir}/best_final_tree.iqtree" ,args.prefix , f"{args.output_dir}/iqtree_results.csv", extra_info={"loop": "Final test", "step": "Final best tree"})
+            final_tree_ll = final_tree_info['log_likelihood']
+            shutil.copy(new_tree, trees_dir / f"FinalModel_IQ_All_partition.treefile")
+        else:
+            shutil.copy(new_tree, trees_dir / f"FinalModel_FT_All_G20.treefile")
+        
+    # 2. Compare the reference tree and the final tree
     log_message('process', "### Tree comparison")
-    compare_trees(args, filtered_allspc_tree, new_tree, final_test_dir, "final_test")
+    log_message('result', "Compare the final tree with reference tree:")
+    compare_trees(args, filtered_allspc_tree, new_tree, args.output_dir, "final_tree_compare")
 
-    # 2. Compare the initial best model and the final model
+    # 3. Compare the initial best model and the final model
     if initial_best_model_name:
         log_message('process', "### Model comparison")
         initial_best_model = extract_spc_Q_from_nex(args.model_dir, initial_best_model_name)
@@ -704,41 +767,108 @@ def main(args: argparse.Namespace) -> None:
         bubble_difference_plot(initial_best_model, new_model, final_test_dir / "model_comparison.png")
         log_link('result', "Model comparison plot", str(final_test_dir / "model_comparison.png"))
 
-    # 2. Validate the final model in subtrees on testing loci
-    if args.test_partition:
+    # 4. Plot PCA of Q matrices and state frequencies among initial and trained models
+    log_message('process', "### PCA Plot for all models")
+    cmd = f"Rscript PCA_Q.R {args.model_dir} {models_dir}/trained_model.nex {models_dir}"
+    run_command(cmd, f"{args.output_dir}/log.md")
+    log_link('result', "PCA plot of Q matrices", str(models_dir / "PCA_Q.png"))
+    log_link('result', "PCA plot of state frequencies", str(models_dir / "PCA_F.png"))
+
+    # 5. Validate the final model in subtrees on testing loci
+    if args.test_subtrees:
         log_message('process', "### Final model testing of test loci in subtrees")
         log_message('process', "#### Extract subtree loci for testing")
-        subtree_test_loci_dir = final_test_dir / "testing_alignment"
+        subtree_test_loci_dir = final_test_logdir / "testing_alignment"
         files_to_remove.append(subtree_test_loci_dir)
-        prune_subtrees(args, new_tree, final_test_dir / "subtrees", num_subtrees = None, prune_mode = "random")
-        sample_alignment(testing_loci_path, final_test_dir / "subtrees" / "taxa_list", subtree_test_loci_dir, nchar_row=3, nchar_col=1)
+        prune_subtrees(args, new_tree, final_test_logdir / "subtrees", num_subtrees = None, prune_mode = "random")
+        sample_alignment(testing_loci_path, final_test_logdir / "subtrees" / "taxa_list", subtree_test_loci_dir, nchar_row=3, nchar_col=1)
         log_message('process', "#### Test model performance")
-        test_model(args, final_test_dir, subtree_test_loci_dir, model_set, trained_model_nex, "partition", loop_id = "final_test_partition", te=None)
+        test_model(args, final_test_logdir, subtree_test_loci_dir, model_set, trained_model_nex, "partition", loop_id = "final_test_subtrees", te=None)
     # Validate the final model in cocatenate testing loci
     log_message('process', "### Final model testing of concatenated test loci on final tree")
-    final_concat_result = test_model(args, final_test_dir, concat_testing_loci, model_set, trained_model_nex, "concat", loop_id = "final_test_concat", te=new_tree)
-    # If cross test is enabled, test the final model on both the reference tree and final tree
-    if args.test_cross:
-        log_message('process', "### Cross test on concatenated test loci")
-        # Use a temporary directory to store the results of the reference tree test
-        log_message('process', "#### Final model testing of concatenated test loci on reference tree")
-        ref_concat_dir = final_test_dir / "ref_concat"
-        ref_concat_dir.mkdir(parents=True, exist_ok=True)
-        ref_concat_result = test_model(args, ref_concat_dir, concat_testing_loci, model_set, trained_model_nex, "concat", loop_id = "final_test_concat_ref", te=filtered_allspc_tree)
-        # files_to_remove.append(ref_concat_dir)
-        # Compare the results of the two tests
-        log_message('process', "#### Cross test comparison")
-        logging_cross_test_table(ref_concat_result, final_concat_result)
+    final_concat_result = test_model(args, final_test_logdir, concat_testing_loci, model_set, trained_model_nex, "concat", loop_id = "final_test_concat", te=new_tree)
+    # If the final model have better BIC than the existing models, continuing estimate the final tree on all loci
+    if final_concat_result:
+        best_concat_test_model = min(final_concat_result, key=lambda x: float(x[2]))  # Find the model with the lowest BIC value
+        if not best_concat_test_model[0].startswith(('d__', 'p__', 'c__', 'o__', 'f__', 'g__', 's__')):
+            log_message('error', f"Warning: The inferred model is not better based on BIC value than the existing models.")
+        else:
+            log_message('process', f"The inferred model is better based on BIC value than the existing models.")
 
-    log_message('process', "### PCA Plot for all models")
-    # 5. Plot PCA of Q matrices and state frequencies among initial and trained models
-    cmd = f"Rscript PCA_Q.R {args.model_dir} {args.output_dir}/trained_models/trained_model.nex {args.output_dir}/trained_models"
-    run_command(cmd, f"{args.output_dir}/log.md")
-    log_link('result', "PCA plot of Q matrices", str(args.output_dir / "trained_models" / "PCA_Q.png"))
-    log_link('result', "PCA plot of state frequencies", str(args.output_dir / "trained_models" / "PCA_F.png"))
+            # 6. If the final model is better than the existing models in the concatenated test loci, Perform cross-validation
+            if args.test_final_tree or args.cross_validation:
+                log_message('process', "### Test final tree")
+                log_message('process', "#### Final tree estimation on all loci without inferred model")
+                all_loci_partition_nex = args.output_dir / "loci_partitions.nex"
+                create_nexus_partition([training_loci_path, testing_loci_path], all_loci_partition_nex)
+                existing_model_tree = final_test_logdir / "existing_model_tree.treefile"
+                if args.final_tree_tool == "IQ" or args.final_tree_tool == "IQFAST":
+                    cmd = f"iqtree -T {args.max_threads} -p {all_loci_partition_nex} -t {new_tree} -m MFP -mset {initial_model_set} -pre {final_test_logdir}/existing_model_tree"
+                    if args.final_tree_tool == "IQFAST":
+                        cmd += " -fast" 
+                    run_command(cmd, f"{args.output_dir}/log.md", log_output=args.keep_cmd_output, log_time=True)
+                    shutil.copy(existing_model_tree, trees_dir / f"ExistModel_IQ_All_partition.treefile")
+                else:
+                    cmd = f"{PATH_FASTTREEMP} -wag -gamma -spr 4 -sprlength 1000 -boot 100 -log {final_test_logdir}/allloci_wag_tree.log -intree {new_tree} {concat_training_loci} > {final_test_logdir}/allloci_wag_tree.treefile"
+                    run_command(cmd, f"{args.output_dir}/log.md", log_output=args.keep_cmd_output, log_time=True)
+                    shutil.copy(f"{final_test_logdir}/allloci_wag_tree.treefile", trees_dir / f"FT_All_WAG_G20.treefile")
+                    cmd = f"{PATH_FASTTREEMP} -lg -gamma -spr 4 -sprlength 1000 -boot 100 -log {final_test_logdir}/allloci_lg_tree.log -intree {new_tree} {concat_training_loci} > {final_test_logdir}/allloci_lg_tree.treefile"
+                    run_command(cmd, f"{args.output_dir}/log.md", log_output=args.keep_cmd_output, log_time=True)
+                    shutil.copy(f"{final_test_logdir}/allloci_lg_tree.treefile", trees_dir / f"FT_All_LG_G20.treefile")
+                    wag_tree_ll = extract_gamma20loglk(f"{final_test_logdir}/allloci_wag_tree.log")
+                    lg_tree_ll = extract_gamma20loglk(f"{final_test_logdir}/allloci_lg_tree.log")
+                    existing_tree_ll = min(wag_tree_ll, lg_tree_ll)
+                    if wag_tree_ll >= lg_tree_ll:
+                        existing_model_tree = final_test_logdir / "allloci_wag_tree.treefile"
+                        log_message('result', f"WAG model has higher likelihood than LG model, use WAG model for final tree.")
+                    else:
+                        existing_model_tree = final_test_logdir / "allloci_lg_tree.treefile"
+                        log_message('result', f"LG model has higher likelihood than WAG model, use LG model for final tree.")
+
+                log_message('process', "#### Compare final tree with existing model tree")
+                compare_trees(args, existing_model_tree, new_tree, final_test_dir, "compare_existing_model_tree")
+                # Compare LogL for the final model tree and the existing model tree
+                if args.final_tree_tool == "IQ" or args.final_tree_tool == "IQFAST":
+                    existing_tree_info = write_iqtree_statistic(f"{final_test_logdir}/existing_model_tree.iqtree" ,args.prefix , f"{args.output_dir}/iqtree_results.csv", extra_info={"loop": "Final test", "step": "Existing model tree"})
+                    existing_tree_ll = existing_tree_info['log_likelihood']
+                else:
+                    final_tree_ll = extract_gamma20loglk(f"{final_test_logdir}/best_final_tree.log")
+                log_message('result', f"Log-Likelihood of final best tree and the tree estimated without inferred model:")
+
+                # log Log-likelihood for final tree and existing tree
+                log_message('result', "| Tree | Best final tree | Existing model tree |", new_line = True)
+                log_message('result', "|------|-----------------|---------------------|")
+                log_message('result', f"| LogL | {final_tree_ll} | {existing_tree_ll} |")
+                if final_tree_ll <= existing_tree_ll:
+                    log_message('error', "The final model tree does not have better likelihood than the existing model tree.")
+                else:
+                    log_message('process', "The final model tree has better likelihood than the existing model tree.")
+                    # If the final model have better LogL, carry out cross validation
+                    if args.cross_validation:
+                        cross_validation_dir = final_test_dir / "cross_validation"
+                        cross_validation_dir.mkdir(parents=True, exist_ok=True)
+                        log_message('process', "### Cross validation")
+                        # Use a temporary directory to store the results of the reference tree test
+                        log_message('process', "#### All models testing on existing model tree and all loci")
+                        if not args.final_tree_tool == "FT":
+                            concat_all_loci = final_test_dir / "all_loci.faa"
+                            concatenate_seq_list([concat_training_loci, concat_testing_loci], concat_all_loci)
+                        existing_concat_result = test_model(args, cross_validation_dir, concat_all_loci, model_set, trained_model_nex, "concat", loop_id = "cross_existing_model_tree", te=existing_model_tree, pre = "cross_existing_model_tree")
+                        # Compare the results of the two tests
+                        log_message('process', "####All models testing on final best tree and all loci")
+                        final_concat_result = test_model(args, cross_validation_dir, concat_all_loci, model_set, trained_model_nex, "concat", loop_id = "cross_final_tree", te=new_tree, pre = "cross_final_tree")
+                        logging_cross_test_table(existing_concat_result, final_concat_result)
+
+    # 7. Plot RF and nRF distance among estimated trees and reference tree
+    cmd = f"Rscript ./analysis/write_pairwise_tree_dist.R {trees_dir}"
+    run_command(cmd, f"{args.output_dir}/log.md", log_any=False)
+    log_link('result', "Heatmap of RF distance of trees:", str(trees_dir / "RF_dist.png"))
+    log_link('result', "Heatmap of nRF distance of trees:", str(trees_dir / "nRF_dist.png"))
+    log_link('result', "Pairwise tree distance metrics: ", str(trees_dir / "tree_pairwise_compare.csv"))
+    # 8. Generate summary for final test
     log_message('process', "### Record files")
-    log_link('result', "Summary of IQtree result", str(args.output_dir / "iqtree_results.csv"))
-    log_link('result', "Summary of tree comparison", str(args.output_dir / "tree_comparison.csv"))
+    log_link('result', "Summary of IQ-TREE result", str(args.output_dir / "iqtree_results.csv"))
+    log_link('result', "Summary of tree comparison", str(args.output_dir / "tree_summary.csv"))
 
     if not args.keep_tmp:
         for file_path in files_to_remove:
@@ -752,23 +882,29 @@ def cli() -> argparse.Namespace:
     Parse command line arguments.
     """
     parser = argparse.ArgumentParser()
-    parser.add_argument('--taxa_name', type=str, required=True, help='Taxonomic name for analysis')
-    parser.add_argument('--taxa_scale', type=str, required=True, help='Taxonomic scale for analysis')
-    parser.add_argument('--num_aln', type=int, required=True, help='Number of training loci')
-    parser.add_argument('--train_loc_path', type=Path, required=True, help='Path to the training loci directory')
-    parser.add_argument('--test_loc_path', type=Path, required=True, help='Path to the testing loci directory')
-    parser.add_argument('--taxa_file', type=Path, required=True, help='Path to the reference taxa information file')
-    parser.add_argument('--ref_tree', type=Path, required=True, help='Path to the reference tree file')
-    parser.add_argument('--model_dir', type=Path, required=True, help='Directory containing initial model files')
+    parser.add_argument('-n', '--taxa_name', type=str, required=True, help='Taxonomic name for analysis')
+    parser.add_argument('-s', '--taxa_scale', type=str, required=True, help='Taxonomic scale for analysis')
+    parser.add_argument('-N', '--num_aln', type=int, required=True, help='Number of training loci')
+    parser.add_argument('-a', '--train_loc_path', type=Path, required=True, help='Path to the training loci directory')
+    parser.add_argument('-e', '--test_loc_path', type=Path, required=True, help='Path to the testing loci directory')
+    parser.add_argument('-f', '--taxa_file', type=Path, required=True, help='Path to the reference taxa information file')
+    parser.add_argument('-r', '--ref_tree', type=Path, required=True, help='Path to the reference tree file')
+    parser.add_argument('-m', '--model_dir', type=Path, required=True, help='Directory containing initial model files')
+    parser.add_argument('-M', '--initial_model_set', type=str, default="LG,Q.PFAM,Q.INSECT,Q.PLANT,Q.YEAST,MTMET,MTART", help='Initial model set for ModelFinder (default: LG,Q.PFAM,Q.INSECT,Q.PLANT,Q.YEAST,MTMET,MTART)')
+    parser.add_argument('--t_drop_species', type=float, default=0.5, help='Threshold of sequence integrity for dropping species (default: 0.5)')
+    parser.add_argument('--t_drop_loc', type=float, default=0.2, help='Threshold of sequence integrity for dropping loci (default: 0.5)')
 
     parser.add_argument('-T', '--max_threads', type=str, default="100", help='Maximum number of threads (default: 100)')
     parser.add_argument('-l', '--max_iterate', type=int, default=5, help='Maximum number of iterations (default: 5)')
-    parser.add_argument('--converge_thres', type=float, default=0.999, help='Convergence threshold of Q matrix (default: 0.999)')
+    parser.add_argument('-V', '--converge_thres', type=float, default=0.999, help='Convergence threshold of Q matrix (default: 0.999)')
     parser.add_argument('-p', '--prefix', type=str, default='Q', help='Prefix for output files (default: Q)')
 
-    parser.add_argument('-t', '--test_in_loop', action='store_true', help='Test new estimated model with test data in each loop')
-    parser.add_argument('--test_partition', action='store_true', help='Test the final model on partitioned loci')
-    parser.add_argument('--test_cross', action='store_true', help='Test the final model on both the reference tree and final tree')
+    parser.add_argument('--test_in_loop', action='store_true', help='Test new estimated model with test data in each loop')
+    parser.add_argument('--test_subtrees', action='store_true', help='Test the final model on test loci in subtrees')
+    parser.add_argument('--estimate_best_final_tree', action='store_true', help='Estimate the best final tree based on both training and testing loci in partition model')
+    parser.add_argument('--test_final_tree', action='store_true', help='Test the final best tree, compare with the tree inferred without the inferred model')
+    parser.add_argument('--cross_validation', action='store_true', help='Test the performance of final model and tree on all loci with comparison with initial model and tree estimated without inferred model.')
+    parser.add_argument('--final_tree_tool', type=str, default='IQFAST', choices=['IQ',"IQFAST",'FT'], help='Method to estimate the final tree (IQ-TREE[IQ] / IQ-TREE in -fast option [IQFAST] / FastTree[FT]) (default: IQ)')
     parser.add_argument('--fix_subtree_num', action='store_true', help='Fix the number of subtrees during model estimation')
     parser.add_argument('--fix_subtree_topology', action='store_true', help='Fix the topology of subtrees during model estimation')
 
@@ -776,9 +912,10 @@ def cli() -> argparse.Namespace:
     parser.add_argument('--tree_size_upper_lim', type=int, default=100, help='Upper limit for the size of subtrees (default: 100)')  
     parser.add_argument('--prune_mode', type=str, default='random', choices=['random', 'lower', 'upper', 'shallow'], help="Pruning mode (random/lower/upper/shallow) (default: random)")
 
-    parser.add_argument('-s', '--model_update_summary', action='store_true', help='Enable model update summary inner each iteration')
+    parser.add_argument('-S', '--model_update_summary', action='store_true', help='Enable model update summary inner each iteration')
+    parser.add_argument('-R', '--tree_comparison_report', action='store_true', help='Enable tree comparison report when comparing pair of trees')
     parser.add_argument('-c', '--keep_cmd_output', action='store_true', help='Keep detailed command output in the log file')
-    parser.add_argument('--keep_tmp', action='store_true', help='Keep temporary files')
+    parser.add_argument('-t', '--keep_tmp', action='store_true', help='Keep temporary files')
     parser.add_argument('-v', '--verbose', action='store_true', help='Print commands')
 
     parser.add_argument('--output_dir', type=Path, required=True, help='Output directory')
