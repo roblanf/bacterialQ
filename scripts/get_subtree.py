@@ -156,19 +156,19 @@ def prune_degree_one_nodes(clade, combine_node_label=False):
     clade.clades = new_clades
 
     # Check if the root node itself is a degree-one node
-    if len(clade.clades) == 1:
-        single_subclade = clade.clades[0]
-        single_subclade.branch_length = (single_subclade.branch_length or 0) + (clade.branch_length or 0)
+    # if len(clade.clades) == 1:
+    #     single_subclade = clade.clades[0]
+    #     single_subclade.branch_length = (single_subclade.branch_length or 0) + (clade.branch_length or 0)
         
-        # Combine node labels if the flag is set
-        if combine_node_label:
-            if clade.name:
-                if single_subclade.name:
-                    single_subclade.name = f"{clade.name}-{single_subclade.name}"
-                else:
-                    single_subclade.name = clade.name
+    #     # Combine node labels if the flag is set
+    #     if combine_node_label:
+    #         if clade.name:
+    #             if single_subclade.name:
+    #                 single_subclade.name = f"{clade.name}-{single_subclade.name}"
+    #             else:
+    #                 single_subclade.name = clade.name
 
-        return single_subclade
+    #     return single_subclade
 
     return clade
 

@@ -4,6 +4,7 @@ library(ggplot2)
 library(patchwork)
 library(dplyr)
 library(optparse)
+library(ape)
 
 #' Get interior nodes from a tree and calculate related parameters
 #'
@@ -196,7 +197,7 @@ select_nodes_to_prune <- function(nodes, tree_size_lower_lim, tree_size_upper_li
     }
     candidate_nodes <- split_nodes(candidate_nodes, nodes, node_ids_to_prune, tree_size_lower_lim)
   }
-  if (mode == 0){
+  if (mode == 0) {
     return(candidate_nodes)
   }
   # Further pruning based on the specified mode
@@ -277,7 +278,7 @@ output_subtrees_and_taxa_list <- function(tree, node_ids_to_prune, output_dir) {
   }
 
   for (node in node_ids_to_prune) {
-    subtree <- get_subtree_at_node(tree, node)$subtree
+    subtree <- extract.clade(tree, node + length(tree$tip.label), collapse.singles = TRUE)
     taxa <- subtree$tip.label
     writeLines(taxa, con = paste0(taxa_list_dir, "/subtree_", node, ".txt"))
     write_tree(subtree, file = paste0(output_dir, "/subtree_", node, ".tre"))
@@ -301,7 +302,7 @@ prune_subtrees <- function(tree_file, tree_size_lower_lim, tree_size_upper_lim, 
   original_num_taxa <- length(tree$tip.label)
 
   # Perform automated pruning based on the specified mode
-  pruned_nodes <- auto_prune(tree, interior_nodes, tree_size_lower_lim, tree_size_upper_lim, num_tree, mode) %>% 
+  pruned_nodes <- auto_prune(tree, interior_nodes, tree_size_lower_lim, tree_size_upper_lim, num_tree, mode) %>%
     arrange(desc(degree))
 
   # Create summary directory if it doesn't exist
@@ -339,11 +340,11 @@ prune_subtrees <- function(tree_file, tree_size_lower_lim, tree_size_upper_lim, 
   # Create log file with pruning information
   log_file <- paste0(summary_dir, "/prune_log.txt")
   log_info <- c(
-    paste("Original number of taxa:", original_num_taxa, '  '),
-    paste("Number of pruned subtrees:", length(node_ids_to_prune), '  '),
-    paste("Number of taxa after pruning:", sum(pruned_nodes$degree), '  '),
-    paste("Pruned node IDs (degree):", paste(sprintf("%d (%d)", node_ids_to_prune, pruned_nodes$degree), collapse = " "), '  '),
-    paste("Pruning mode:", mode, '  ')
+    paste("Original number of taxa:", original_num_taxa, "  "),
+    paste("Number of pruned subtrees:", length(node_ids_to_prune), "  "),
+    paste("Number of taxa after pruning:", sum(pruned_nodes$degree), "  "),
+    paste("Pruned node IDs (degree):", paste(sprintf("%d (%d)", node_ids_to_prune, pruned_nodes$degree), collapse = " "), "  "),
+    paste("Pruning mode:", mode, "  ")
   )
   writeLines(log_info, con = log_file)
 
