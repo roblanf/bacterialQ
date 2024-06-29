@@ -281,7 +281,6 @@ def prune_subtrees(args, ref_tree, subtree_dir, num_subtrees, prune_mode):
             log_message('error', f"Error remove mono-furcation nodes in {file}: {e}")
     return subtree_dir
 
-@log_and_handle_error
 def test_model(args, output_dir, test_loci_dir, model_name_set, trained_model_nex, mode, loop_id, te=None, pre = None):
     """
     Test the model performance on test loci or concatenated alignment.
@@ -304,24 +303,26 @@ def test_model(args, output_dir, test_loci_dir, model_name_set, trained_model_ne
             concat_test_loci = output_dir / "concat_test_loci.faa"
             concatenate_seq_dict(str(test_loci_dir), str(concat_test_loci))
         # Test models on the concatenated alignment
-        cmd = f"iqtree -T {args.max_threads} -s {concat_test_loci} -m TESTONLY -mset {model_name_set} -mdef {trained_model_nex}"
+        cmd = f"iqtree -T {args.max_threads} -s {concat_test_loci} -m TESTNEWONLY -mset {model_name_set} -mdef {trained_model_nex}"
     elif mode == "partition":
         # Test models on individual test loci
-        cmd = f"iqtree -T {args.max_threads} -S {test_loci_dir} -m TESTONLY -mset {model_name_set} -mdef {trained_model_nex}"
+        cmd = f"iqtree -T {args.max_threads} -S {test_loci_dir} -m TESTNEWONLY -mset {model_name_set} -mdef {trained_model_nex}"
     else:
         log_message('error', "Invalid name of testing method.")
         return
     if te:
         cmd += f" -te {te}"
     test_prefix = f"{output_dir / args.prefix}_test_{mode}"
+    step = f"test_{mode}"
     if pre:
-        cmd += f" -pre {pre}"
-    else:
-        cmd += " -pre " + test_prefix
+        test_prefix = pre
+        step = pre
+    cmd += f" -pre {test_prefix}"
 
     run_command(cmd, f"{args.output_dir}/log.md", log_output=args.keep_cmd_output, log_time=True)
     test_iqtree_file = f"{test_prefix}.iqtree"
-    write_iqtree_statistic(test_iqtree_file, f"{args.prefix}", f"{args.output_dir}/iqtree_results.csv", extra_info={"loop": loop_id, "step": f"test_{mode}"})
+    log_link('result', f"Detail result of {mode} test", f"{test_prefix}.log")
+    write_iqtree_statistic(test_iqtree_file, f"{args.prefix}", f"{args.output_dir}/iqtree_results.csv", extra_info={"loop": loop_id, "step": f"{step}"})
 
 
     if mode == "concat":
@@ -395,8 +396,8 @@ def logging_cross_test_table(ref_concat_result, final_concat_result):
         """
         Extract the best BIC for inferred and existed models from the model data.
         """
-        inferred_bic = float('-inf')
-        existed_bic = float('-inf')
+        inferred_bic = float('inf')
+        existed_bic = float('inf')
         
         for model, _, bic in model_data:
             bic = float(bic)
@@ -799,10 +800,8 @@ def main(args: argparse.Namespace) -> None:
             if args.test_final_tree or args.cross_validation:
                 log_message('process', "### Test final tree")
                 log_message('process', "#### Final tree estimation on all loci without inferred model")
-                all_loci_partition_nex = args.output_dir / "loci_partitions.nex"
-                create_nexus_partition([training_loci_path, testing_loci_path], all_loci_partition_nex)
-                existing_model_tree = final_test_logdir / "existing_model_tree.treefile"
                 if args.final_tree_tool == "IQ" or args.final_tree_tool == "IQFAST":
+                    existing_model_tree = final_test_logdir / "existing_model_tree.treefile"
                     cmd = f"iqtree -T {args.max_threads} -p {all_loci_partition_nex} -t {new_tree} -m MFP -mset {initial_model_set} -pre {final_test_logdir}/existing_model_tree"
                     if args.final_tree_tool == "IQFAST":
                         cmd += " -fast" 
@@ -817,7 +816,7 @@ def main(args: argparse.Namespace) -> None:
                     shutil.copy(f"{final_test_logdir}/allloci_lg_tree.treefile", trees_dir / f"FT_All_LG_G20.treefile")
                     wag_tree_ll = extract_gamma20loglk(f"{final_test_logdir}/allloci_wag_tree.log")
                     lg_tree_ll = extract_gamma20loglk(f"{final_test_logdir}/allloci_lg_tree.log")
-                    existing_tree_ll = min(wag_tree_ll, lg_tree_ll)
+                    existing_tree_ll = max(wag_tree_ll, lg_tree_ll)
                     if wag_tree_ll >= lg_tree_ll:
                         existing_model_tree = final_test_logdir / "allloci_wag_tree.treefile"
                         log_message('result', f"WAG model has higher likelihood than LG model, use WAG model for final tree.")

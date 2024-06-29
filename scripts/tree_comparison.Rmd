@@ -131,7 +131,7 @@ if (!file.exists(params$summary_path)) {
 ### Tree Visualization
 ```{r echo=FALSE, fig.height=25, fig.width=15, message=FALSE, warning=FALSE}
 phylograms <- function(tree, y_scale = -5, subtitle = "") {
-  ggtree(tree, cex = 0.8, lwd = 0.3, aes(color = ifelse(is.na(as.numeric(label)), 100, as.numeric(label)))) +
+  ggtree(tree, cex = 0.8, lwd = 0.5, aes(color = ifelse(is.na(as.numeric(label)), 100, as.numeric(label)))) +
     scale_color_continuous(
       high = "black", low = "red",
       name = "Support Value", limits = c(0, 100),
