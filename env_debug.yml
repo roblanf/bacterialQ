@@ -10,34 +10,37 @@ dependencies:
         - seaborn
         - numpy
         - pandas
-        - python-lsp-server
-        - r-languageserver
         - r-ggfortify
         - r-ggrepel
-        - r-castor
-        - r-phytools
+        - r-dendextend
+        - r-vegan
+        - r-tidyverse
         - r-patchwork
-        - r-ggplot2
-        - r-ggextra
-        - r-dplyr
         - r-optparse
         - r-rmarkdown
         - r-kableextra
-        - r-jsonlite
-        - r-vegan
-        - r-dendextend
-        - r-nlme
-        - r-rtsne
-        - r-ggcorrplot
         - biopython
         - matplotlib
         - pandoc
         - ucsc-faSomeRecords
         - iqtree
-        - fasttree
-        - veryfasttree
-        - raxml-ng
         - treeshrink
+        - r-ape
+        - r-castor
         - r-phangorn
+        - r-phytools
         - bioconductor-ggtree
+        - jupyterlab
+        - ipykernal
+        - irkernal
+        - python-lsp-server
+        - r-languageserver
+        - r-jsonlite
+        - r-nlme
+        - r-rtsne
+        - r-ggextra
+        - r-ggcorrplot
+        - r-igraph
+        - raxml-ng
+
 

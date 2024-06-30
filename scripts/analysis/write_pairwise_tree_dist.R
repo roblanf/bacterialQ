@@ -1,9 +1,13 @@
 library(ape)
 library(phangorn)
 library(ggplot2)
-library(tidyverse)
+library(ggplot2)
+library(dplyr)
+library(tidyr)
+library(tibble)
 library(vegan)
 library(ggrepel)
+library(dendextend)
 
 # Define a function to extract the tree name from the file path
 extract_tree_name <- function(file_path) {
@@ -92,10 +96,6 @@ calculate_tree_distances <- function(tree1_file, tree2_file, dir_path) {
     # Return the result data frame
     return(result_df)
 }
-
-library(tidyverse)
-library(ggplot2)
-library(dendextend)
 
 #' @description Generate a heatmap from a CSV file with hierarchical clustering
 #' @param csv_path Path to the CSV file
