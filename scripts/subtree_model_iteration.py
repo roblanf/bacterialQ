@@ -854,7 +854,7 @@ def main(args: argparse.Namespace) -> None:
                             concatenate_seq_list([concat_training_loci, concat_testing_loci], concat_all_loci)
                         existing_concat_result = test_model(args, cross_validation_dir, concat_all_loci, model_set, trained_model_nex, "concat", loop_id = "cross_existing_model_tree", te=existing_model_tree, pre =f"{cross_validation_dir}/cross_existing_model_tree")
                         # Compare the results of the two tests
-                        log_message('process', "####All models testing on final best tree and all loci")
+                        log_message('process', "#### All models testing on final best tree and all loci")
                         final_concat_result = test_model(args, cross_validation_dir, concat_all_loci, model_set, trained_model_nex, "concat", loop_id = "cross_final_tree", te=new_tree, pre = f"{cross_validation_dir}/cross_final_tree")
                         logging_cross_test_table(existing_concat_result, final_concat_result)
 
