@@ -244,14 +244,14 @@ generate_cophylo_plot <- function(rooted_tree1, rooted_tree2, output_path) {
   dev.off()
 }
 
-if (result_df$nRF > 0.05) {
+if (result_df$nRF >= 0.05) {
   # Generate cophylo plot
   output_path <- params$cophylo_path
   generate_cophylo_plot(tree1, tree2, output_path)
   cat("Cophylo plot generated successfully.\n")
   cat("![Cophylo plot](cophylo_plot.png)")
 } else {
-  cat("The normalized Robinson-Foulds distance is less than 0.02, cophylo plot will not be shown.")
+  cat("The normalized Robinson-Foulds distance is less than 0.05, cophylo plot will not be shown.")
 }
 ```
 
