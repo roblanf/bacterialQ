@@ -3,6 +3,7 @@ channels:
         - bioconda
         - conda-forge
         - annaconda
+        - r
 
 dependencies:
         - python=3.9.16
@@ -31,8 +32,8 @@ dependencies:
         - r-phytools
         - bioconductor-ggtree
         - jupyterlab
-        - ipykernal
-        - irkernal
+        - ipykernel
+        - r-irkernel
         - python-lsp-server
         - r-languageserver
         - r-jsonlite
@@ -42,5 +43,3 @@ dependencies:
         - r-ggcorrplot
         - r-igraph
         - raxml-ng
-
-
