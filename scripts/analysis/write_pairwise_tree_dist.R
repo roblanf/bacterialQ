@@ -192,9 +192,16 @@ plot_NMDS <- function(csv_file, metric_column, output_path) {
     nRF_matrix <- nRF_matrix %>%
         select(-Tree1) %>%
         as.matrix()
-    rownames(nRF_matrix) <- namerow
-    # nRF_matrix[is.nan(nRF_matrix)] <- 0
 
+    rownames(nRF_matrix) <- namerow
+    nRF_matrix[is.na(nRF_matrix) | is.nan(nRF_matrix) | is.infinite(nRF_matrix)] <- 0
+
+    # Check the rank of the matrix
+    matrix_rank <- qr(nRF_matrix)$rank
+    if (matrix_rank <= 2) {
+        cat("Matrix rank is less than 3. NMDS computation cannot proceed.")
+        return(NULL)
+    }
     # Perform NMDS
     z <- metaMDS(
         comm = nRF_matrix,
