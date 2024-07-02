@@ -4,7 +4,7 @@ output: html_document
 params:
   tree1_path: "path/to/tree1.tre"
   tree2_path: "path/to/tree2.tre"
-  summary_path: "path/to/table.csv"
+  summary_path: NULL
   cophylo_path: "path/to/figure.png"
   root: FALSE
   name: "default_name"
@@ -116,15 +116,17 @@ result_df <- data.frame(
 # Print the resulting data frame
 kable_styling(knitr::kable(result_df, caption = "Tree distance Summary", row.names = FALSE), bootstrap_options = c("striped", "hover", "condensed"))
 
-if (!file.exists(params$summary_path)) {
-  write.table(result_df, file = params$summary_path, sep = ",", row.names = FALSE, col.names = TRUE)
-} else {
-  # Read existing data
-  existing_data <- read.table(params$summary_path, sep = ",", header = TRUE)
-  # Combine existing data with new data
-  combined_data <- rbind(existing_data, result_df)
-  # Write combined data to file
-  write.table(combined_data, file = params$summary_path, sep = ",", row.names = FALSE, col.names = TRUE)
+if (!is.null(params$summary_path) && file.exists(params$summary_path)) {
+  if (!file.exists(params$summary_path)) {
+    write.table(result_df, file = params$summary_path, sep = ",", row.names = FALSE, col.names = TRUE)
+  } else {
+    # Read existing data
+    existing_data <- read.table(params$summary_path, sep = ",", header = TRUE)
+    # Combine existing data with new data
+    combined_data <- rbind(existing_data, result_df)
+    # Write combined data to file
+    write.table(combined_data, file = params$summary_path, sep = ",", row.names = FALSE, col.names = TRUE)
+  }
 }
 ```
 

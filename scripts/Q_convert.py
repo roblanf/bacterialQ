@@ -114,9 +114,9 @@ class AminoAcidSubstitutionModel:
 
         # Calculate the Pearson correlation coefficient between the masked, flattened Q matrices
         corr = np.corrcoef(self_flattened, other_flattened)[0, 1]
-        
-        # Calculate the Euclidean distance between the Q matrices
-        dist = np.linalg.norm(self.Q_matrix - other_model.Q_matrix)
+
+        # Calculate the Euclidean distance between the masked, flattened Q matrices
+        dist = np.linalg.norm(self_flattened - other_flattened)
         
         # Check if the correlation exceeds the threshold
         if corr > threshold:
