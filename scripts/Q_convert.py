@@ -328,7 +328,7 @@ def bubble_plot(model, output_path, bar_freq=True):
     plt.savefig(output_path, dpi=300)
     plt.close()
 
-def bubble_difference_plot(prev_model, curr_model, output_path, bar_freq=True):
+def bubble_difference_plot(prev_model, curr_model, output_path, bar_freq=True, format="amount"):
     import pandas as pd
     import matplotlib.pyplot as plt
     import seaborn as sns
@@ -346,7 +346,11 @@ def bubble_difference_plot(prev_model, curr_model, output_path, bar_freq=True):
     # Calculate the difference between Q matrices
     curr_model.rescale_Q_matrix()
     prev_model.rescale_Q_matrix()
-    Q_diff = curr_model.Q_matrix - prev_model.Q_matrix
+    if format == "percent":
+        Q_diff = (curr_model.Q_matrix - prev_model.Q_matrix) / prev_model.Q_matrix
+    else:
+        Q_diff = curr_model.Q_matrix - prev_model.Q_matrix
+
     # Ensure the Q_matrix is not the same
     if Q_diff.max() == 0:
         return None
@@ -369,13 +373,20 @@ def bubble_difference_plot(prev_model, curr_model, output_path, bar_freq=True):
     ax1.set_yticks(range(-1, len(aa_order) - 1))
     ax1.set_xticklabels(list(aa_order), rotation=0, fontsize=12)
     ax1.set_yticklabels(list(aa_order), rotation=0, fontsize=12)
-    ax1.set_title(f"Q Difference: {os.path.basename(prev_model.model_name)} to {os.path.basename(curr_model.model_name)}", fontsize=14)
+    if format == "amount":
+        ax1.set_title(f"Q Difference: {os.path.basename(prev_model.model_name)} to {os.path.basename(curr_model.model_name)}", fontsize=14)
+    else:
+        ax1.set_title(f"Q Difference (%): {os.path.basename(prev_model.model_name)} to {os.path.basename(curr_model.model_name)}", fontsize=14)
     ax1.tick_params(axis='both', which='both', length=0)  # Remove tick marks
 
     # Add size legend
     values = np.percentile(abs(df_melt['value']), [10, 50, 75, 90, 100])  # Get 10th, 50th, and 90th percentile absolute values
-    labels_pos = [f"+{value:.2f}" for value in values]  # Format labels with 2 decimal places
-    labels_neg = [f"-{value:.2f}" for value in values]  # Format labels with 2 decimal places
+    if format == "percent":
+        labels_pos = [f"+{int(value * 100)}%" for value in values]  # Format labels as percentages
+        labels_neg = [f"-{int(value * 100)}%" for value in values]  # Format labels as percentages
+    else:
+        labels_pos = [f"+{value:.2f}" for value in values]  # Format labels with 2 decimal places
+        labels_neg = [f"-{value:.2f}" for value in values]  # Format labels with 2 decimal places
     sizes = (values / np.max(values)) * 500  # Adjust sizes according to your preference
     legend_elements_pos = [Line2D([0], [0], marker='o', color='w', label=label, 
                           markerfacecolor='white', markeredgecolor='black', markersize=np.sqrt(size)) for size, label in zip(sizes, labels_pos)]
@@ -384,10 +395,19 @@ def bubble_difference_plot(prev_model, curr_model, output_path, bar_freq=True):
     legend_elements = legend_elements_pos + legend_elements_neg
     ax1.legend(handles=legend_elements, title='Size', labelspacing=1, frameon=True, loc='upper right', bbox_to_anchor=(0.98, 0.98))
 
-    freq_diff = curr_model.state_freq - prev_model.state_freq
+    if format == "percent":
+        freq_diff = (curr_model.state_freq - prev_model.state_freq) / prev_model.state_freq
+    else:
+        freq_diff = curr_model.state_freq - prev_model.state_freq
 
+    # Function to format y-axis labels as percentages
+    def to_percent(y, position):
+        return f"{int(y * 100)}%"
+    
     if bar_freq:
         sns.barplot(x=list(aa_order), y=freq_diff, ax=ax2, color='white', edgecolor='black')
+        if format == "percent":
+            ax2.yaxis.set_major_formatter(plt.FuncFormatter(to_percent))
     else:
         sns.scatterplot(x=list(aa_order), y=[0]*len(aa_order), size=abs(freq_diff), sizes=(1, 500),
                         hue=freq_diff > 0, palette={True: 'white', False: 'black'},
