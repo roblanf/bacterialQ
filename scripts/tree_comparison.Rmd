@@ -116,7 +116,7 @@ result_df <- data.frame(
 # Print the resulting data frame
 kable_styling(knitr::kable(result_df, caption = "Tree distance Summary", row.names = FALSE), bootstrap_options = c("striped", "hover", "condensed"))
 
-if (!is.null(params$summary_path) && file.exists(params$summary_path)) {
+if (!is.null(params$summary_path)) {
   if (!file.exists(params$summary_path)) {
     write.table(result_df, file = params$summary_path, sep = ",", row.names = FALSE, col.names = TRUE)
   } else {

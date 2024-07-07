@@ -189,7 +189,6 @@ split_nodes <- function(nodes, all_nodes, node_ids_to_remove, tree_size_lower_li
 select_nodes_to_prune <- function(all_nodes, tree_size_lower_lim, tree_size_upper_lim, num_tree = NULL, mode = 1) {
   # Initial pruning: remove nodes with degree > tree_size_upper_lim
   candidate_nodes <- all_nodes[all_nodes$node_id == 1, ]
-  total_degree <- candidate_nodes$degree
 
   while (TRUE) {
     node_ids_to_prune <- split_func(candidate_nodes, all_nodes, tree_size_lower_lim, tree_size_upper_lim, num_tree, mode = 0)
@@ -208,12 +207,6 @@ select_nodes_to_prune <- function(all_nodes, tree_size_lower_lim, tree_size_uppe
       break
     }
     candidate_nodes <- split_nodes(candidate_nodes, all_nodes, node_ids_to_prune, tree_size_lower_lim)
-    if ((mode == 2) && is.null(num_tree)) {
-      current_degree <- sum(candidate_nodes$degree)
-      if (current_degree / total_degree <= 0.95) {
-        break
-      }
-    }
   }
   return(candidate_nodes)
 }
@@ -255,6 +248,15 @@ auto_prune <- function(tree, interior_nodes, tree_size_lower_lim, tree_size_uppe
           arrange(desc(degree)) %>%
           slice(1:num_tree)
       }
+    } else {
+      # keep nodes to the sum up top 80% degree count from high to low
+      total_taxa <- interior_nodes %>%
+        filter(node_id == 1) %>%
+        pull(degree)
+      pruned_nodes <- pruned_nodes %>%
+        arrange(desc(degree)) %>%
+        mutate(cum_degree = cumsum(degree)) %>%
+        filter(cum_degree <= 0.8 * total_taxa)
     }
   } else if (mode == "shallow") {
     pruned_nodes <- select_nodes_to_prune(interior_nodes, tree_size_lower_lim, tree_size_upper_lim, num_tree = NULL, mode = 3)
