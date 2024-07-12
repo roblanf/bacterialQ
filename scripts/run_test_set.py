@@ -29,6 +29,7 @@ combined_table = "/home/tim/project/GTDB_TREE/data/r220/combined_df.csv"
 FastTreeMP_path = "/home/tim/project/tool/FastTreeMP/FastTreeMP"
 decorated_tree_file="/home/tim/project/GTDB_TREE/data/r220/bac120_r220_decorated.tree"
 outgroup_phylum_list="/home/tim/project/GTDB_TREE/data/GTDB_stable_phyla_list.txt"
+time_limit = 86400 #24hrs
 
 log_file_path = f"{RESULT_DIR}/error_log.txt"
 status_file_path = f"{RESULT_DIR}/script_status.json"
@@ -60,6 +61,7 @@ def generate_shell_script(taxa_name, prune_mode, maximum_subtree_size, prop_aln,
         "--use_outgroup",
         f"--decorated_tree {decorated_tree_file}",
         f"--outgroup_taxa_list {outgroup_phylum_list}",
+        f"--time_limit {time_limit}",
         "--verbose",
         "--test_partition_test_loci",
         "--estimate_best_final_tree",

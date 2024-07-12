@@ -769,9 +769,10 @@ def main(args: argparse.Namespace) -> None:
         model_set = ",".join([model for model, count in best_model_counts.items() if count / total_models >= keep_model_thres])
 
         # Check the time usage before the next step
-        if time_checkpoint(time_usage_inloop, loop_start_time, args.time_limit):
-            log_message('error', f"Time limit reached. Program will terminate in loop {iteration_id} before model update.")
-            break
+        if args.time_limit:
+            if time_checkpoint(time_usage_inloop, loop_start_time, args.time_limit):
+                log_message('error', f"Time limit reached. Program will terminate in loop {iteration_id} before model update.")
+                break
 
         # 4. Estimate new models using ModelFinder based on the best model for each partition and the pruned subtree
         log_message('process', "### Model update")
@@ -886,13 +887,14 @@ def main(args: argparse.Namespace) -> None:
         log_message('process', f"Time usage for Loop_{iteration_id}: {loop_time:.2f} seconds ({loop_time/3600:.2f} h)")
 
         # Check the time usage before the next step
-        if time_checkpoint(time_usage_inloop, loop_start_time, args.time_limit):
-            log_message('error', f"Time limit reached. Program will terminate in the end of loop {iteration_id}.")
-            break
- 
-        if time_checkpoint(time_usage_inloop, loop_start_time, args.time_limit - bound_next_round_time(time_usage_inloop)):
-            log_message('error', f"The estimated remaining time is insufficient to complete the next iteration. Program will terminate in the end of loop {iteration_id}.")
-            break 
+        if args.time_limit:
+            if time_checkpoint(time_usage_inloop, loop_start_time, args.time_limit):
+                log_message('error', f"Time limit reached. Program will terminate in the end of loop {iteration_id}.")
+                break
+    
+            if time_checkpoint(time_usage_inloop, loop_start_time, args.time_limit - bound_next_round_time(time_usage_inloop)):
+                log_message('error', f"The estimated remaining time is insufficient to complete the next iteration. Program will terminate in the end of loop {iteration_id}.")
+                break 
 
         if iteration_id > args.max_iterate:
             # If the maximum number of iterations is reached, stop the iteration
