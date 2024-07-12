@@ -4,12 +4,12 @@ from Bio import Phylo
 import copy
 from io import StringIO
 
-def prune_tree(tree_file, taxa_list_path, output_file):
+def prune_tree(tree_file, taxa_file_list, output_file):
     # Read newick to prune
     tree = Phylo.read(tree_file, "newick")
 
     # Read list of taxa to subset
-    taxa_list = read_taxa_list(taxa_list_path)
+    taxa_list = read_taxa_file(taxa_file_list)
 
     subtree = get_subtree(tree, taxa_list)
     subtree = prune_degree_one_nodes(subtree.root)
@@ -20,20 +20,16 @@ def prune_tree(tree_file, taxa_list_path, output_file):
     print(f"Pruned tree saved to {output_file}")
     Phylo.write(subtree, output_file, "newick")
 
-def read_taxa_list(path_to_list):
-    if os.path.isfile(path_to_list):
-        with open(path_to_list, "r") as f:
-            return [line.strip() for line in f.readlines() if line.strip()]
-    elif os.path.isdir(path_to_list):
-        taxa_list = []
-        for file in os.listdir(path_to_list):
-            file_path = os.path.join(path_to_list, file)
-            if os.path.isfile(file_path):
-                with open(file_path, "r") as f:
-                    taxa_list.extend([line.strip() for line in f.readlines() if line.strip()])
-        return taxa_list
-    else:
-        raise ValueError(f"{path_to_list} is neither a file nor a directory.")
+def read_taxa_file(paths):
+    taxa_list = []
+    for path in paths:
+        if os.path.isfile(path):
+            with open(path, "r") as f:
+                taxa_list.extend([line.strip() for line in f.readlines() if line.strip()])
+        else:
+            raise ValueError(f"{path} is not a valid file path.")
+
+    return taxa_list
 
 def get_subtree(tree, taxa_list):
     cptree = copy.deepcopy(tree)
@@ -171,6 +167,72 @@ def prune_degree_one_nodes(clade, combine_node_label=False):
     #     return single_subclade
 
     return clade
+
+def root_at_outgroups(tree_file, outgroup_taxa_list, output_file, delete_outgroup=True):
+    """
+    Roots the tree with the specified species list and optionally prunes the outgroup.
+
+    Args:
+        tree_file (str): Path to the Newick tree file.
+        outgroup_taxa_list (list): List of outgroup species to root the tree with.
+        output_file (str): Path to save the output tree.
+        delete_outgroup (bool): Whether to delete the outgroup from the tree.
+
+    Returns:
+        None
+    """
+    trees = Phylo.parse(tree_file, "newick")
+    output_trees = []
+
+    for tree in trees:
+        # Get the list of taxa in the current tree
+        tree_taxa = {leaf.name for leaf in tree.get_terminals()}
+        # Find the intersection of outgroup_taxa_list and tree_taxa
+        current_outgroup_taxa = list(set(outgroup_taxa_list) & tree_taxa)
+
+        if not current_outgroup_taxa:
+            print("No common outgroup taxa found, root the tree at the midpoint.")
+            try:
+                tree.root_at_midpoint()
+            except UnboundLocalError:
+                pass
+        else:
+            try:
+                clade = tree.common_ancestor(current_outgroup_taxa)
+                clade_species = {leaf.name for leaf in clade.get_terminals()}
+
+                if clade_species == set(current_outgroup_taxa):
+                    print("The outgroup clade is monophyletic, root the tree with this clade.")
+                    tree.root_with_outgroup(clade)
+                else:
+                    if len(clade_species) - len(current_outgroup_taxa) == 1:
+                        print("The outgroup clade contains one additional taxon, use it as the root.")
+                        outgroup_taxa = clade_species - set(current_outgroup_taxa)
+                        tree.root_with_outgroup(outgroup_taxa)
+                    else:
+                        print("The outgroup clade isn't monophyletic, root the tree at the midpoint.")
+                        try:
+                            tree.root_at_midpoint()
+                        except UnboundLocalError:
+                            pass
+            except ValueError:
+                print("The common ancestor clade does not exist, root the tree at the midpoint.")
+                try:
+                    tree.root_at_midpoint()
+                except UnboundLocalError:
+                    pass
+
+        if delete_outgroup:
+            for taxon in current_outgroup_taxa:
+                try:
+                    tree.prune(taxon)
+                except ValueError:
+                    print(f"Taxon {taxon} not found in the tree, skipping pruning for this taxon.")
+
+        output_trees.append(tree)
+
+    print(f"Rooted and pruned trees saved to {output_file}")
+    Phylo.write(output_trees, output_file, "newick")
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Prune a tree based on a list of taxa.")

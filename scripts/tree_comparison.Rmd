@@ -6,7 +6,7 @@ params:
   tree2_path: "path/to/tree2.tre"
   summary_path: NULL
   cophylo_path: "path/to/figure.png"
-  root: FALSE
+  root: TRUE
   name: "default_name"
 ---
 

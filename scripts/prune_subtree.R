@@ -1,10 +1,10 @@
 # prune_subtree.R
+library(ape)
 library(castor)
 library(ggplot2)
 library(patchwork)
 library(dplyr)
 library(optparse)
-library(ape)
 
 #' Get interior nodes from a tree and calculate related parameters
 #'
@@ -13,6 +13,13 @@ library(ape)
 get_interior_nodes <- function(tree) {
   n_tip <- length(tree$tip)
   n_node <- length(tree$node.label)
+
+  # Function to calculate total branch length for a clade
+  get_clade_branch_length <- function(tree, node) {
+    clade <- extract.clade(tree, node)
+    sum(clade$edge.length)
+  }
+
   seq_along(tree$node.label) %>%
     tibble(
       degree = count_tips_per_node(tree),
@@ -23,7 +30,8 @@ get_interior_nodes <- function(tree) {
       depth_ct = get_all_distances_to_root(tree, as_edge_count = TRUE)[(n_tip + 1):(n_tip + n_node)],
       depth_bl = get_all_distances_to_root(tree, as_edge_count = FALSE)[(n_tip + 1):(n_tip + n_node)],
       father_node = get_ancestral_nodes(tree, . + n_tip, Nsplits = 1),
-      node_label = tree$node.label
+      node_label = tree$node.label,
+      total_bl = sapply(., function(node) get_clade_branch_length(tree, node + n_tip))
     ) %>%
     mutate(father_node = ifelse(father_node == node_id, 0, father_node)) %>%
     filter(degree > 3)
@@ -135,7 +143,8 @@ split_func <- function(candidate_nodes, all_nodes, tree_size_lower_lim, tree_siz
       summarise(
         child_degrees = list(degree.y),
         depth_bl = first(depth_bl.x),
-        degree = first(degree.x)
+        degree = first(degree.x),
+        child_bl = sum(total_bl.y)
       ) %>%
       mutate(child_degrees = lapply(child_degrees, as.integer)) %>% # Convert child_degrees to integer
       filter(sapply(child_degrees, function(x) any(x >= tree_size_lower_lim))) # Filter nodes with child_degrees >= tree_size_lower_lim
@@ -154,12 +163,13 @@ split_func <- function(candidate_nodes, all_nodes, tree_size_lower_lim, tree_siz
     } else if (mode == 3) {
       # Return the node with the minimal depth(branch length) and at least one child node having degree >= tree_size_lower_lim
       candidate_nodes %>%
-        arrange(depth_bl) %>%
+        arrange(desc(child_bl)) %>%
         slice(1) %>%
         pull(node_id)
     }
   }
 }
+
 
 #' Split nodes based on a list of node IDs to remove
 #'
@@ -189,7 +199,6 @@ split_nodes <- function(nodes, all_nodes, node_ids_to_remove, tree_size_lower_li
 select_nodes_to_prune <- function(all_nodes, tree_size_lower_lim, tree_size_upper_lim, num_tree = NULL, mode = 1) {
   # Initial pruning: remove nodes with degree > tree_size_upper_lim
   candidate_nodes <- all_nodes[all_nodes$node_id == 1, ]
-  total_degree <- candidate_nodes$degree
 
   while (TRUE) {
     node_ids_to_prune <- split_func(candidate_nodes, all_nodes, tree_size_lower_lim, tree_size_upper_lim, num_tree, mode = 0)
@@ -208,12 +217,6 @@ select_nodes_to_prune <- function(all_nodes, tree_size_lower_lim, tree_size_uppe
       break
     }
     candidate_nodes <- split_nodes(candidate_nodes, all_nodes, node_ids_to_prune, tree_size_lower_lim)
-    if ((mode == 2) && is.null(num_tree)) {
-      current_degree <- sum(candidate_nodes$degree)
-      if (current_degree / total_degree <= 0.95) {
-        break
-      }
-    }
   }
   return(candidate_nodes)
 }
@@ -226,12 +229,12 @@ select_nodes_to_prune <- function(all_nodes, tree_size_lower_lim, tree_size_uppe
 #' @param tree_size_lower_lim Lower limit for the size of subtrees
 #' @param tree_size_upper_lim Upper limit for the size of subtrees
 #' @param num_tree Number of subtrees to select (optional)
-#' @param mode Pruning mode ("random", "lower", "upper", or "shallow")
+#' @param mode Pruning mode ("split", "lower", "upper", or "shallow")
 #' @return A list containing the pruned nodes and pruning criteria
-auto_prune <- function(tree, interior_nodes, tree_size_lower_lim, tree_size_upper_lim, num_tree = NULL, mode = "random") {
+auto_prune <- function(tree, interior_nodes, tree_size_lower_lim, tree_size_upper_lim, num_tree = NULL, mode = "split") {
   total_taxa <- length(tree$tip.label)
 
-  if (mode == "random") {
+  if (mode == "split") {
     pruned_nodes <- select_nodes_to_prune(interior_nodes, tree_size_lower_lim, tree_size_upper_lim, num_tree, mode = 0)
     if (!is.null(num_tree)) {
       if (nrow(pruned_nodes) >= num_tree) {
@@ -255,13 +258,22 @@ auto_prune <- function(tree, interior_nodes, tree_size_lower_lim, tree_size_uppe
           arrange(desc(degree)) %>%
           slice(1:num_tree)
       }
+    } else {
+      # keep nodes to the sum up top 80% degree count from high to low
+      total_taxa <- interior_nodes %>%
+        filter(node_id == 1) %>%
+        pull(degree)
+      pruned_nodes <- pruned_nodes %>%
+        arrange(desc(degree)) %>%
+        mutate(cum_degree = cumsum(degree)) %>%
+        filter(cum_degree <= 0.8 * total_taxa)
     }
-  } else if (mode == "shallow") {
-    pruned_nodes <- select_nodes_to_prune(interior_nodes, tree_size_lower_lim, tree_size_upper_lim, num_tree = NULL, mode = 3)
+  } else if (mode == "deep") {
+    pruned_nodes <- select_nodes_to_prune(interior_nodes, tree_size_lower_lim, tree_size_upper_lim, num_tree, mode = 3)
     if (!is.null(num_tree)) {
       if (nrow(pruned_nodes) >= num_tree) {
         pruned_nodes <- pruned_nodes %>%
-          arrange(desc(depth_bl)) %>%
+          arrange(desc(total_bl)) %>%
           slice(1:num_tree)
       }
     }
@@ -300,11 +312,15 @@ output_subtrees_and_taxa_list <- function(tree, node_ids_to_prune, output_dir) {
 #' @param tree_size_upper_lim Upper limit for the size of subtrees
 #' @param num_tree Number of subtrees to select (optional)
 #' @param output_dir Output directory
-#' @param mode Pruning mode ("random", "lower", "upper", or "shallow")
-prune_subtrees <- function(tree_file, tree_size_lower_lim, tree_size_upper_lim, num_tree = NULL, output_dir, mode = "random") {
+#' @param mode Pruning mode ("split", "lower", "upper", or "shallow")
+prune_subtrees <- function(tree_file, tree_size_lower_lim, tree_size_upper_lim, num_tree = NULL, output_dir, mode = "split") {
   # Read and process the input tree
-  tree <- read_tree(file = tree_file) %>%
-    root_at_midpoint()
+  tree <- read_tree(file = tree_file)
+
+  if (!is.rooted(tree)) {
+    warning("The input tree is not rooted. Rooting at the midpoint.")
+    tree <- root_at_midpoint(tree)
+  }
 
   interior_nodes <- get_interior_nodes(tree)
   original_num_taxa <- length(tree$tip.label)
@@ -368,7 +384,7 @@ option_list <- list(
   make_option(c("-u", "--tree_size_upper_lim"), type = "integer", default = 100, help = "Upper limit for the size of subtrees", metavar = "integer"),
   make_option(c("-n", "--num_tree"), type = "integer", default = NULL, help = "Number of subtrees", metavar = "integer"),
   make_option(c("-o", "--output_dir"), type = "character", default = "./subtree", help = "Path to the output directory", metavar = "character"),
-  make_option(c("-m", "--mode"), type = "character", default = "random", help = "Pruning mode (random/lower/upper/shallow)", metavar = "character")
+  make_option(c("-m", "--mode"), type = "character", default = "split", help = "Pruning mode (split/lower/upper/deep)", metavar = "character")
 )
 
 # Parse command-line options

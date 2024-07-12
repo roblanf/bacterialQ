@@ -9,14 +9,14 @@ import shutil
 import itertools
 import random
 from pathlib import Path, PosixPath
-from typing import Tuple
+from typing import Tuple, Union, List
  
 # Import functional scripts
 from Q_convert import *
 from grep_iqtree_output import *
 from quality_trimming import *
 from concat_seq import concatenate_seq_dict, concatenate_seq_list
-from get_subtree import prune_tree, remove_redundant_nodes
+from get_subtree import prune_tree, remove_redundant_nodes, root_at_outgroups
 from mdlogger import *
 from metalogger import *
 from analyze_best_models import *
@@ -87,17 +87,17 @@ def run_command(cmd: str, log_file: str, log_any: bool = True, log_output: bool 
     return stdout, stderr, exit_code
 
 @log_and_handle_error
-def sample_alignment(loci_dir: Path, taxa_list: Path, output_folder: Path, num_aln: int = None, prop_aln: float = None, combine_subtree: bool = False, loci_filter: Path = None, nchar_row = None, nchar_col = None) -> None:
+def sample_alignment(loci_dir: Path, taxa_file_list: Union[Path, List[Path]], output_folder: Path, num_aln: int = None, prop_aln: float = None, combine_taxa_list: bool = False, loci_filter: Path = None, nchar_row = None, nchar_col = None) -> None:
     """
     Sample alignments from the given loci directory and subtree directory.
 
     Args:
         loci_dir (Path): Path to the directory containing loci alignments.
-        taxa_list (Path): Path to the directory or file containing taxa for each subtree.
+        taxa_file_list (Union[Path, List[Path]]): Path to the file containing taxa or a list of paths to taxa files.
         output_folder (Path): Path to the sampled alignments output folder.
         num_aln (int, optional): Number of alignments to sample. If both num_aln and prop_aln is None, sample all alignments.
         prop_aln (float, optional): Proportion of alignments to sample. If both num_aln and prop_aln is None, sample all alignments.
-        combine_subtree (bool): Whether to combine subtrees into a single file.
+        combine_taxa_list (bool): Whether to combine subtrees into a single file.
         loci_filter (Path, optional): Path to the file containing the list of loci to filter.
     """
     output_folder.mkdir(parents=True, exist_ok=True)  # Create the output folder if it doesn't exist
@@ -123,7 +123,7 @@ def sample_alignment(loci_dir: Path, taxa_list: Path, output_folder: Path, num_a
 
     def process_loci_files(loci_files, taxa_list, output_dir, num_aln=None, prop_aln = None, nchar_row = None, nchar_col = None):
         splited_aln_count, deleted_aln_count = 0, 0
-        if taxa_list.is_file():
+        if isinstance(taxa_list, Path) and taxa_list.is_file():
             # If a single taxa file is provided
             log_message('process', f"Input a single taxa file: {taxa_list}. Sampling sequences for {len(loci_files)} loci.")
             log_message('result', f"Number of input species: {sum(1 for line in open(taxa_list))}")
@@ -133,16 +133,19 @@ def sample_alignment(loci_dir: Path, taxa_list: Path, output_folder: Path, num_a
                     splited_aln_count += 1
                 else:
                     deleted_aln_count += 1
-        elif taxa_list.is_dir():
-            if combine_subtree:
+        elif isinstance(taxa_list, list):
+            if combine_taxa_list:
                 # If subtrees need to be combined
-                log_message('process', f"Input {len(os.listdir(taxa_list))} subtree files and combine them. Sampling sequences for {len(loci_files)} loci.")
+                log_message('process', f"Input {len(taxa_list)} taxa files and combine them. Sampling sequences for {len(loci_files)} loci.")
                 all_taxa_file = output_dir / "combined_taxa.txt"
                 with open(all_taxa_file, 'w') as f:
-                    for taxa_file in os.listdir(taxa_list):
-                        if taxa_file.endswith(".txt"):
-                            with open(taxa_list / taxa_file, 'r') as tf:
-                                f.write(tf.read())
+                    for taxa_file in taxa_list:
+                        with open(taxa_file, 'r') as tf:
+                            content = tf.read()
+                            # Check if the content ends with a newline
+                            if not content.endswith('\n'):
+                                content += '\n'
+                            f.write(content)
                 target_aln_count = min(num_aln or len(loci_files), len(loci_files))
                 for loci_file in loci_files:
                     output_file = output_dir / os.path.basename(loci_file)
@@ -150,23 +153,17 @@ def sample_alignment(loci_dir: Path, taxa_list: Path, output_folder: Path, num_a
                         splited_aln_count += 1
                     else:
                         deleted_aln_count += 1
-                    if splited_aln_count >= target_aln_count:
-                        break
-                if num_aln is not None and splited_aln_count < num_aln:
-                    log_message('result', f"Could not obtain {num_aln} alignments after combining subtrees. Keeping {splited_aln_count} alignments.")
+                # Remove the combined taxa file to avoid contamination
+                os.remove(all_taxa_file)
             else:
                 # If subtrees don't need to be combined
-                total_aln_count = len(loci_files) * len(os.listdir(taxa_list))
+                total_aln_count = len(loci_files) * len(taxa_list)
                 num_aln = math.ceil(prop_aln * total_aln_count) if prop_aln is not None else num_aln
-                log_message('process', f"Input {len(os.listdir(taxa_list))} subtree files and {len(loci_files)} loci files. Total number of potential alignments: {total_aln_count}.")
+                log_message('process', f"Input {len(taxa_list)} subtree files and {len(loci_files)} loci files. Total number of potential alignments: {total_aln_count}.")
                 if num_aln is not None and num_aln < total_aln_count:
                     # If the requested number of alignments is less than the total potential alignments
                     log_message('result', f"Sub-sampling {num_aln} alignments from {total_aln_count} alignments.")
-                    subtree_loci_pairs = list(itertools.product(
-                        (taxa_list / taxa_file for taxa_file in os.listdir(taxa_list) if taxa_file.endswith(".txt")),
-                        loci_files
-                    ))
-                    print(len(subtree_loci_pairs))
+                    subtree_loci_pairs = list(itertools.product(taxa_list, loci_files))
                     random.shuffle(subtree_loci_pairs)  # Shuffle the list to avoid sequential selection
                     target_aln_count = min(num_aln or total_aln_count, total_aln_count)
                     target_aln_count = min(int(target_aln_count * 1.2), total_aln_count)  # 20% spare space, but not exceeding total alignment count
@@ -185,29 +182,31 @@ def sample_alignment(loci_dir: Path, taxa_list: Path, output_folder: Path, num_a
                         log_message('result', f"Could not obtain the requested {num_aln} alignments. Keeping {splited_aln_count} alignments.")
                 else:
                     # If all potential alignments need to be processed
-                    for taxa_file in os.listdir(taxa_list):
-                        if taxa_file.endswith(".txt"):
-                            tree_name = os.path.splitext(taxa_file)[0]
-                            for loci_file in loci_files:
-                                loci_name = os.path.splitext(os.path.basename(loci_file))[0]
-                                ext = os.path.splitext(loci_file)[1]
-                                output_file = output_dir / f"{tree_name}_{loci_name}{ext}"
-                                if run_faSomeRecords(loci_file, taxa_list / taxa_file, output_file, nchar_row, nchar_col):
-                                    splited_aln_count += 1
-                                else:
-                                    deleted_aln_count += 1
+                    for taxa_file in taxa_list:
+                        tree_name = os.path.splitext(os.path.basename(taxa_file))[0]
+                        for loci_file in loci_files:
+                            loci_name = os.path.splitext(os.path.basename(loci_file))[0]
+                            ext = os.path.splitext(loci_file)[1]
+                            output_file = output_dir / f"{tree_name}_{loci_name}{ext}"
+                            if run_faSomeRecords(loci_file, taxa_file, output_file, nchar_row, nchar_col):
+                                splited_aln_count += 1
+                            else:
+                                deleted_aln_count += 1
                     log_message('result', f"Obtained {splited_aln_count} alignments from all potential alignments.")
         else:
-            raise ValueError(f"{taxa_list} is neither a file nor a directory.")
+            raise ValueError(f"{taxa_list} is neither a file nor a list of files.")
 
         log_message('process', f"Remaining {splited_aln_count} alignments. Deleted {deleted_aln_count} alignments.")
+        return splited_aln_count
 
     loci_files = filter_loci_files(loci_dir, loci_filter)
 
     if not loci_files:
         raise ValueError("Loci set is empty after filtering. Program will terminate.")
     
-    process_loci_files(loci_files, taxa_list, output_folder, num_aln = num_aln, prop_aln = prop_aln, nchar_row = nchar_row, nchar_col = nchar_col)
+    splited_aln_count = process_loci_files(loci_files, taxa_file_list, output_folder, num_aln = num_aln, prop_aln = prop_aln, nchar_row = nchar_row, nchar_col = nchar_col)
+    return splited_aln_count
+
 
 def get_constraint_tree(loci_dir, subtree_dir, output_tree_path):
     from Bio import Phylo
@@ -231,12 +230,85 @@ def get_constraint_tree(loci_dir, subtree_dir, output_tree_path):
                 subtree_name = re.search('subtree_\d+', file).group()
                 get_subtree_from_fasta(tree_dict[subtree_name], file_path, output_tree)
 
+def time_checkpoint(used_time_list, start_time, time_limit):
+    if time_limit is None:
+        return False
+    end_time = time.time()
+    used_time = end_time - start_time
+    used_time = used_time + sum(used_time_list)
+    if used_time > time_limit:
+        return True
+    return False
+
+def bound_next_round_time(times):
+    if not times:  # Check if the list is empty
+        return 0
+    
+    min_time = min(times)  # Find the minimum value in the list
+    return min_time * 0.6  # Return 0.6 times the minimum value
+
+def fix_best_model_nex(file_path):
+    """
+    Fix the error that some version of IQ-TREE produces some meaningless command in the .best_model file.
+    """
+    with open(file_path, 'r') as file:
+        lines = file.readlines()
+
+    modified_lines = []
+    encountered_charpartition = False
+
+    for line in lines:
+        if "charpartition mymodels =" in line:
+            encountered_charpartition = True
+            break
+        # Find the last ':' and ';' in the line
+        last_colon = line.rfind(':')
+        last_semicolon = line.rfind(';')
+        if last_colon != -1 and last_semicolon != -1 and last_colon < last_semicolon:
+            # Replace the content between the last ':' and the last ';' with a space
+            line = line[:last_colon + 1] + ' ' + line[last_semicolon:]
+        modified_lines.append(line)
+
+    # Append the remaining lines without modification
+    if encountered_charpartition:
+        modified_lines.append(line)  # Append the line with 'charpartition mymodels ='
+        modified_lines.extend(lines[lines.index(line) + 1:])
+
+    # Write the modified lines back to the file
+    with open(file_path, 'w') as file:
+        file.writelines(modified_lines)
+
 @log_and_handle_error
-def initial_data_extraction(args: argparse.Namespace) -> Tuple[Path, Path]:
+def initial_aln_extraction(args: argparse.Namespace) -> Tuple[Path, Path]:
     """
     Extract training and testing loci for all signed species.
     """
-    nchar_keep_col = max(sum(1 for line in open(args.output_dir / "select_id.txt"))//100, 4)
+    n_species = sum(1 for line in open(args.output_dir / "select_id.txt"))
+    nchar_keep_col = max(n_species//100, 4)
+
+    if args.use_outgroup:
+        # If outgroup is used, add the outgroup to the taxa list for sampling alignments
+        log_message('process', f"Select outgroup taxa for {args.taxa_name}")
+        # n_outgroup_taxa = max(min(n_species // 100, max(5, n_species // 100)), 50)
+        cmd = f"Rscript get_outgroup.R -t {args.decorated_tree} -n {args.taxa_name} -d 0.1 -o {args.output_dir / 'outgroup_id.txt'} -c {args.taxa_file} -s {args.outgroup_taxa_list} -N 1 --detail"
+        run_command(cmd, f"{args.output_dir}/log.md")
+        # open the detail file, read and log the first line as the detail of outgroup selection
+        with open(args.output_dir / "outgroup_species_info.txt", 'r') as f:
+            log_message('result', f"Outgroup selection detail: {f.readline()}")
+        taxa_file_list = [args.output_dir / "select_id.txt", args.output_dir / "outgroup_id.txt"]
+
+        # If outgroup is used, sample alignments for the outgroup taxa
+        log_message('process', "Abstract alingment of outgroup taxa scale in training set:")
+        sample_alignment(args.train_loc_path, taxa_file_list, args.output_dir / "loci" / "training_loci_with_outgroup", num_aln=None, nchar_col=nchar_keep_col, combine_taxa_list=True)
+        log_message('process', "Abstract alingment of outgroup taxa scale in testing set:")
+        sample_alignment(args.test_loc_path, taxa_file_list, args.output_dir / "loci" / "testing_loci_with_outgroup", num_aln=None, nchar_col=nchar_keep_col, combine_taxa_list=True)
+
+        log_message('process', "Concatenating training loci contains outgroups...")
+        concatenate_seq_dict(str(args.output_dir / "loci" / "training_loci_with_outgroup"), str(args.output_dir / "loci" / "concat_training_loci_with_outgroup.faa"))
+        log_message('process', "Concatenating testing loci contains outgroups...")
+        concatenate_seq_dict(str(args.output_dir / "loci" / "testing_loci_with_outgroup"), str(args.output_dir / "loci" / "concat_testing_loci_with_outgroup.faa"))
+
+    # Sample alignments for the selected taxa
     log_message('process', "Abstract alingment of selected taxa scale in training set:")
     sample_alignment(args.train_loc_path, args.output_dir / "select_id.txt", args.output_dir / "loci" / "training_loci", loci_filter=args.output_dir / "select_loci.txt",num_aln=None, nchar_col=nchar_keep_col)
     log_message('process', "Abstract alingment of selected taxa scale in testing set:")
@@ -285,7 +357,70 @@ def prune_subtrees(args, ref_tree, subtree_dir, num_subtrees, prune_mode):
             log_message('error', f"Error remove mono-furcation nodes in {file}: {e}")
     return subtree_dir
 
-def test_model(args, output_dir, test_loci_dir, model_name_set, trained_model_nex, mode, loop_id, te=None, initial_tree = None, pre = None):
+def extract_and_log_model_info_concat(iqtree_file):
+    """
+    Extract model information from the IQ-TREE output file and log it as a Markdown table.
+
+    Args:
+        iqtree_file (str): Path to the IQ-TREE output file.
+
+    Returns:
+        list: A list of model data containing model name, LogL, and BIC.
+    """
+    with open(iqtree_file) as f:
+        content = f.read()
+
+    model_table_start = content.find("List of models sorted by BIC scores:")
+    if model_table_start != -1:
+        model_table_end = content.find("AIC, w-AIC", model_table_start) - 1
+        model_table = content[model_table_start:model_table_end].strip()
+
+        log_message('result', "Model testing results (concat):")
+        log_message('result', "| Model | LogL | BIC |", new_line=True)
+        log_message('result', "|-------|------|-----|")
+
+        model_data = []
+        for line in model_table.split("\n")[3:]:  # Skip header lines
+            if not line.strip():
+                continue
+            fields = line.split()
+            model, logl, bic = fields[0], fields[1], fields[8]
+            model_data.append([model, logl, bic])
+            log_message('result', f"| {model} | {logl} | {bic} |")
+
+        return model_data
+    return []
+
+
+def extract_and_log_model_info_partition(iqtree_file, output_dir):
+    """
+    Extract model information from the partitioned IQ-TREE output file and log it as a Markdown table.
+
+    Args:
+        iqtree_file (str): Path to the IQ-TREE output file.
+        output_dir (Path): Output directory for test results.
+
+    Returns:
+        dict: A dictionary of model counts.
+    """
+    partition_test_nex = f"{iqtree_file}.best_scheme.nex"
+    model_data = get_and_print_model_counts(partition_test_nex, f"{output_dir}/model_counts.txt")
+    best_model_name = max(model_data, key=model_data.get)
+
+    log_message('result', "Best model for test data:")
+    log_message('result', best_model_name)
+
+    # Print best models output as a table
+    log_message('result', "| Model | Count |", new_line=True)
+    log_message('result', "|-------|-------|")
+
+    for model, count in model_data.items():
+        log_message('result', f"| {model} | {count} |")
+
+    return model_data
+
+
+def test_model(args, output_dir, test_loci_dir, model_name_set, trained_model_nex, mode, loop_id, te=None, initial_tree=None, pre=None):
     """
     Test the model performance on test loci or concatenated alignment.
 
@@ -311,10 +446,10 @@ def test_model(args, output_dir, test_loci_dir, model_name_set, trained_model_ne
             concat_test_loci = output_dir / "concat_test_loci.faa"
             concatenate_seq_dict(str(test_loci_dir), str(concat_test_loci))
         # Test models on the concatenated alignment
-        cmd = f"iqtree -T {args.max_threads} -s {concat_test_loci} -m TESTNEWONLY -mset {model_name_set} -mdef {trained_model_nex}"
+        cmd = f"iqtree -seed 1 -T {args.max_threads} -s {concat_test_loci} -m TESTNEWONLY -mset {model_name_set} -mdef {trained_model_nex}"
     elif mode == "partition":
         # Test models on individual test loci
-        cmd = f"iqtree -T {args.max_threads} -p {test_loci_dir} -m TESTNEWONLY -mset {model_name_set} -mdef {trained_model_nex}"
+        cmd = f"iqtree -seed 1 -T {args.max_threads} -p {test_loci_dir} -m TESTNEWONLY -mset {model_name_set} -mdef {trained_model_nex} -wpl"
     else:
         log_message('error', "Invalid name of testing method.")
         return
@@ -334,45 +469,15 @@ def test_model(args, output_dir, test_loci_dir, model_name_set, trained_model_ne
     log_link('result', f"Detail result of {mode} test", f"{test_prefix}.log")
     write_iqtree_statistic(test_iqtree_file, f"{args.prefix}", f"{args.output_dir}/iqtree_results.csv", extra_info={"loop": loop_id, "step": f"{step}"})
 
+    # Generate the tree without outgroup if the outgroup is used
+    if args.use_outgroup:
+        reroot_treefile_by_outgroup(f"{test_prefix}.treefile", args.output_dir / "outgroup_id.txt")
 
     if mode == "concat":
-        # Extract model information and print as Markdown table
-        with open(test_iqtree_file) as f:
-            content = f.read()
-        
-        model_table_start = content.find("List of models sorted by BIC scores:")
-        if model_table_start != -1:
-            model_table_end = content.find("AIC, w-AIC", model_table_start) - 1
-            model_table = content[model_table_start:model_table_end].strip()
+        model_data = extract_and_log_model_info_concat(test_iqtree_file)
+    elif mode == "partition":
+        model_data = extract_and_log_model_info_partition(test_prefix, output_dir)
 
-            log_message('result', f"Model testing results ({mode}):")
-            log_message('result', "| Model | LogL | BIC |", new_line = True)
-            log_message('result', "|-------|------|-----|")
-
-            model_data = []
-            for line in model_table.split("\n")[3:]:  # Skip header lines
-                if not line.strip():
-                    continue
-                fields = line.split()
-                model, logl, bic = fields[0], fields[1], fields[8]
-                model_data.append([model, logl, bic])
-                log_message('result', f"| {model} | {logl} | {bic} |")
-
-    if mode == "partition":
-        partition_test_nex = f"{test_prefix}.best_scheme.nex"
-        model_data = get_and_print_model_counts(partition_test_nex, f"{output_dir}/model_counts.txt")
-        best_model_name = max(model_data, key=model_data.get)
-          
-        log_message('result', f"Best model for test data:")
-        log_message('result', best_model_name)
-
-        # Print best models output as a table
-        log_message('result', "| Model | Count |", new_line = True)
-        log_message('result', "|-------|-------|")
-        
-        for model, count in model_data.items():
-            log_message('result', f"| {model} | {count} |")
-        
     return model_data
 
 def compare_trees(args, prev_tree, new_tree, html_output_dir, name):
@@ -477,6 +582,34 @@ def create_nexus_partition(input_dir, output_file):
                 f.write(f"charset {file} = {abs_path}: ;\n")
         f.write("end;\n")
 
+def reroot_treefile_by_outgroup(tree_file, outgroup_taxa_file, delete_outgroup=True):
+    """
+    Reroot the tree at the outgroup taxa and delete the outgroup clade, saving the original tree as a backup.
+
+    Args:
+        tree_file (str or Path): Path to the original tree file.
+        outgroup_taxa_file (str or Path): Path to the file containing outgroup taxa.
+        delete_outgroup (bool): Whether to delete the outgroup clade after rerooting. Default is True.
+    Returns:
+        None
+    """
+    tree_file = Path(tree_file)
+    outgroup_taxa_file = Path(outgroup_taxa_file)
+    
+    # Add '_with_outgroup' suffix to the original tree file name
+    new_tree_with_outgroup = tree_file.with_name(tree_file.stem + '_with_outgroup' + tree_file.suffix)
+    
+    # Rename the original tree file
+    log_message('process', f'Prune outgroup from the tree. The original tree is renamed as {new_tree_with_outgroup}.')
+    shutil.move(tree_file, new_tree_with_outgroup)
+    
+    # Read outgroup taxa from the file
+    with open(outgroup_taxa_file, 'r') as file:
+        outgroup_list = [line.strip() for line in file.readlines()]
+    
+    # Root the tree at the outgroups
+    root_at_outgroups(new_tree_with_outgroup, outgroup_list, tree_file, delete_outgroup)
+
 
 def main(args: argparse.Namespace) -> None:
     """
@@ -490,6 +623,9 @@ def main(args: argparse.Namespace) -> None:
 
     setup_logging(args.output_dir, args.verbose)
     files_to_remove = []
+    num_aln_inloop = []
+    time_usage_inloop = []
+    training_tree_ll = []
 
     log_message('process', "## Initialization")
     log_message('result', f"Running model estimation with the following parameters:")
@@ -510,16 +646,20 @@ def main(args: argparse.Namespace) -> None:
     quality_trimming(args.taxa_file, args.taxa_scale, args.taxa_name, args.output_dir, args.t_drop_loc, args.t_drop_species)
 
     log_message('process', "### Initial data extraction")
-    concat_training_loci, concat_testing_loci = initial_data_extraction(args)
+    concat_training_loci, concat_testing_loci = initial_aln_extraction(args)
     training_loci_path = args.output_dir / "loci" / "training_loci"
     testing_loci_path = args.output_dir / "loci" / "testing_loci"
-    files_to_remove.append(args.output_dir / "loci")
-    files_to_remove.append(args.output_dir / "pruned_integrity_table.csv")
+    if not args.keep_aln:
+        files_to_remove.append(args.output_dir / "loci")
+        files_to_remove.append(args.output_dir / "pruned_integrity_table.csv")
     # with open(args.output_dir / "select_id.txt", 'r') as f:
     #     all_species_count = len(f.readlines())
 
     log_message('process', "### Prune reference tree")
-    prune_tree(args.ref_tree, args.output_dir / "select_id.txt", args.output_dir / "ref_tree.tre")
+    prune_tree(args.ref_tree, [args.output_dir / "select_id.txt"], args.output_dir / "ref_tree.tre")
+    if args.use_outgroup:
+        prune_tree(args.ref_tree, [args.output_dir / "select_id.txt", args.output_dir / "outgroup_id.txt"], args.output_dir / "ref_tree_with_outgroups.tre")
+        outgroup_allspc_tree = args.output_dir / "ref_tree_with_outgroups.tre"
     filtered_allspc_tree = args.output_dir / "ref_tree.tre"
 
     iteration_id = 1
@@ -528,6 +668,10 @@ def main(args: argparse.Namespace) -> None:
     trained_model_nex = None
     prev_tree = filtered_allspc_tree
     initial_best_model_name = None
+    if args.use_outgroup:
+        prev_outgroup_tree = outgroup_allspc_tree
+        concat_training_loci_og = args.output_dir / "loci" / "concat_training_loci_with_outgroup.faa"
+        concat_testing_loci_og = args.output_dir / "loci" / "concat_testing_loci_with_outgroup.faa"
 
     # Create the directory for the output of models
     models_dir = args.output_dir / "inferred_models"
@@ -556,7 +700,9 @@ def main(args: argparse.Namespace) -> None:
 
         # 2. Extract subtree loci from the filtered sequence set using split_loci.sh
         log_message('process', "### Extract subtree loci for trainning")
-        sample_alignment(training_loci_path, subtree_dir / "taxa_list", iteration_dir / "training_loci", num_aln=args.num_aln, prop_aln = args.prop_aln, nchar_row = 3, nchar_col = 1)
+        taxa_files = list((subtree_dir / "taxa_list").glob("*.txt"))
+        num_aln = sample_alignment(training_loci_path, taxa_files, iteration_dir / "training_loci", num_aln=args.num_aln, prop_aln = args.prop_aln, nchar_row = 3, nchar_col = 1)
+        num_aln_inloop.append(num_aln)
         subtree_train_loci_dir = iteration_dir / "training_loci"
         files_to_remove.append(subtree_train_loci_dir)
 
@@ -565,7 +711,7 @@ def main(args: argparse.Namespace) -> None:
         subtree_update_dir = iteration_dir / "subtree_update"
         subtree_update_dir.mkdir(parents=True, exist_ok=True)
         num_threads = min(int(args.max_threads), len(list(subtree_train_loci_dir.glob("*.fa*"))))
-        cmd = f"iqtree -T {num_threads} -S {subtree_train_loci_dir} -m MFP -mset {model_set}"
+        cmd = f"iqtree -seed 1 -T {num_threads} -S {subtree_train_loci_dir} -m MFP -mset {model_set}"
         if trained_model_nex:
             cmd += f" -mdef {trained_model_nex}"
         if args.fix_subtree_topology:
@@ -579,15 +725,18 @@ def main(args: argparse.Namespace) -> None:
         cmd += f" -pre {subtree_update_dir / args.prefix}"
         run_command(cmd, f"{args.output_dir}/log.md", log_output=args.keep_cmd_output, log_time=True)
 
-        subtree_update_nex = subtree_update_dir / f"{args.prefix}.best_scheme.nex"
+        subtree_model_nex = subtree_update_dir / f"{args.prefix}.best_model.nex"
         subtree_iqtree_path = subtree_update_dir / f"{args.prefix}.iqtree"  
         subtree_update_trees = subtree_update_dir / f"{args.prefix}.treefile" 
         write_iqtree_statistic(subtree_iqtree_path, f"{args.prefix}", f"{args.output_dir}/iqtree_results.csv", extra_info={"loop": iteration_id, "step": "subtree_update"})
         plot_loci_statistic(subtree_iqtree_path, subtree_update_dir / "loci_statistic.png")
         log_link('result', "Subtree update log", str(subtree_update_dir / f"{args.prefix}.iqtree"))
 
+        # Detele reduandant comma in best_model nex file
+        fix_best_model_nex(subtree_model_nex)
+
         # Get the initial best model name
-        model_data = get_and_print_model_counts(subtree_update_nex, f"{subtree_update_dir}/models.txt")
+        model_data = get_and_print_model_counts(subtree_model_nex, f"{subtree_update_dir}/models.txt")
         best_model_name = max(model_data, key=model_data.get)
         if iteration_id == 1:
             initial_best_model_name = best_model_name
@@ -619,14 +768,19 @@ def main(args: argparse.Namespace) -> None:
         total_models = sum(best_model_counts.values())
         model_set = ",".join([model for model, count in best_model_counts.items() if count / total_models >= keep_model_thres])
 
+        # Check the time usage before the next step
+        if time_checkpoint(time_usage_inloop, loop_start_time, args.time_limit):
+            log_message('error', f"Time limit reached. Program will terminate in loop {iteration_id} before model update.")
+            break
+
         # 4. Estimate new models using ModelFinder based on the best model for each partition and the pruned subtree
         log_message('process', "### Model update")
         model_update_dir = iteration_dir / "model_update"
         model_update_dir.mkdir(parents=True, exist_ok=True)
         if not trained_model_nex:
-            cmd = f"iqtree -T {num_threads} -S {subtree_update_nex} -te {subtree_update_trees} --model-joint GTR20+FO --init-model {best_model_name} -pre {model_update_dir / args.prefix}"  
+            cmd = f"iqtree -seed 1 -T {num_threads} -S {subtree_model_nex} -te {subtree_update_trees} --model-joint GTR20+FO --init-model {best_model_name} -pre {model_update_dir / args.prefix}"  
         else:
-            cmd = f"iqtree -T {num_threads} -S {subtree_update_nex} -te {subtree_update_trees} --model-joint GTR20+FO --init-model {best_model_name} -mdef {trained_model_nex} -pre {model_update_dir / args.prefix}"
+            cmd = f"iqtree -seed 1 -T {num_threads} -S {subtree_model_nex} -te {subtree_update_trees} --model-joint GTR20+FO --init-model {best_model_name} -mdef {trained_model_nex} -pre {model_update_dir / args.prefix}"
         run_command(cmd, f"{args.output_dir}/log.md", log_output=args.keep_cmd_output, log_time=True)
 
         model_iqtree_file = model_update_dir / f"{args.prefix}.iqtree"
@@ -687,6 +841,9 @@ def main(args: argparse.Namespace) -> None:
         if ifconverge:
             # If convergence is reached, stop the iteration
             log_message('result', f"Convergence of model reached at iteration {iteration_id}")
+            loop_end_time = time.time()
+            loop_time = loop_end_time - loop_start_time
+            time_usage_inloop.append(loop_time)
             break
         
         # 6. Re-estimate the tree using FastTree on the concatenated loci
@@ -696,12 +853,19 @@ def main(args: argparse.Namespace) -> None:
 
         # Set the number of threads for fasttree to 3
         os.environ['OMP_NUM_THREADS'] = '3'
-        cmd_FT = f"{PATH_FASTTREEMP} -trans {model_update_dir}/Q_matrix_fasttree.txt -gamma -spr 4 -sprlength 1000 -boot 100 -log {tree_update_dir}/fasttree.log -intree {filtered_allspc_tree} {concat_training_loci} > {tree_update_dir / args.prefix}_{iteration_id}.treefile"
+        if args.use_outgroup:
+            cmd_FT = f"{PATH_FASTTREEMP} -trans {model_update_dir}/Q_matrix_fasttree.txt -gamma -spr 4 -sprlength 1000 -boot 100 -log {tree_update_dir}/fasttree.log -intree {prev_outgroup_tree} {concat_training_loci_og} > {tree_update_dir / args.prefix}_{iteration_id}.treefile"
+        else:
+            cmd_FT = f"{PATH_FASTTREEMP} -trans {model_update_dir}/Q_matrix_fasttree.txt -gamma -spr 4 -sprlength 1000 -boot 100 -log {tree_update_dir}/fasttree.log -intree {prev_tree} {concat_training_loci} > {tree_update_dir / args.prefix}_{iteration_id}.treefile"
         run_command(cmd_FT, f"{args.output_dir}/log.md", log_output=args.keep_cmd_output, log_time=True)
 
         log_link('result', "FastTree log", str(tree_update_dir / "fasttree.log"))
-
         new_tree = tree_update_dir / f"{args.prefix}_{iteration_id}.treefile"
+        training_tree_ll.append(extract_gamma20loglk(f"{tree_update_dir}/fasttree.log"))
+        if args.use_outgroup:
+            reroot_treefile_by_outgroup(new_tree, args.output_dir / "outgroup_id.txt")
+            prev_outgroup_tree = new_tree.with_name(new_tree.stem + '_with_outgroup' + new_tree.suffix)
+   
         shutil.copy(new_tree, trees_dir / f"Loop_{iteration_id}_FT_Train_G20.treefile")
         compare_trees(args, prev_tree, new_tree, iteration_dir, f"loop_{iteration_id}")
 
@@ -709,7 +873,7 @@ def main(args: argparse.Namespace) -> None:
         if args.test_in_loop:
             inloop_test_dir = iteration_dir / "test_model"
             inloop_test_dir.mkdir(parents=True, exist_ok=True)
-            log_message('process', "### Test model performance")
+            log_message('process', "### Test model with concatenated testing loci inner loop")
             test_model(args, inloop_test_dir, concat_testing_loci, model_set, trained_model_nex, "concat", loop_id = iteration_id, te=new_tree)
 
         iteration_id += 1
@@ -718,13 +882,28 @@ def main(args: argparse.Namespace) -> None:
 
         loop_end_time = time.time()
         loop_time = loop_end_time - loop_start_time
+        time_usage_inloop.append(loop_time)
         log_message('process', f"Time usage for Loop_{iteration_id}: {loop_time:.2f} seconds ({loop_time/3600:.2f} h)")
+
+        # Check the time usage before the next step
+        if time_checkpoint(time_usage_inloop, loop_start_time, args.time_limit):
+            log_message('error', f"Time limit reached. Program will terminate in the end of loop {iteration_id}.")
+            break
+ 
+        if time_checkpoint(time_usage_inloop, loop_start_time, args.time_limit - bound_next_round_time(time_usage_inloop)):
+            log_message('error', f"The estimated remaining time is insufficient to complete the next iteration. Program will terminate in the end of loop {iteration_id}.")
+            break 
 
         if iteration_id > args.max_iterate:
             # If the maximum number of iterations is reached, stop the iteration
             log_message('result', f"Stop loop after {args.max_iterate} times of iteration")
             break
     
+    # record parameters
+    metalogger.log_parameter("num_aln_inloop", num_aln_inloop)
+    metalogger.log_parameter("time_usage_inloop", time_usage_inloop)
+    metalogger.log_parameter("training_tree_ll", training_tree_ll)
+
     # Final model testing
     log_message('process', "## Final test", new_line = True)
     final_test_dir = args.output_dir / "final_test"
@@ -735,6 +914,11 @@ def main(args: argparse.Namespace) -> None:
     concat_all_loci = final_test_dir / "all_loci.faa"
     concatenate_seq_list([concat_training_loci, concat_testing_loci], concat_all_loci)
     files_to_remove.append(concat_all_loci)
+    if args.use_outgroup:
+        concat_all_loci_og = final_test_dir / "all_loci_with_outgroup.faa"
+        concatenate_seq_list([concat_training_loci_og, concat_testing_loci_og], concat_all_loci_og)
+        files_to_remove.append(concat_all_loci_og)
+    
     # 1. Estimate the best final tree on the concatenated loci
     if args.estimate_best_final_tree or args.test_final_tree or args.cross_validation:
         log_message('process', "### Final tree estimation on all loci")
@@ -742,19 +926,43 @@ def main(args: argparse.Namespace) -> None:
             all_loci_partition_nex = final_test_logdir / "all_loci_partition.nex"
             create_nexus_partition([training_loci_path, testing_loci_path], all_loci_partition_nex)
             num_threads = min(int(args.max_threads), len(list(training_loci_path.glob("*.fa*"))) + len(list(testing_loci_path.glob("*.fa*"))))
-            cmd = f"iqtree -T {num_threads} -p {all_loci_partition_nex} -t {new_tree} -m MFP -mset {model_set} -mdef {trained_model_nex} -pre {final_test_logdir}/best_final_tree"
+            cmd = f"iqtree -seed 1 -T {num_threads} -p {all_loci_partition_nex} -t {new_tree} -m MFP -mset {model_set} -mdef {trained_model_nex} -pre {final_test_logdir}/best_final_tree -wpl"
             if args.final_tree_tool == "IQFAST":
                 cmd += " -fast" 
         else:
-            cmd = f"{PATH_FASTTREEMP} -trans {model_update_dir}/Q_matrix_fasttree.txt -gamma -spr 4 -sprlength 1000 -boot 100 -log {final_test_logdir}/best_final_tree.log -intree {new_tree} {concat_training_loci} > {final_test_logdir}/best_final_tree.treefile"
+            if args.use_outgroup:
+                cmd = f"{PATH_FASTTREEMP} -trans {model_update_dir}/Q_matrix_fasttree.txt -gamma -spr 4 -sprlength 1000 -boot 100 -log {final_test_logdir}/best_final_tree.log -intree {prev_outgroup_tree} {concat_all_loci_og} > {final_test_logdir}/best_final_tree.treefile"
+            else:
+                cmd = f"{PATH_FASTTREEMP} -trans {model_update_dir}/Q_matrix_fasttree.txt -gamma -spr 4 -sprlength 1000 -boot 100 -log {final_test_logdir}/best_final_tree.log -intree {new_tree} {concat_all_loci} > {final_test_logdir}/best_final_tree.treefile"
         run_command(cmd, f"{args.output_dir}/log.md", log_output=args.keep_cmd_output, log_time=True)
         new_tree = final_test_logdir / "best_final_tree.treefile"
+        if args.use_outgroup:
+            reroot_treefile_by_outgroup(new_tree, args.output_dir / "outgroup_id.txt")
+
         if args.final_tree_tool == "IQ" or args.final_tree_tool == "IQFAST":
             final_tree_info = write_iqtree_statistic(f"{final_test_logdir}/best_final_tree.iqtree" ,args.prefix , f"{args.output_dir}/iqtree_results.csv", extra_info={"loop": "Final test", "step": "Final best tree"})
-            final_tree_ll = final_tree_info['log_likelihood']
+            final_partition_result = extract_and_log_model_info_partition(f"{final_test_logdir}/best_final_tree.iqtree", f"{final_test_logdir}/final_partition_tree_models.txt")
+            metalogger.log_parameter("final_partition_result", final_partition_result)
+            metalogger.log_parameter("final_tree_info", final_tree_info)
             shutil.copy(new_tree, trees_dir / f"FinalModel_IQ_All_partition.treefile")
         else:
+            metalogger.log_parameter("final_tree_ll", extract_gamma20loglk(f"{final_test_logdir}/best_final_tree.log"))
             shutil.copy(new_tree, trees_dir / f"FinalModel_FT_All_G20.treefile")
+
+    ######### This block is added for the pipeline test, delete in the final version ##########
+    # 1. The final concatenated tree (final_concat_tree) obtained using FastTree under concatenated all loci and the final model
+    if args.pipeline_test_settings:
+        if args.use_outgroup:
+            cmd = f"{PATH_FASTTREEMP} -trans {model_update_dir}/Q_matrix_fasttree.txt -gamma -spr 4 -sprlength 1000 -boot 100 -log {final_test_logdir}/final_concat_tree.log -intree {prev_outgroup_tree} {concat_all_loci_og} > {final_test_logdir}/final_concat_tree.treefile"
+        else:
+            cmd = f"{PATH_FASTTREEMP} -trans {model_update_dir}/Q_matrix_fasttree.txt -gamma -spr 4 -sprlength 1000 -boot 100 -log {final_test_logdir}/final_concat_tree.log -intree {new_tree} {concat_all_loci} > {final_test_logdir}/final_concat_tree.treefile"
+        run_command(cmd, f"{args.output_dir}/log.md", log_output=args.keep_cmd_output, log_time=True)
+        new_tree = final_test_logdir / "final_concat_tree.treefile"
+        if args.use_outgroup:
+            reroot_treefile_by_outgroup(new_tree, args.output_dir / "outgroup_id.txt")
+        metalogger.log_parameter("final_concat_tree_ll", extract_gamma20loglk(f"{final_test_logdir}/final_concat_tree.log"))
+        shutil.copy(new_tree, trees_dir / f"FinalModel_FT_All_G20.treefile")
+    ######### This block is added for the pipeline test, delete in the final version ##########
         
     # 2. Compare the reference tree and the final tree
     log_message('process', "### Tree comparison")
@@ -787,7 +995,9 @@ def main(args: argparse.Namespace) -> None:
     if args.test_partition_test_loci:
         log_message('process', "### Final model testing on partitioned test loci without constraint tree")
         partition_test_result = test_model(args, final_test_logdir, testing_loci_path, model_set, trained_model_nex, "partition", loop_id="final_test_partition", initial_tree=new_tree)
-        metalogger.log_parameter({"final_test_partition": partition_test_result})
+        metalogger.log_parameter("final_test_partition", partition_test_result)
+        final_test_partition_info = write_iqtree_statistic(final_test_logdir / "final_test_partition.iqtree", "final_test_partition", f"{args.output_dir}/iqtree_results.csv", extra_info={"loop": "final_test_partition", "step": "Final test partition"})
+        metalogger.log_parameter("test_partition_result",final_test_partition_info)
 
     # 6. Validate the final model in subtrees on testing loci
     if args.test_subtrees:
@@ -795,20 +1005,21 @@ def main(args: argparse.Namespace) -> None:
         log_message('process', "#### Extract subtree loci for testing")
         subtree_test_loci_dir = final_test_logdir / "testing_alignment"
         files_to_remove.append(subtree_test_loci_dir)
-        prune_subtrees(args, new_tree, final_test_logdir / "subtrees", num_subtrees=None, prune_mode="random")
-        sample_alignment(testing_loci_path, final_test_logdir / "subtrees" / "taxa_list", subtree_test_loci_dir, nchar_row=3, nchar_col=1)
-        log_message('process', "#### Test model performance")
+        prune_subtrees(args, new_tree, final_test_logdir / "subtrees", num_subtrees=None, prune_mode="split")
+        taxa_files_test = list((final_test_logdir / "subtrees" / "taxa_list").glob("*.txt"))
+        sample_alignment(testing_loci_path, taxa_files_test, subtree_test_loci_dir, nchar_row=3, nchar_col=1)
+        log_message('process', "#### Test model performance on subtrees")
         test_model(args, final_test_logdir, subtree_test_loci_dir, model_set, trained_model_nex, "partition", loop_id="final_test_subtrees", te=None)
 
     # 7. Validate the final model in concatenated testing loci
     log_message('process', "### Final model testing of concatenated all loci on final tree")
     #test version: we use the full concatenated loci for testing instead of test loci
-    final_concat_result = test_model(args, final_test_logdir, concat_all_loci, model_set, trained_model_nex, "concat", loop_id="final_test_concat", te=new_tree)
-    metalogger.log_parameter({"final_test_concat": final_concat_result})
+    final_tree_on_concat_result = test_model(args, final_test_logdir, concat_all_loci, model_set, trained_model_nex, "concat", loop_id="final_test_concat", te=new_tree)
+    metalogger.log_parameter("final_tree_on_concat_result", final_tree_on_concat_result)
     # If the final model has better BIC than the existing models, continue to estimate the final tree on all loci
     if final_concat_result:
-        best_concat_test_model = min(final_concat_result, key=lambda x: float(x[2]))  # Find the model with the lowest BIC value
-        if not best_concat_test_model[0].startswith(('d__', 'p__', 'c__', 'o__', 'f__', 'g__', 's__')):
+        best_concat_model = min(final_tree_on_concat_result, key=lambda x: float(x[2]))  # Find the model with the lowest BIC value
+        if not best_concat_model[0].startswith(('d__', 'p__', 'c__', 'o__', 'f__', 'g__', 's__')):
             log_message('error', f"Warning: The inferred model is not better based on BIC value than the existing models.")
         else:
             log_message('process', f"The inferred model is better based on BIC value than the existing models.")
@@ -819,17 +1030,29 @@ def main(args: argparse.Namespace) -> None:
                 log_message('process', "#### Final tree estimation on all loci without inferred model")
                 if args.final_tree_tool == "IQ" or args.final_tree_tool == "IQFAST":
                     existing_model_tree = final_test_logdir / "existing_model_tree.treefile"
-                    cmd = f"iqtree -T {num_threads} -p {all_loci_partition_nex} -t {new_tree} -m MFP -mset {initial_model_set} -pre {final_test_logdir}/existing_model_tree"
+                    cmd = f"iqtree -seed 1 -T {num_threads} -p {all_loci_partition_nex} -t {new_tree} -m MFP -mset {initial_model_set} -pre {final_test_logdir}/existing_model_tree -wpl"
                     if args.final_tree_tool == "IQFAST":
                         cmd += " -fast"
                     run_command(cmd, f"{args.output_dir}/log.md", log_output=args.keep_cmd_output, log_time=True)
+                    if args.use_outgroup:
+                        reroot_treefile_by_outgroup(existing_model_tree, args.output_dir / "outgroup_id.txt")
                     shutil.copy(existing_model_tree, trees_dir / f"ExistModel_IQ_All_partition.treefile")
                 else:
-                    cmd = f"{PATH_FASTTREEMP} -wag -gamma -spr 4 -sprlength 1000 -boot 100 -log {final_test_logdir}/allloci_wag_tree.log -intree {new_tree} {concat_training_loci} > {final_test_logdir}/allloci_wag_tree.treefile"
+                    if args.use_outgroup:
+                        FT_init_tree = prev_outgroup_tree
+                        FT_full_aln = concat_training_loci_og
+                    else:
+                        FT_init_tree = new_tree
+                        FT_full_aln = concat_training_loci
+                    cmd = f"{PATH_FASTTREEMP} -wag -gamma -spr 4 -sprlength 1000 -boot 100 -log {final_test_logdir}/allloci_wag_tree.log -intree {FT_init_tree} {FT_full_aln} > {final_test_logdir}/allloci_wag_tree.treefile"
                     run_command(cmd, f"{args.output_dir}/log.md", log_output=args.keep_cmd_output, log_time=True)
+                    if args.use_outgroup:
+                        reroot_treefile_by_outgroup(final_test_logdir / "allloci_wag_tree.treefile", args.output_dir / "outgroup_id.txt")
                     shutil.copy(f"{final_test_logdir}/allloci_wag_tree.treefile", trees_dir / f"FT_All_WAG_G20.treefile")
-                    cmd = f"{PATH_FASTTREEMP} -lg -gamma -spr 4 -sprlength 1000 -boot 100 -log {final_test_logdir}/allloci_lg_tree.log -intree {new_tree} {concat_training_loci} > {final_test_logdir}/allloci_lg_tree.treefile"
+                    cmd = f"{PATH_FASTTREEMP} -lg -gamma -spr 4 -sprlength 1000 -boot 100 -log {final_test_logdir}/allloci_lg_tree.log -intree {FT_init_tree} {FT_full_aln} > {final_test_logdir}/allloci_lg_tree.treefile"
                     run_command(cmd, f"{args.output_dir}/log.md", log_output=args.keep_cmd_output, log_time=True)
+                    if args.use_outgroup:
+                        reroot_treefile_by_outgroup(final_test_logdir / "allloci_lg_tree.treefile", args.output_dir / "outgroup_id.txt")
                     shutil.copy(f"{final_test_logdir}/allloci_lg_tree.treefile", trees_dir / f"FT_All_LG_G20.treefile")
                     wag_tree_ll = extract_gamma20loglk(f"{final_test_logdir}/allloci_wag_tree.log")
                     lg_tree_ll = extract_gamma20loglk(f"{final_test_logdir}/allloci_lg_tree.log")
@@ -866,9 +1089,6 @@ def main(args: argparse.Namespace) -> None:
                         log_message('process', "### Cross validation")
                         # Use a temporary directory to store the results of the reference tree test
                         log_message('process', "#### All models testing on existing model tree and all loci")
-                        if not args.final_tree_tool == "FT":
-                            concat_all_loci = final_test_dir / "all_loci.faa"
-                            concatenate_seq_list([concat_training_loci, concat_testing_loci], concat_all_loci)
                         existing_concat_result = test_model(args, cross_validation_dir, concat_all_loci, model_set, trained_model_nex, "concat", loop_id="cross_existing_model_tree", te=existing_model_tree, pre=f"{cross_validation_dir}/cross_existing_model_tree")
                         # Compare the results of the two tests
                         log_message('process', "#### All models testing on final best tree and all loci")
@@ -920,6 +1140,7 @@ def cli() -> argparse.Namespace:
     parser.add_argument('-T', '--max_threads', type=str, default="100", help='Maximum number of threads (default: 100)')
     parser.add_argument('-l', '--max_iterate', type=int, default=5, help='Maximum number of iterations (default: 5)')
     parser.add_argument('-V', '--converge_thres', type=float, default=0.999, help='Convergence threshold of Q matrix (default: 0.999)')
+    parser.add_argument('--time_limit', type=int, default=None, help='Time limit (seconds) inner model inference stage (default: None)')
     parser.add_argument('-p', '--prefix', type=str, default='Q', help='Prefix for output files (default: Q)')
 
     parser.add_argument('--test_in_loop', action='store_true', help='Test new estimated model with test data in each loop')
@@ -931,15 +1152,21 @@ def cli() -> argparse.Namespace:
     parser.add_argument('--final_tree_tool', type=str, default='IQFAST', choices=['IQ',"IQFAST",'FT'], help='Method to estimate the final tree (IQ-TREE[IQ] / IQ-TREE in -fast option [IQFAST] / FastTree[FT]) (default: IQ)')
     parser.add_argument('--fix_subtree_num', action='store_true', help='Fix the number of subtrees during model estimation')
     parser.add_argument('--fix_subtree_topology', action='store_true', help='Fix the topology of subtrees during model estimation')
+    parser.add_arguemnt('--pipeline_test_settings', action='store_true', help='Excetute additional tests for pipeline setting test (ONLY FOR PIPELINE TESTING)')
+
+    parser.add_argument('--use_outgroup', action='store_true', help='Use outgroup in the tree estimation')
+    parser.add_argument('--decorated_tree', type=Path, help='Path to the tree file with decorated taxanomic information')
+    parser.add_argument('--outgroup_taxa_list', type=Path, help='Path to the list of outgroup taxa(in same taxanomic scale with --taxa_scale) to select from.')
 
     parser.add_argument('--tree_size_lower_lim', type=int, default=20, help='Lower limit for the size of subtrees (default: 20)')
     parser.add_argument('--tree_size_upper_lim', type=int, default=100, help='Upper limit for the size of subtrees (default: 100)')  
-    parser.add_argument('--prune_mode', type=str, default='random', choices=['random', 'lower', 'upper', 'shallow'], help="Pruning mode (random/lower/upper/shallow) (default: random)")
+    parser.add_argument('--prune_mode', type=str, default='split', choices=['split', 'lower', 'upper', 'deep'], help="Pruning mode (split/lower/upper/deep) (default: split)")
 
     parser.add_argument('-S', '--model_update_summary', action='store_true', help='Enable model update summary inner each iteration')
     parser.add_argument('-R', '--tree_comparison_report', action='store_true', help='Enable tree comparison report when comparing pair of trees')
     parser.add_argument('-c', '--keep_cmd_output', action='store_true', help='Keep detailed command output in the log file')
     parser.add_argument('-t', '--keep_tmp', action='store_true', help='Keep temporary files')
+    parser.add_argument('-A', '--keep_aln', action='store_true', help='Keep training and testing alignment files.')
     parser.add_argument('-v', '--verbose', action='store_true', help='Print commands')
 
     parser.add_argument('--output_dir', type=Path, required=True, help='Output directory')
@@ -955,11 +1182,9 @@ if __name__ == "__main__":
     metalogger = MetaLogger.get_instance(str(args.output_dir / "meta.json"))
     metalogger.log_parameters({k: str(v) if isinstance(v, PosixPath) else v for k, v in vars(args).items()})
     metalogger.log_parameter("keep_model_thres", keep_model_thres)
-    metalogger.write_parameters()
     start_time = time.time()
     main(args)
     end_time = time.time()
     total_time = end_time - start_time
     log_message('result', f"Total time usage: {total_time:.2f} seconds ({total_time/3600:.2f} h)")
     metalogger.log_parameter("total_time", total_time)
-    metalogger.write_parameters()

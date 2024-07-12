@@ -19,15 +19,17 @@ class MetaLogger:
         if os.path.exists(self.file_path):
             self._read_parameters()
 
-    def log_parameter(self, key, value):
-        """Log a parameter to the internal dictionary."""
-        self.parameters[key] = value
+    def log_parameter(self, para_name, para_value):
+        """Log a single parameter."""
+        self.parameters[para_name] = para_value
+        self._write_parameters()
 
-    def log_parameters(self, params):
-        """Log multiple parameters to the internal dictionary."""
-        self.parameters.update(params)
+    def log_parameters(self, params_dict):
+        """Log a dictionary of parameters."""
+        self.parameters.update(params_dict)
+        self._write_parameters()
 
-    def write_parameters(self):
+    def _write_parameters(self):
         """Write the parameters to the file, updating existing ones."""
         if os.path.exists(self.file_path):
             with open(self.file_path, 'r') as file:
