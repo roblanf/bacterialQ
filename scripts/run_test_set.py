@@ -6,15 +6,15 @@ import time
 
 # Define the lists of parameters
 # taxa_name_list = ["p__Chloroflexota", "p__Cyanobacteriota", "p__Acidobacteriota", "p__Spirochaetota", "p__Gemmatimonadota"]
-# prune_mode_list = ["upper", "random"]
+# prune_mode_list = ["upper", "split"]
 # maximum_subtree_size_list = [200, 100, 50]
 # prop_aln_list = [1, 0.2, 0.05]
 # fix_subtree_topology_list = [True, False]
 
-taxa_name_list = ["p__Chloroflexota", "p__Cyanobacteriota", "p__Acidobacteriota", "p__Spirochaetota", "p__Gemmatimonadota"]
-prune_mode_list = ["random"]
-maximum_subtree_size_list = [150]
-prop_aln_list = [1]
+taxa_name_list = ["p__Chloroflexota", "p__Cyanobacteriota"]
+prune_mode_list = ["split"]
+maximum_subtree_size_list = [50, 100, 150, 200, 250]
+prop_aln_list = [0.2, 0.05, 0.5]
 fix_subtree_topology_list = [True, False]
 
 n_threads = 5
@@ -27,6 +27,9 @@ model_dir = "/home/tim/project/GTDB_TREE/data/modelset_ALL.nex"
 RESULT_DIR = "../Result_rona/method_test"
 combined_table = "/home/tim/project/GTDB_TREE/data/r220/combined_df.csv"
 FastTreeMP_path = "/home/tim/project/tool/FastTreeMP/FastTreeMP"
+decorated_tree_file="/home/tim/project/GTDB_TREE/data/r220/bac120_r220_decorated.tree"
+outgroup_phylum_list="/home/tim/project/GTDB_TREE/data/GTDB_stable_phyla_list.txt"
+
 log_file_path = f"{RESULT_DIR}/error_log.txt"
 status_file_path = f"{RESULT_DIR}/script_status.json"
 
@@ -50,18 +53,21 @@ def generate_shell_script(taxa_name, prune_mode, maximum_subtree_size, prop_aln,
         f"--model_dir {model_dir}",
         f"--output_dir {output_dir}",
         f"--FastTreeMP_path {FastTreeMP_path}",
-        "--max_threads 50",
+        "--max_threads 30",
         "--tree_size_lower_lim 15",
         f"--tree_size_upper_lim {maximum_subtree_size}",
         f"--prune_mode {prune_mode}",
+        "--use_outgroup",
+        f"--decorated_tree {decorated_tree_file}",
+        f"--outgroup_taxa_list {outgroup_phylum_list}",
         "--verbose",
-        "--test_in_loop",
         "--test_partition_test_loci",
-        "--test_final_tree",
+        "--estimate_best_final_tree",
         "--final_tree_tool IQFAST",
-        fix_subtree_topology_param,
+        "--pipeline_test_settings",
         "--model_update_summary",
-        "--tree_comparison_report"
+        "--tree_comparison_report",
+        fix_subtree_topology_param
     ]
 
     script_content = " \\\n".join(params)
@@ -100,11 +106,12 @@ status = load_status()
 
 # Generate the list of shell scripts to run
 shell_scripts = []
-for taxa_name in taxa_name_list:
-    for prune_mode in prune_mode_list:
-        for maximum_subtree_size in maximum_subtree_size_list:
-            for prop_aln in prop_aln_list:
-                for fix_subtree_topology in fix_subtree_topology_list:
+for prop_aln in prop_aln_list:
+    for maximum_subtree_size in maximum_subtree_size_list:
+        for fix_subtree_topology in fix_subtree_topology_list:
+             for prune_mode in prune_mode_list:
+                for taxa_name in taxa_name_list:
+
                     script_path = generate_shell_script(taxa_name, prune_mode, maximum_subtree_size, prop_aln, fix_subtree_topology)
                     if script_path not in status:
                         status[script_path] = "not_run"

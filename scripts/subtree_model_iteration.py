@@ -1134,8 +1134,8 @@ def cli() -> argparse.Namespace:
     parser.add_argument('-r', '--ref_tree', type=Path, required=True, help='Path to the reference tree file')
     parser.add_argument('-m', '--model_dir', type=Path, required=True, help='Directory containing initial model files')
     parser.add_argument('-M', '--initial_model_set', type=str, default="LG,Q.PFAM,Q.INSECT,Q.PLANT,Q.YEAST,MTMET,MTART", help='Initial model set for ModelFinder (default: LG,Q.PFAM,Q.INSECT,Q.PLANT,Q.YEAST,MTMET,MTART)')
-    parser.add_argument('--t_drop_species', type=float, default=0.5, help='Threshold of sequence integrity for dropping species (default: 0.5)')
-    parser.add_argument('--t_drop_loc', type=float, default=0.2, help='Threshold of sequence integrity for dropping loci (default: 0.5)')
+    parser.add_argument('--t_drop_species', type=float, default=0.2, help='Threshold of sequence integrity for dropping species (default: 0.2)')
+    parser.add_argument('--t_drop_loc', type=float, default=0.1, help='Threshold of sequence integrity for dropping loci (default: 0.1)')
 
     parser.add_argument('-T', '--max_threads', type=str, default="100", help='Maximum number of threads (default: 100)')
     parser.add_argument('-l', '--max_iterate', type=int, default=5, help='Maximum number of iterations (default: 5)')
@@ -1152,7 +1152,7 @@ def cli() -> argparse.Namespace:
     parser.add_argument('--final_tree_tool', type=str, default='IQFAST', choices=['IQ',"IQFAST",'FT'], help='Method to estimate the final tree (IQ-TREE[IQ] / IQ-TREE in -fast option [IQFAST] / FastTree[FT]) (default: IQ)')
     parser.add_argument('--fix_subtree_num', action='store_true', help='Fix the number of subtrees during model estimation')
     parser.add_argument('--fix_subtree_topology', action='store_true', help='Fix the topology of subtrees during model estimation')
-    parser.add_arguemnt('--pipeline_test_settings', action='store_true', help='Excetute additional tests for pipeline setting test (ONLY FOR PIPELINE TESTING)')
+    parser.add_argument('--pipeline_test_settings', action='store_true', help='Excetute additional tests for pipeline setting test (ONLY FOR PIPELINE TESTING)')
 
     parser.add_argument('--use_outgroup', action='store_true', help='Use outgroup in the tree estimation')
     parser.add_argument('--decorated_tree', type=Path, help='Path to the tree file with decorated taxanomic information')
