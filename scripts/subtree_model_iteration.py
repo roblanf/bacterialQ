@@ -940,7 +940,7 @@ def main(args: argparse.Namespace) -> None:
     concat_all_loci = final_test_dir / "all_loci.faa"
     concatenate_seq_list([concat_training_loci, concat_testing_loci], concat_all_loci)
     all_model_set = f"{initial_model_set},{new_model.model_name}"
-    all_trained_model_set = list_Q_from_nex(trained_model_nex).join(",")
+    all_trained_model_set = ",".join(list_Q_from_nex(trained_model_nex))
     all_model_set_with_all_trained = f"{initial_model_set},{all_trained_model_set}"
     files_to_remove.append(concat_all_loci)
     if args.use_outgroup:
