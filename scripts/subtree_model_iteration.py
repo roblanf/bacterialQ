@@ -123,6 +123,7 @@ def sample_alignment(loci_dir: Path, taxa_file_list: Union[Path, List[Path]], ou
 
     def process_loci_files(loci_files, taxa_list, output_dir, num_aln=None, prop_aln = None, nchar_row = None, nchar_col = None):
         splited_aln_count, deleted_aln_count = 0, 0
+        total_aln_count = len(loci_files)
         if isinstance(taxa_list, Path) and taxa_list.is_file():
             # If a single taxa file is provided
             log_message('process', f"Input a single taxa file: {taxa_list}. Sampling sequences for {len(loci_files)} loci.")
@@ -197,15 +198,15 @@ def sample_alignment(loci_dir: Path, taxa_file_list: Union[Path, List[Path]], ou
             raise ValueError(f"{taxa_list} is neither a file nor a list of files.")
 
         log_message('process', f"Remaining {splited_aln_count} alignments. Deleted {deleted_aln_count} alignments.")
-        return splited_aln_count
+        return total_aln_count, splited_aln_count
 
     loci_files = filter_loci_files(loci_dir, loci_filter)
 
     if not loci_files:
         raise ValueError("Loci set is empty after filtering. Program will terminate.")
     
-    splited_aln_count = process_loci_files(loci_files, taxa_file_list, output_folder, num_aln = num_aln, prop_aln = prop_aln, nchar_row = nchar_row, nchar_col = nchar_col)
-    return splited_aln_count
+    total_aln_count, splited_aln_count = process_loci_files(loci_files, taxa_file_list, output_folder, num_aln = num_aln, prop_aln = prop_aln, nchar_row = nchar_row, nchar_col = nchar_col)
+    return total_aln_count, splited_aln_count
 
 
 def get_constraint_tree(loci_dir, subtree_dir, output_tree_path):
@@ -392,19 +393,18 @@ def extract_and_log_model_info_concat(iqtree_file):
     return []
 
 
-def extract_and_log_model_info_partition(iqtree_file, output_dir):
+def extract_and_log_model_info_partition(best_scheme_file, output_dir):
     """
     Extract model information from the partitioned IQ-TREE output file and log it as a Markdown table.
 
     Args:
-        iqtree_file (str): Path to the IQ-TREE output file.
+        best_scheme_file (Path): Path to the best scheme file of IQ-TREE output.
         output_dir (Path): Output directory for test results.
 
     Returns:
         dict: A dictionary of model counts.
     """
-    partition_test_nex = f"{iqtree_file}.best_scheme.nex"
-    model_data = get_and_print_model_counts(partition_test_nex, f"{output_dir}/model_counts.txt")
+    model_data = get_and_print_model_counts(best_scheme_file, f"{output_dir}/model_counts.txt")
     best_model_name = max(model_data, key=model_data.get)
 
     log_message('result', "Best model for test data:")
@@ -414,7 +414,7 @@ def extract_and_log_model_info_partition(iqtree_file, output_dir):
     log_message('result', "| Model | Count |", new_line=True)
     log_message('result', "|-------|-------|")
 
-    for model, count in model_data.items():
+    for model, count in sorted(model_data.items(), key=lambda item: item[1], reverse=True):
         log_message('result', f"| {model} | {count} |")
 
     return model_data
@@ -480,7 +480,7 @@ def test_model(args, output_dir, test_loci_dir, model_name_set, trained_model_ne
     if mode == "concat":
         model_data = extract_and_log_model_info_concat(test_iqtree_file)
     elif mode == "partition":
-        model_data = extract_and_log_model_info_partition(test_prefix, output_dir)
+        model_data = extract_and_log_model_info_partition(f"{test_prefix}.best_scheme.nex", output_dir)
 
     return model_data
 
@@ -504,29 +504,42 @@ def compare_trees(args, prev_tree, new_tree, html_output_dir, name):
     log_message('result', f"Tree 1 branch length: {tree1_bl}")
     log_message('result', f"Tree 2 branch length: {tree2_bl}")
 
+def extract_best_bic(model_data):
+    """
+    Extract the best BIC and corresponding model names for inferred and existed models from the model data.
+
+    Args:
+        model_data (list of tuples): Each tuple contains (model, _, bic).
+
+    Returns:
+        tuple: (best_inferred_model, best_existed_model, best_inferred_bic, best_existed_bic)
+    """
+    inferred_bic = float('inf')
+    existed_bic = float('inf')
+    best_inferred_model = None
+    best_existed_model = None
+    
+    for model, _, bic in model_data:
+        bic = float(bic)
+        if model.startswith(('d__', 'p__', 'c__', 'o__', 'f__', 'g__', 's__')):
+            if bic < inferred_bic:
+                inferred_bic = bic
+                best_inferred_model = model
+        else:
+            if bic < existed_bic:
+                existed_bic = bic
+                best_existed_model = model
+    
+    return best_inferred_model, best_existed_model, inferred_bic, existed_bic
+    
 def logging_cross_test_table(ref_concat_result, final_concat_result):
     """
     Log the cross test results as a 3x3 table.
     """
-    def extract_best_bic(model_data):
-        """
-        Extract the best BIC for inferred and existed models from the model data.
-        """
-        inferred_bic = float('inf')
-        existed_bic = float('inf')
-        
-        for model, _, bic in model_data:
-            bic = float(bic)
-            if model.startswith(('d__', 'p__', 'c__', 'o__', 'f__', 'g__', 's__')):
-                inferred_bic = min(inferred_bic, bic)
-            else:
-                existed_bic = min(existed_bic, bic)
-        
-        return inferred_bic, existed_bic
 
     # Extract best logL for inferred and existed models
-    bic11, bic21 = extract_best_bic(final_concat_result)
-    bic12, bic22 = extract_best_bic(ref_concat_result)
+    _, _, bic11, bic21 = extract_best_bic(final_concat_result)
+    _, _, bic12, bic22 = extract_best_bic(ref_concat_result)
     
     # Calculate differences
     tree_diff1 = round(bic11 - bic12, 4)
@@ -624,10 +637,12 @@ def main(args: argparse.Namespace) -> None:
     """
     PATH_FASTTREEMP = args.FastTreeMP_path
     initial_model_set = args.initial_model_set
+    global keep_model_thres
 
     setup_logging(args.output_dir, args.verbose)
     files_to_remove = []
     num_aln_inloop = []
+    total_aln_inloop = []
     time_usage_inloop = []
     training_tree_ll = []
 
@@ -668,10 +683,11 @@ def main(args: argparse.Namespace) -> None:
 
     iteration_id = 1
     prev_model = None
-    model_set = initial_model_set
+    model_set = initial_model_set.replace(" ", "").split(",")
     trained_model_nex = None
     prev_tree = filtered_allspc_tree
     initial_best_model_name = None
+    new_model = None
     if args.use_outgroup:
         prev_outgroup_tree = outgroup_allspc_tree
         concat_training_loci_og = args.output_dir / "loci" / "concat_training_loci_with_outgroup.faa"
@@ -705,8 +721,9 @@ def main(args: argparse.Namespace) -> None:
         # 2. Extract subtree loci from the filtered sequence set using split_loci.sh
         log_message('process', "### Extract subtree loci for trainning")
         taxa_files = list((subtree_dir / "taxa_list").glob("*.txt"))
-        num_aln = sample_alignment(training_loci_path, taxa_files, iteration_dir / "training_loci", num_aln=args.num_aln, prop_aln = args.prop_aln, nchar_row = 3, nchar_col = 1)
+        total_aln, num_aln = sample_alignment(training_loci_path, taxa_files, iteration_dir / "training_loci", num_aln=args.num_aln, prop_aln = args.prop_aln, nchar_row = 3, nchar_col = 1)
         num_aln_inloop.append(num_aln)
+        total_aln_inloop.append(total_aln)
         subtree_train_loci_dir = iteration_dir / "training_loci"
         files_to_remove.append(subtree_train_loci_dir)
 
@@ -715,7 +732,8 @@ def main(args: argparse.Namespace) -> None:
         subtree_update_dir = iteration_dir / "subtree_update"
         subtree_update_dir.mkdir(parents=True, exist_ok=True)
         num_threads = min(int(args.max_threads), len(list(subtree_train_loci_dir.glob("*.fa*"))))
-        cmd = f"iqtree -seed 1 -T {num_threads} -S {subtree_train_loci_dir} -m MFP -mset {model_set}"
+        model_set_str = ",".join(model_set)
+        cmd = f"iqtree -seed 1 -T {num_threads} -S {subtree_train_loci_dir} -m MFP -mset {model_set_str}"
         if trained_model_nex:
             cmd += f" -mdef {trained_model_nex}"
         if args.fix_subtree_topology:
@@ -740,8 +758,8 @@ def main(args: argparse.Namespace) -> None:
         fix_best_model_nex(subtree_model_nex)
 
         # Get the initial best model name
-        model_data = get_and_print_model_counts(subtree_model_nex, f"{subtree_update_dir}/models.txt")
-        best_model_name = max(model_data, key=model_data.get)
+        subtree_model_data = get_and_print_model_counts(subtree_model_nex, f"{subtree_update_dir}/model_count.txt")
+        best_model_name = max(subtree_model_data, key=subtree_model_data.get)
         if iteration_id == 1:
             initial_best_model_name = best_model_name
         log_message('result', f"Best models for iteration {iteration_id}:")
@@ -750,7 +768,7 @@ def main(args: argparse.Namespace) -> None:
         # Print best models output as a table
         log_message('result', "| Model | Count |", new_line = True)
         log_message('result', "|-------|-------|")
-        for model, count in model_data.items():
+        for model, count in sorted(subtree_model_data.items(), key=lambda item: item[1], reverse=True):
             log_message('result', f"| {model} | {count} |")
         
         # Set prev_model to the best model of past iteration
@@ -760,7 +778,7 @@ def main(args: argparse.Namespace) -> None:
             prev_model = extract_spc_Q_from_nex(trained_model_nex, best_model_name)
 
         # Update model_set based on the best models
-        best_models_output = subtree_update_dir / 'models.txt'
+        best_models_output = subtree_update_dir / 'model_count.txt'
         with open(best_models_output) as f:
             best_model_counts = {}
             for line in f:
@@ -768,9 +786,12 @@ def main(args: argparse.Namespace) -> None:
                 if line:
                     count, model = line.split()
                     best_model_counts[model] = int(count)
-
+        
+        if new_model:
+            del best_model_counts[new_model.model_name]
+            keep_model_thres = 0.1
         total_models = sum(best_model_counts.values())
-        model_set = ",".join([model for model, count in best_model_counts.items() if count / total_models >= keep_model_thres])
+        model_set = [model for model, count in best_model_counts.items() if count / total_models >= keep_model_thres]
 
         # Check the time usage before the next step
         if args.time_limit:
@@ -807,14 +828,11 @@ def main(args: argparse.Namespace) -> None:
         new_model.add_Q_to_nex(trained_model_nex)
 
         # Update model_set for next iteration
-        if iteration_id > 1:
-            model_set = model_set.replace(f",{prev_model.model_name}", "").replace(f"{prev_model.model_name},", "") + f",{new_model.model_name}"
-        else:
-            initial_model_set = model_set
-            model_set += f",{new_model.model_name}"
+        model_set.append(new_model.model_name)
+        model_set_str = ",".join(model_set)
 
         log_link('result', "New model", str(models_dir / f"{new_model.model_name}"))
-        log_message('result', f"Model set for next iteration: {model_set}")
+        log_message('result', f"Model set for next iteration: {model_set_str}")
 
         # Save the model parameters to a file in the output directory
         with open(models_dir / f"{new_model.model_name}", 'w') as f:
@@ -880,7 +898,7 @@ def main(args: argparse.Namespace) -> None:
             inloop_test_dir = iteration_dir / "test_model"
             inloop_test_dir.mkdir(parents=True, exist_ok=True)
             log_message('process', "### Test model with concatenated testing loci inner loop")
-            test_model(args, inloop_test_dir, concat_testing_loci, model_set, trained_model_nex, "concat", loop_id = iteration_id, te=new_tree, adv_rate_opt=False)
+            test_model(args, inloop_test_dir, concat_testing_loci, model_set_str, trained_model_nex, "concat", loop_id = iteration_id, te=new_tree, adv_rate_opt=False)
 
         prev_model = new_model
         prev_tree = new_tree
@@ -908,6 +926,7 @@ def main(args: argparse.Namespace) -> None:
     
     # record parameters
     metalogger.log_parameter("num_aln_inloop", num_aln_inloop)
+    metalogger.log_parameter("total_aln_inloop", total_aln_inloop)
     metalogger.log_parameter("time_usage_inloop", time_usage_inloop)
     metalogger.log_parameter("training_tree_ll", training_tree_ll)
 
@@ -920,6 +939,9 @@ def main(args: argparse.Namespace) -> None:
     
     concat_all_loci = final_test_dir / "all_loci.faa"
     concatenate_seq_list([concat_training_loci, concat_testing_loci], concat_all_loci)
+    all_model_set = f"{initial_model_set},{new_model.model_name}"
+    all_trained_model_set = list_Q_from_nex(trained_model_nex).join(",")
+    all_model_set_with_all_trained = f"{initial_model_set},{all_trained_model_set}"
     files_to_remove.append(concat_all_loci)
     if args.use_outgroup:
         concat_all_loci_og = final_test_dir / "all_loci_with_outgroup.faa"
@@ -933,7 +955,7 @@ def main(args: argparse.Namespace) -> None:
             all_loci_partition_nex = final_test_logdir / "all_loci_partition.nex"
             create_nexus_partition([training_loci_path, testing_loci_path], all_loci_partition_nex)
             num_threads = min(int(args.max_threads), len(list(training_loci_path.glob("*.fa*"))) + len(list(testing_loci_path.glob("*.fa*"))))
-            cmd = f"iqtree -seed 1 -T {num_threads} -p {all_loci_partition_nex} -t {new_tree} -m MFP -mset {model_set} -mdef {trained_model_nex} -pre {final_test_logdir}/best_final_tree -wpl"
+            cmd = f"iqtree -seed 1 -T {num_threads} -p {all_loci_partition_nex} -t {new_tree} -m MFP -mset {all_model_set} -mdef {trained_model_nex} -pre {final_test_logdir}/best_final_tree -wpl"
             if args.final_tree_tool == "IQFAST":
                 cmd += " -fast" 
         else:
@@ -948,28 +970,13 @@ def main(args: argparse.Namespace) -> None:
 
         if args.final_tree_tool == "IQ" or args.final_tree_tool == "IQFAST":
             final_tree_info = write_iqtree_statistic(f"{final_test_logdir}/best_final_tree.iqtree" ,args.prefix , f"{args.output_dir}/iqtree_results.csv", extra_info={"loop": "Final test", "step": "Final best tree"})
-            final_partition_result = extract_and_log_model_info_partition(f"{final_test_logdir}/best_final_tree.iqtree", f"{final_test_logdir}/final_partition_tree_models.txt")
+            final_partition_result = extract_and_log_model_info_partition(f"{final_test_logdir}/best_final_tree.best_scheme.nex", f"{final_test_logdir}/final_partition_tree_models.txt")
             metalogger.log_parameter("final_partition_result", final_partition_result)
             metalogger.log_parameter("final_tree_info", final_tree_info)
             shutil.copy(new_tree, trees_dir / f"FinalModel_IQ_All_partition.treefile")
         else:
             metalogger.log_parameter("final_tree_ll", extract_gamma20loglk(f"{final_test_logdir}/best_final_tree.log"))
             shutil.copy(new_tree, trees_dir / f"FinalModel_FT_All_G20.treefile")
-
-    ######### This block is added for the pipeline test, delete in the final version ##########
-    # 1. The final concatenated tree (final_concat_tree) obtained using FastTree under concatenated all loci and the final model
-    if args.pipeline_test_settings:
-        if args.use_outgroup:
-            cmd = f"{PATH_FASTTREEMP} -trans {model_update_dir}/Q_matrix_fasttree.txt -gamma -spr 4 -sprlength 1000 -boot 100 -log {final_test_logdir}/final_concat_tree.log -intree {prev_outgroup_tree} {concat_all_loci_og} > {final_test_logdir}/final_concat_tree.treefile"
-        else:
-            cmd = f"{PATH_FASTTREEMP} -trans {model_update_dir}/Q_matrix_fasttree.txt -gamma -spr 4 -sprlength 1000 -boot 100 -log {final_test_logdir}/final_concat_tree.log -intree {new_tree} {concat_all_loci} > {final_test_logdir}/final_concat_tree.treefile"
-        run_command(cmd, f"{args.output_dir}/log.md", log_output=args.keep_cmd_output, log_time=True)
-        new_tree = final_test_logdir / "final_concat_tree.treefile"
-        if args.use_outgroup:
-            reroot_treefile_by_outgroup(new_tree, args.output_dir / "outgroup_id.txt")
-        metalogger.log_parameter("final_concat_tree_ll", extract_gamma20loglk(f"{final_test_logdir}/final_concat_tree.log"))
-        shutil.copy(new_tree, trees_dir / f"FinalModel_FT_All_G20.treefile")
-    ######### This block is added for the pipeline test, delete in the final version ##########
         
     # 2. Compare the reference tree and the final tree
     log_message('process', "### Tree comparison")
@@ -995,16 +1002,47 @@ def main(args: argparse.Namespace) -> None:
     log_message('process', "### PCA Plot for all models")
     cmd = f"Rscript PCA_Q.R {args.model_dir} {models_dir}/trained_model.nex {models_dir}"
     run_command(cmd, f"{args.output_dir}/log.md")
-    log_link('result', "PCA plot of Q matrices", str(models_dir / "PCA_Q.png"))
+    log_link('res', "PCA plot of Q matrultices", str(models_dir / "PCA_Q.png"))
     log_link('result', "PCA plot of state frequencies", str(models_dir / "PCA_F.png"))
 
     # 5. Test the final model on partitioned test loci without providing the constraint tree
     if args.test_partition_test_loci:
         log_message('process', "### Final model testing on partitioned test loci without constraint tree")
-        partition_test_result = test_model(args, final_test_logdir, testing_loci_path, model_set, trained_model_nex, "partition", loop_id="final_test_partition", initial_tree=new_tree)
+        partition_test_result = test_model(args, final_test_logdir, testing_loci_path, all_model_set, trained_model_nex, "partition", loop_id="final_test_partition", initial_tree=new_tree)
         metalogger.log_parameter("final_test_partition", partition_test_result)
         final_test_partition_info = write_iqtree_statistic(final_test_logdir / "final_test_partition.iqtree", "final_test_partition", f"{args.output_dir}/iqtree_results.csv", extra_info={"loop": "final_test_partition", "step": "Final test partition"})
         metalogger.log_parameter("test_partition_result",final_test_partition_info)
+        best_test_tree = final_test_logdir / "final_test_partition.treefile"
+    
+     ######### This block is added for the pipeline test, delete in the final version ##########
+    # 1. The final concatenated tree (final_concat_tree) obtained using FastTree under concatenated all loci and the final model
+    if args.pipeline_test_settings:
+        # if args.use_outgroup:
+        #     cmd = f"{PATH_FASTTREEMP} -trans {model_update_dir}/Q_matrix_fasttree.txt -gamma -spr 4 -sprlength 1000 -boot 100 -log {final_test_logdir}/final_concat_tree.log -intree {prev_outgroup_tree} {concat_all_loci_og} > {final_test_logdir}/final_concat_tree.treefile"
+        # else:
+        #     cmd = f"{PATH_FASTTREEMP} -trans {model_update_dir}/Q_matrix_fasttree.txt -gamma -spr 4 -sprlength 1000 -boot 100 -log {final_test_logdir}/final_concat_tree.log -intree {new_tree} {concat_all_loci} > {final_test_logdir}/final_concat_tree.treefile"
+        # run_command(cmd, f"{args.output_dir}/log.md", log_output=args.keep_cmd_output, log_time=True)
+        # new_tree = final_test_logdir / "final_concat_tree.treefile"
+        # if args.use_outgroup:
+        #     reroot_treefile_by_outgroup(new_tree, args.output_dir / "outgroup_id.txt")
+        # metalogger.log_parameter("final_concat_tree_ll", extract_gamma20loglk(f"{final_test_logdir}/final_concat_tree.log"))
+        # shutil.copy(new_tree, trees_dir / f"FinalModel_FT_All_G20.treefile")
+        log_message('process', "### Distinguish best model on concatenated test loci")
+        testset_best_model_result = test_model(args, final_test_logdir, concat_testing_loci, all_model_set_with_all_trained, trained_model_nex, "concat", loop_id="best_model_test", te = best_test_tree, pre=f"{final_test_logdir}/test_best_concat_model")
+        best_infer_str, best_existing_str, best_infer_bic, best_existing_bic = extract_best_bic(testset_best_model_result)
+        best_infer_model, best_existing_model = best_infer_str.split('+', 1)[0], best_existing_str.split('+', 1)[0]
+        if best_infer_bic < best_existing_bic:
+            log_message('result', f"The inferred model {best_infer_model} has better BIC value than the existing model:")
+        else:
+            log_message('error', f"The existing model {best_existing_model} has better BIC value than the inferred model:")
+        log_message('result', "| Type | Best Inferred Model | Best Existing Model |", new_line=True)
+        log_message('result', "|------|-----------------|---------------------|")
+        log_message('result', f"| Model | {best_infer_str} | {best_existing_str} |")
+        log_message('result', f"| BIC | {best_infer_bic} | {best_existing_bic} |")
+        metalogger.log_parameters({"best_infer_model_testset":best_infer_str, "best_existing_model_testset":best_existing_str, "best_infer_model_testset_bic":best_infer_bic, "best_existing_model_testset_bic":best_existing_bic})
+        metalogger.log_parameter("testset_best_model_result", testset_best_model_result)
+        
+    ######### This block is added for the pipeline test, delete in the final version ##########
 
     # 6. Validate the final model in subtrees on testing loci
     if args.test_subtrees:
@@ -1016,12 +1054,12 @@ def main(args: argparse.Namespace) -> None:
         taxa_files_test = list((final_test_logdir / "subtrees" / "taxa_list").glob("*.txt"))
         sample_alignment(testing_loci_path, taxa_files_test, subtree_test_loci_dir, nchar_row=3, nchar_col=1)
         log_message('process', "#### Test model performance on subtrees")
-        test_model(args, final_test_logdir, subtree_test_loci_dir, model_set, trained_model_nex, "partition", loop_id="final_test_subtrees", te=None, adv_rate_opt=False)
+        test_model(args, final_test_logdir, subtree_test_loci_dir, model_set_str, trained_model_nex, "partition", loop_id="final_test_subtrees", te=None, adv_rate_opt=False)
 
     # 7. Validate the final model in concatenated testing loci
     log_message('process', "### Final model testing of concatenated all loci on final tree")
     #test version: we use the full concatenated loci for testing instead of test loci
-    final_tree_on_concat_result = test_model(args, final_test_logdir, concat_all_loci, model_set, trained_model_nex, "concat", loop_id="final_test_concat", te=new_tree)
+    final_tree_on_concat_result = test_model(args, final_test_logdir, concat_all_loci, all_model_set, trained_model_nex, "concat", loop_id="final_test_concat", te=new_tree)
     metalogger.log_parameter("final_tree_on_concat_result", final_tree_on_concat_result)
     # If the final model has better BIC than the existing models, continue to estimate the final tree on all loci
     if final_concat_result:
@@ -1065,9 +1103,11 @@ def main(args: argparse.Namespace) -> None:
                     if wag_tree_ll >= lg_tree_ll:
                         existing_model_tree = final_test_logdir / "allloci_wag_tree.treefile"
                         log_message('result', f"WAG model has higher likelihood than LG model, use WAG model for final tree.")
+                        metalogger.log_parameter("existing_tree_model", "WAG")
                     else:
                         existing_model_tree = final_test_logdir / "allloci_lg_tree.treefile"
                         log_message('result', f"LG model has higher likelihood than WAG model, use LG model for final tree.")
+                        metalogger.log_parameter("existing_tree_model", "LG")
 
                 log_message('process', "#### Compare final tree with existing model tree")
                 compare_trees(args, existing_model_tree, new_tree, final_test_dir, "compare_existing_model_tree")
@@ -1083,10 +1123,32 @@ def main(args: argparse.Namespace) -> None:
                 log_message('result', "| Tree | Best final tree | Existing model tree |", new_line=True)
                 log_message('result', "|------|-----------------|---------------------|")
                 log_message('result', f"| LogL | {final_tree_ll} | {existing_tree_ll} |")
+                metalogger.log_parameter("final_tree_ll", final_tree_ll)
+                metalogger.log_parameter("existing_tree_ll", existing_tree_ll)
                 if final_tree_ll <= existing_tree_ll:
                     log_message('error', "The final model tree does not have better likelihood than the existing model tree.")
+                    best_concat_tree = existing_model_tree
                 else:
                     log_message('process', "The final model tree has better likelihood than the existing model tree.")
+                    best_concat_tree = new_tree
+                
+                if args.estimate_best_concat_model:
+                    log_message('process', "### Distinguish best model on final tree in concatenated all loci")
+                    concat_best_model_result = test_model(args, final_test_logdir, concat_all_loci, all_model_set_with_all_trained, trained_model_nex, "concat", loop_id="best_model_concat", te = best_concat_tree, pre=f"{final_test_logdir}/test_best_concat_model")
+                    best_infer_str, best_existing_str, best_infer_bic, best_existing_bic = extract_best_bic(concat_best_model_result)
+                    best_infer_model, best_existing_model = best_infer_str.split('+', 1)[0], best_existing_str.split('+', 1)[0]
+                    if best_infer_bic < best_existing_bic:
+                        log_message('result', f"The inferred model {best_infer_model} has better BIC value than the existing model:")
+                    else:
+                        log_message('error', f"The existing model {best_existing_model} has better BIC value than the inferred model:")
+                    log_message('result', "| Type | Best Inferred Model | Best Existing Model |", new_line=True)
+                    log_message('result', "|------|-----------------|---------------------|")
+                    log_message('result', f"| Model | {best_infer_str} | {best_existing_str} |")
+                    log_message('result', f"| BIC | {best_infer_bic} | {best_existing_bic} |")
+                    metalogger.log_parameters({"best_infer_model_concat":best_infer_str, "best_existing_model_concat":best_existing_str, "best_infer_model_concat_bic":best_infer_bic, "best_existing_model_concat_bic":best_existing_bic})
+                    metalogger.log_parameter("concat_best_model_result", concat_best_model_result)
+
+                if final_tree_ll >= existing_tree_ll:
                     # If the final model has better LogL, carry out cross-validation
                     if args.cross_validation:
                         cross_validation_dir = final_test_dir / "cross_validation"
@@ -1094,10 +1156,10 @@ def main(args: argparse.Namespace) -> None:
                         log_message('process', "### Cross validation")
                         # Use a temporary directory to store the results of the reference tree test
                         log_message('process', "#### All models testing on existing model tree and all loci")
-                        existing_concat_result = test_model(args, cross_validation_dir, concat_all_loci, model_set, trained_model_nex, "concat", loop_id="cross_existing_model_tree", te=existing_model_tree, pre=f"{cross_validation_dir}/cross_existing_model_tree")
+                        existing_concat_result = test_model(args, cross_validation_dir, concat_all_loci, all_model_set, trained_model_nex, "concat", loop_id="cross_existing_model_tree", te=existing_model_tree, pre=f"{cross_validation_dir}/cross_existing_model_tree")
                         # Compare the results of the two tests
                         log_message('process', "#### All models testing on final best tree and all loci")
-                        final_concat_result = test_model(args, cross_validation_dir, concat_all_loci, model_set, trained_model_nex, "concat", loop_id="cross_final_tree", te=new_tree, pre=f"{cross_validation_dir}/cross_final_tree")
+                        final_concat_result = test_model(args, cross_validation_dir, concat_all_loci, all_model_set, trained_model_nex, "concat", loop_id="cross_final_tree", te=new_tree, pre=f"{cross_validation_dir}/cross_final_tree")
                         logging_cross_test_table(existing_concat_result, final_concat_result)
 
     # 8. Plot RF and nRF distance among estimated trees and reference tree
@@ -1151,7 +1213,8 @@ def cli() -> argparse.Namespace:
     parser.add_argument('--test_in_loop', action='store_true', help='Test new estimated model with test data in each loop')
     parser.add_argument('--test_subtrees', action='store_true', help='Test the final model on test loci in subtrees')
     parser.add_argument('--test_partition_test_loci', action='store_true', help='Test the final model on partitioned test loci without providing the constraint tree')
-    parser.add_argument('--estimate_best_final_tree', action='store_true', help='Estimate the best final tree based on both training and testing loci in partition model')
+    parser.add_argument('--estimate_best_final_tree', action='store_true', help='Estimate the best final tree based on all loci in partitioned analysis')
+    parser.add_argument('--estimate_best_concat_model', action='store_true', help='Estimate the best model based on all loci in concatenated analysis')
     parser.add_argument('--test_final_tree', action='store_true', help='Test the final best tree, compare with the tree inferred without the inferred model')
     parser.add_argument('--cross_validation', action='store_true', help='Test the performance of final model and tree on all loci with comparison with initial model and tree estimated without inferred model.')
     parser.add_argument('--final_tree_tool', type=str, default='IQFAST', choices=['IQ',"IQFAST",'FT'], help='Method to estimate the final tree (IQ-TREE[IQ] / IQ-TREE in -fast option [IQFAST] / FastTree[FT]) (default: IQ)')
@@ -1181,7 +1244,7 @@ def cli() -> argparse.Namespace:
 if __name__ == "__main__":
     args = cli()
     # args.prefix = f"{args.taxa_name}_{args.prop_aln}"
-    args.prefix = f"{args.taxa_name}_{args.tree_size_upper_lim}_{args.prop_aln:.2f}"
+    args.prefix = f"{args.taxa_name}_{args.tree_size_upper_lim}_{args.num_aln}"
     args.output_dir = args.output_dir / f"{args.prefix}"  
     args.output_dir.mkdir(parents=True, exist_ok=True)
     metalogger = MetaLogger.get_instance(str(args.output_dir / "meta.json"))

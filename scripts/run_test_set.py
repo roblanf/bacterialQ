@@ -8,13 +8,13 @@ import time
 # taxa_name_list = ["p__Chloroflexota", "p__Cyanobacteriota", "p__Acidobacteriota", "p__Spirochaetota", "p__Gemmatimonadota"]
 # prune_mode_list = ["upper", "split"]
 # maximum_subtree_size_list = [200, 100, 50]
-# prop_aln_list = [1, 0.2, 0.05]
+# num_aln_list = [1, 0.2, 0.05]
 # fix_subtree_topology_list = [True, False]
 
 taxa_name_list = ["p__Chloroflexota", "p__Cyanobacteriota"]
 prune_mode_list = ["split"]
-maximum_subtree_size_list = [50, 100, 150, 200, 250]
-prop_aln_list = [0.2, 0.05, 0.5]
+maximum_subtree_size_list = [50, 100, 150, 200]
+num_aln_list = [500, 1000, 2000]
 fix_subtree_topology_list = [True, False]
 
 n_threads = 5
@@ -34,7 +34,7 @@ time_limit = 86400 #24hrs
 log_file_path = f"{RESULT_DIR}/error_log.txt"
 status_file_path = f"{RESULT_DIR}/script_status.json"
 
-def generate_shell_script(taxa_name, prune_mode, maximum_subtree_size, prop_aln, fix_subtree_topology):
+def generate_shell_script(taxa_name, prune_mode, maximum_subtree_size, num_aln, fix_subtree_topology):
     fix_subtree_topo_str = "fix_subtree_topo" if fix_subtree_topology else "free_subtree_topo"
     output_dir = f"{RESULT_DIR}/{taxa_name}/{prune_mode}/{fix_subtree_topo_str}"
     os.makedirs(output_dir, exist_ok=True)
@@ -46,7 +46,7 @@ def generate_shell_script(taxa_name, prune_mode, maximum_subtree_size, prop_aln,
         "python subtree_model_iteration.py",
         "--taxa_scale phylum",
         f"--taxa_name {taxa_name}",
-        f"--prop_aln {prop_aln}",
+        f"--num_aln {num_aln}",
         f"--train_loc_path {train_loc_path}",
         f"--test_loc_path {test_loc_path}",
         f"--taxa_file {combined_table}",
@@ -73,7 +73,7 @@ def generate_shell_script(taxa_name, prune_mode, maximum_subtree_size, prop_aln,
     ]
 
     script_content = " \\\n".join(params)
-    script_dir = os.path.join(output_dir, f"{taxa_name}_{maximum_subtree_size}_{prop_aln:.2f}")
+    script_dir = os.path.join(output_dir, f"{taxa_name}_{maximum_subtree_size}_{num_aln:.2f}")
     os.makedirs(script_dir, exist_ok=True)
     script_path = os.path.join(script_dir, f"run_script.sh")
     with open(script_path, "w") as script_file:
@@ -108,13 +108,13 @@ status = load_status()
 
 # Generate the list of shell scripts to run
 shell_scripts = []
-for prop_aln in prop_aln_list:
+for num_aln in num_aln_list:
     for maximum_subtree_size in maximum_subtree_size_list:
         for fix_subtree_topology in fix_subtree_topology_list:
              for prune_mode in prune_mode_list:
                 for taxa_name in taxa_name_list:
 
-                    script_path = generate_shell_script(taxa_name, prune_mode, maximum_subtree_size, prop_aln, fix_subtree_topology)
+                    script_path = generate_shell_script(taxa_name, prune_mode, maximum_subtree_size, num_aln, fix_subtree_topology)
                     if script_path not in status:
                         status[script_path] = "not_run"
                     if status[script_path] == "not_run" or status[script_path] == "error":
