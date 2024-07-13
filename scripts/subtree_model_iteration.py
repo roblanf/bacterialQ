@@ -781,7 +781,7 @@ def main(args: argparse.Namespace) -> None:
         # 4. Estimate new models using ModelFinder based on the best model for each partition and the pruned subtree
         log_message('process', "### Model update")
         model_update_dir = iteration_dir / "model_update"
-        model_update_dir.mkdir(parents=True, exist_ok=Tr ue)
+        model_update_dir.mkdir(parents=True, exist_ok=True)
         if not trained_model_nex:
             cmd = f"iqtree -seed 1 -T {num_threads} -S {subtree_model_nex} -te {subtree_update_trees} --model-joint GTR20+FO --init-model {best_model_name} -pre {model_update_dir / args.prefix}"  
         else:
