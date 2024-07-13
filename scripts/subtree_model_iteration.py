@@ -420,7 +420,7 @@ def extract_and_log_model_info_partition(iqtree_file, output_dir):
     return model_data
 
 
-def test_model(args, output_dir, test_loci_dir, model_name_set, trained_model_nex, mode, loop_id, te=None, initial_tree=None, pre=None):
+def test_model(args, output_dir, test_loci_dir, model_name_set, trained_model_nex, mode, loop_id, te=None, initial_tree=None, pre=None, adv_rate_opt=True):
     """
     Test the model performance on test loci or concatenated alignment.
 
@@ -433,10 +433,14 @@ def test_model(args, output_dir, test_loci_dir, model_name_set, trained_model_ne
         mode (str): Test mode, either "concat" or "partition".
         te (Path, optional): Path to the tree file for the -te option in IQ-TREE.
         initial_tree (Path, optional): Path to the initial tree for the -t option in IQ-TREE to accelerate tree search.
+        adv_rate_opt (bool, optional): Whether to enable advanced rate models search in IQ-TREE.
     """
     if te:
         initial_tree = None
-
+    if adv_rate_opt:
+        model_opt = "TESTNEWONLY"
+    else:
+        model_opt = "TESTONLY"
     output_dir.mkdir(parents=True, exist_ok=True)
     if mode == "concat":
         if test_loci_dir.is_file():
@@ -446,10 +450,10 @@ def test_model(args, output_dir, test_loci_dir, model_name_set, trained_model_ne
             concat_test_loci = output_dir / "concat_test_loci.faa"
             concatenate_seq_dict(str(test_loci_dir), str(concat_test_loci))
         # Test models on the concatenated alignment
-        cmd = f"iqtree -seed 1 -T {args.max_threads} -s {concat_test_loci} -m TESTNEWONLY -mset {model_name_set} -mdef {trained_model_nex}"
+        cmd = f"iqtree -seed 1 -T {args.max_threads} -s {concat_test_loci} -m {model_opt} -mset {model_name_set} -mdef {trained_model_nex}"
     elif mode == "partition":
         # Test models on individual test loci
-        cmd = f"iqtree -seed 1 -T {args.max_threads} -p {test_loci_dir} -m TESTNEWONLY -mset {model_name_set} -mdef {trained_model_nex} -wpl"
+        cmd = f"iqtree -seed 1 -T {args.max_threads} -p {test_loci_dir} -m {model_opt} -mset {model_name_set} -mdef {trained_model_nex} -wpl"
     else:
         log_message('error', "Invalid name of testing method.")
         return
@@ -777,7 +781,7 @@ def main(args: argparse.Namespace) -> None:
         # 4. Estimate new models using ModelFinder based on the best model for each partition and the pruned subtree
         log_message('process', "### Model update")
         model_update_dir = iteration_dir / "model_update"
-        model_update_dir.mkdir(parents=True, exist_ok=True)
+        model_update_dir.mkdir(parents=True, exist_ok=Tr ue)
         if not trained_model_nex:
             cmd = f"iqtree -seed 1 -T {num_threads} -S {subtree_model_nex} -te {subtree_update_trees} --model-joint GTR20+FO --init-model {best_model_name} -pre {model_update_dir / args.prefix}"  
         else:
@@ -804,8 +808,9 @@ def main(args: argparse.Namespace) -> None:
 
         # Update model_set for next iteration
         if iteration_id > 1:
-            model_set = f"{initial_model_set},{new_model.model_name}"  
+            model_set = model_set.replace(f",{prev_model.model_name}", "").replace(f"{prev_model.model_name},", "") + f",{new_model.model_name}"
         else:
+            initial_model_set = model_set
             model_set += f",{new_model.model_name}"
 
         log_link('result', "New model", str(models_dir / f"{new_model.model_name}"))
@@ -830,7 +835,7 @@ def main(args: argparse.Namespace) -> None:
             model_log_path = model_update_dir / f"{args.prefix}.log"
             cmd = f"Rscript model_update_summary.R {subtree_iqtree_path} {subtree_log_path} {model_log_path} {summary_dir}"
             log_message('result', "Generated summary for model update, see" + str(summary_dir))
-            run_command(cmd, f"{args.output_dir}/log.md")
+            run_command(cmd, f"{args.output_dir}/log.md",log_any = False)
 
         # 5. Check for model convergence
         log_message('process', "### Check model convergence")
@@ -875,9 +880,8 @@ def main(args: argparse.Namespace) -> None:
             inloop_test_dir = iteration_dir / "test_model"
             inloop_test_dir.mkdir(parents=True, exist_ok=True)
             log_message('process', "### Test model with concatenated testing loci inner loop")
-            test_model(args, inloop_test_dir, concat_testing_loci, model_set, trained_model_nex, "concat", loop_id = iteration_id, te=new_tree)
+            test_model(args, inloop_test_dir, concat_testing_loci, model_set, trained_model_nex, "concat", loop_id = iteration_id, te=new_tree, adv_rate_opt=False)
 
-        iteration_id += 1
         prev_model = new_model
         prev_tree = new_tree
 
@@ -885,20 +889,21 @@ def main(args: argparse.Namespace) -> None:
         loop_time = loop_end_time - loop_start_time
         time_usage_inloop.append(loop_time)
         log_message('process', f"Time usage for Loop_{iteration_id}: {loop_time:.2f} seconds ({loop_time/3600:.2f} h)")
+        iteration_id += 1
 
         # Check the time usage before the next step
         if args.time_limit:
             if time_checkpoint(time_usage_inloop, loop_start_time, args.time_limit):
-                log_message('error', f"Time limit reached. Program will terminate in the end of loop {iteration_id}.")
+                log_message('process', f"Time limit reached. Program will terminate in the end of loop {iteration_id}.")
                 break
     
             if time_checkpoint(time_usage_inloop, loop_start_time, args.time_limit - bound_next_round_time(time_usage_inloop)):
-                log_message('error', f"The estimated remaining time is insufficient to complete the next iteration. Program will terminate in the end of loop {iteration_id}.")
+                log_message('process', f"The estimated remaining time is insufficient to complete the next iteration. Program will terminate in the end of loop {iteration_id}.")
                 break 
 
         if iteration_id > args.max_iterate:
             # If the maximum number of iterations is reached, stop the iteration
-            log_message('result', f"Stop loop after {args.max_iterate} times of iteration")
+            log_message('process', f"Stop loop after {args.max_iterate} times of iteration")
             break
     
     # record parameters
@@ -1011,7 +1016,7 @@ def main(args: argparse.Namespace) -> None:
         taxa_files_test = list((final_test_logdir / "subtrees" / "taxa_list").glob("*.txt"))
         sample_alignment(testing_loci_path, taxa_files_test, subtree_test_loci_dir, nchar_row=3, nchar_col=1)
         log_message('process', "#### Test model performance on subtrees")
-        test_model(args, final_test_logdir, subtree_test_loci_dir, model_set, trained_model_nex, "partition", loop_id="final_test_subtrees", te=None)
+        test_model(args, final_test_logdir, subtree_test_loci_dir, model_set, trained_model_nex, "partition", loop_id="final_test_subtrees", te=None, adv_rate_opt=False)
 
     # 7. Validate the final model in concatenated testing loci
     log_message('process', "### Final model testing of concatenated all loci on final tree")
@@ -1036,8 +1041,6 @@ def main(args: argparse.Namespace) -> None:
                     if args.final_tree_tool == "IQFAST":
                         cmd += " -fast"
                     run_command(cmd, f"{args.output_dir}/log.md", log_output=args.keep_cmd_output, log_time=True)
-                    if args.use_outgroup:
-                        reroot_treefile_by_outgroup(existing_model_tree, args.output_dir / "outgroup_id.txt")
                     shutil.copy(existing_model_tree, trees_dir / f"ExistModel_IQ_All_partition.treefile")
                 else:
                     if args.use_outgroup:
