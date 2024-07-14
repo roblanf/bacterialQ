@@ -14,7 +14,7 @@ import time
 taxa_name_list = ["p__Chloroflexota", "p__Cyanobacteriota"]
 prune_mode_list = ["split"]
 maximum_subtree_size_list = [50, 100, 150, 200]
-num_aln_list = [500, 1000, 2000]
+num_aln_list = [1000, 1500, 2000]
 fix_subtree_topology_list = [True, False]
 
 n_threads = 5
@@ -63,10 +63,12 @@ def generate_shell_script(taxa_name, prune_mode, maximum_subtree_size, num_aln, 
         f"--outgroup_taxa_list {outgroup_phylum_list}",
         f"--time_limit {time_limit}",
         "--verbose",
-        "--test_partition_test_loci",
-        "--estimate_best_final_tree",
-        "--final_tree_tool IQFAST",
-        "--pipeline_test_settings",
+        "--estimate_best_concat_model", # concat all loci + FT tree -> IQ-TREE concat all loci
+        "--estimate_best_final_tree",   # concat all loci + Final model  -> FT tree
+        "--test_final_tree",            # concat all loci + WAG/LG model -> FT tree
+        "--test_partition_test_loci",   # partitioned testing loci + All model -> IQ-TREE
+        "--final_tree_tool IQFAST",     
+        "--pipeline_test_settings",     # concat testing loci + FT tree -> IQ-TREE concat all loci
         "--model_update_summary",
         "--tree_comparison_report",
         fix_subtree_topology_param
