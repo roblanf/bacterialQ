@@ -1002,7 +1002,7 @@ def main(args: argparse.Namespace) -> None:
     log_message('process', "### PCA Plot for all models")
     cmd = f"Rscript PCA_Q.R {args.model_dir} {models_dir}/trained_model.nex {models_dir}"
     run_command(cmd, f"{args.output_dir}/log.md")
-    log_link('res', "PCA plot of Q matrultices", str(models_dir / "PCA_Q.png"))
+    log_link('result', "PCA plot of Q matrultices", str(models_dir / "PCA_Q.png"))
     log_link('result', "PCA plot of state frequencies", str(models_dir / "PCA_F.png"))
 
     # 5. Test the final model on partitioned test loci without providing the constraint tree
@@ -1059,108 +1059,107 @@ def main(args: argparse.Namespace) -> None:
     # 7. Validate the final model in concatenated testing loci
     log_message('process', "### Final model testing of concatenated all loci on final tree")
     #test version: we use the full concatenated loci for testing instead of test loci
-    final_tree_on_concat_result = test_model(args, final_test_logdir, concat_all_loci, all_model_set, trained_model_nex, "concat", loop_id="final_test_concat", te=new_tree)
-    metalogger.log_parameter("final_tree_on_concat_result", final_tree_on_concat_result)
+    final_model_verify = test_model(args, final_test_logdir, concat_all_loci, all_model_set, trained_model_nex, "concat", loop_id="final_model_verify", te=new_tree, adv_rate_opt=False)
+    metalogger.log_parameter("final_model_verify", final_model_verify)
     # If the final model has better BIC than the existing models, continue to estimate the final tree on all loci
-    if final_concat_result:
-        best_concat_model = min(final_tree_on_concat_result, key=lambda x: float(x[2]))  # Find the model with the lowest BIC value
-        if not best_concat_model[0].startswith(('d__', 'p__', 'c__', 'o__', 'f__', 'g__', 's__')):
-            log_message('error', f"Warning: The inferred model is not better based on BIC value than the existing models.")
-        else:
-            log_message('process', f"The inferred model is better based on BIC value than the existing models.")
+    best_concat_model = min(final_model_verify, key=lambda x: float(x[2]))  # Find the model with the lowest BIC value
+    if not best_concat_model[0].startswith(('d__', 'p__', 'c__', 'o__', 'f__', 'g__', 's__')):
+        log_message('error', f"Warning: The inferred model is not better based on BIC value than the existing models.")
+    else:
+        log_message('process', f"The inferred model is better based on BIC value than the existing models.")
 
-            # 7. If the final model is better than the existing models in the concatenated test loci, perform cross-validation
-            if args.test_final_tree or args.cross_validation:
-                log_message('process', "### Test final tree")
-                log_message('process', "#### Final tree estimation on all loci without inferred model")
-                if args.final_tree_tool == "IQ" or args.final_tree_tool == "IQFAST":
-                    existing_model_tree = final_test_logdir / "existing_model_tree.treefile"
-                    cmd = f"iqtree -seed 1 -T {num_threads} -p {all_loci_partition_nex} -t {new_tree} -m MFP -mset {initial_model_set} -pre {final_test_logdir}/existing_model_tree -wpl"
-                    if args.final_tree_tool == "IQFAST":
-                        cmd += " -fast"
-                    run_command(cmd, f"{args.output_dir}/log.md", log_output=args.keep_cmd_output, log_time=True)
-                    shutil.copy(existing_model_tree, trees_dir / f"ExistModel_IQ_All_partition.treefile")
+        # 7. If the final model is better than the existing models in the concatenated test loci, perform cross-validation
+        if args.test_final_tree or args.cross_validation:
+            log_message('process', "### Test final tree")
+            log_message('process', "#### Final tree estimation on all loci without inferred model")
+            if args.final_tree_tool == "IQ" or args.final_tree_tool == "IQFAST":
+                existing_model_tree = final_test_logdir / "existing_model_tree.treefile"
+                cmd = f"iqtree -seed 1 -T {num_threads} -p {all_loci_partition_nex} -t {new_tree} -m MFP -mset {initial_model_set} -pre {final_test_logdir}/existing_model_tree -wpl"
+                if args.final_tree_tool == "IQFAST":
+                    cmd += " -fast"
+                run_command(cmd, f"{args.output_dir}/log.md", log_output=args.keep_cmd_output, log_time=True)
+                shutil.copy(existing_model_tree, trees_dir / f"ExistModel_IQ_All_partition.treefile")
+            else:
+                if args.use_outgroup:
+                    FT_init_tree = prev_outgroup_tree
+                    FT_full_aln = concat_training_loci_og
                 else:
-                    if args.use_outgroup:
-                        FT_init_tree = prev_outgroup_tree
-                        FT_full_aln = concat_training_loci_og
-                    else:
-                        FT_init_tree = new_tree
-                        FT_full_aln = concat_training_loci
-                    cmd = f"{PATH_FASTTREEMP} -wag -gamma -spr 4 -sprlength 1000 -boot 100 -log {final_test_logdir}/allloci_wag_tree.log -intree {FT_init_tree} {FT_full_aln} > {final_test_logdir}/allloci_wag_tree.treefile"
-                    run_command(cmd, f"{args.output_dir}/log.md", log_output=args.keep_cmd_output, log_time=True)
-                    if args.use_outgroup:
-                        reroot_treefile_by_outgroup(final_test_logdir / "allloci_wag_tree.treefile", args.output_dir / "outgroup_id.txt")
-                    shutil.copy(f"{final_test_logdir}/allloci_wag_tree.treefile", trees_dir / f"FT_All_WAG_G20.treefile")
-                    cmd = f"{PATH_FASTTREEMP} -lg -gamma -spr 4 -sprlength 1000 -boot 100 -log {final_test_logdir}/allloci_lg_tree.log -intree {FT_init_tree} {FT_full_aln} > {final_test_logdir}/allloci_lg_tree.treefile"
-                    run_command(cmd, f"{args.output_dir}/log.md", log_output=args.keep_cmd_output, log_time=True)
-                    if args.use_outgroup:
-                        reroot_treefile_by_outgroup(final_test_logdir / "allloci_lg_tree.treefile", args.output_dir / "outgroup_id.txt")
-                    shutil.copy(f"{final_test_logdir}/allloci_lg_tree.treefile", trees_dir / f"FT_All_LG_G20.treefile")
-                    wag_tree_ll = extract_gamma20loglk(f"{final_test_logdir}/allloci_wag_tree.log")
-                    lg_tree_ll = extract_gamma20loglk(f"{final_test_logdir}/allloci_lg_tree.log")
-                    existing_tree_ll = max(wag_tree_ll, lg_tree_ll)
-                    if wag_tree_ll >= lg_tree_ll:
-                        existing_model_tree = final_test_logdir / "allloci_wag_tree.treefile"
-                        log_message('result', f"WAG model has higher likelihood than LG model, use WAG model for final tree.")
-                        metalogger.log_parameter("existing_tree_model", "WAG")
-                    else:
-                        existing_model_tree = final_test_logdir / "allloci_lg_tree.treefile"
-                        log_message('result', f"LG model has higher likelihood than WAG model, use LG model for final tree.")
-                        metalogger.log_parameter("existing_tree_model", "LG")
-
-                log_message('process', "#### Compare final tree with existing model tree")
-                compare_trees(args, existing_model_tree, new_tree, final_test_dir, "compare_existing_model_tree")
-                # Compare LogL for the final model tree and the existing model tree
-                if args.final_tree_tool == "IQ" or args.final_tree_tool == "IQFAST":
-                    existing_tree_info = write_iqtree_statistic(f"{final_test_logdir}/existing_model_tree.iqtree", args.prefix, f"{args.output_dir}/iqtree_results.csv", extra_info={"loop": "Final test", "step": "Existing model tree"})
-                    existing_tree_ll = existing_tree_info['log_likelihood']
+                    FT_init_tree = new_tree
+                    FT_full_aln = concat_training_loci
+                cmd = f"{PATH_FASTTREEMP} -wag -gamma -spr 4 -sprlength 1000 -boot 100 -log {final_test_logdir}/allloci_wag_tree.log -intree {FT_init_tree} {FT_full_aln} > {final_test_logdir}/allloci_wag_tree.treefile"
+                run_command(cmd, f"{args.output_dir}/log.md", log_output=args.keep_cmd_output, log_time=True)
+                if args.use_outgroup:
+                    reroot_treefile_by_outgroup(final_test_logdir / "allloci_wag_tree.treefile", args.output_dir / "outgroup_id.txt")
+                shutil.copy(f"{final_test_logdir}/allloci_wag_tree.treefile", trees_dir / f"FT_All_WAG_G20.treefile")
+                cmd = f"{PATH_FASTTREEMP} -lg -gamma -spr 4 -sprlength 1000 -boot 100 -log {final_test_logdir}/allloci_lg_tree.log -intree {FT_init_tree} {FT_full_aln} > {final_test_logdir}/allloci_lg_tree.treefile"
+                run_command(cmd, f"{args.output_dir}/log.md", log_output=args.keep_cmd_output, log_time=True)
+                if args.use_outgroup:
+                    reroot_treefile_by_outgroup(final_test_logdir / "allloci_lg_tree.treefile", args.output_dir / "outgroup_id.txt")
+                shutil.copy(f"{final_test_logdir}/allloci_lg_tree.treefile", trees_dir / f"FT_All_LG_G20.treefile")
+                wag_tree_ll = extract_gamma20loglk(f"{final_test_logdir}/allloci_wag_tree.log")
+                lg_tree_ll = extract_gamma20loglk(f"{final_test_logdir}/allloci_lg_tree.log")
+                existing_tree_ll = max(wag_tree_ll, lg_tree_ll)
+                if wag_tree_ll >= lg_tree_ll:
+                    existing_model_tree = final_test_logdir / "allloci_wag_tree.treefile"
+                    log_message('result', f"WAG model has higher likelihood than LG model, use WAG model for final tree.")
+                    metalogger.log_parameter("existing_tree_model", "WAG")
                 else:
-                    final_tree_ll = extract_gamma20loglk(f"{final_test_logdir}/best_final_tree.log")
-                log_message('result', f"Log-Likelihood of final best tree and the tree estimated without inferred model:")
+                    existing_model_tree = final_test_logdir / "allloci_lg_tree.treefile"
+                    log_message('result', f"LG model has higher likelihood than WAG model, use LG model for final tree.")
+                    metalogger.log_parameter("existing_tree_model", "LG")
 
-                # log Log-likelihood for final tree and existing tree
-                log_message('result', "| Tree | Best final tree | Existing model tree |", new_line=True)
+            log_message('process', "#### Compare final tree with existing model tree")
+            compare_trees(args, existing_model_tree, new_tree, final_test_dir, "compare_existing_model_tree")
+            # Compare LogL for the final model tree and the existing model tree
+            if args.final_tree_tool == "IQ" or args.final_tree_tool == "IQFAST":
+                existing_tree_info = write_iqtree_statistic(f"{final_test_logdir}/existing_model_tree.iqtree", args.prefix, f"{args.output_dir}/iqtree_results.csv", extra_info={"loop": "Final test", "step": "Existing model tree"})
+                existing_tree_ll = existing_tree_info['log_likelihood']
+            else:
+                final_tree_ll = extract_gamma20loglk(f"{final_test_logdir}/best_final_tree.log")
+            log_message('result', f"Log-Likelihood of final best tree and the tree estimated without inferred model:")
+
+            # log Log-likelihood for final tree and existing tree
+            log_message('result', "| Tree | Best final tree | Existing model tree |", new_line=True)
+            log_message('result', "|------|-----------------|---------------------|")
+            log_message('result', f"| LogL | {final_tree_ll} | {existing_tree_ll} |")
+            metalogger.log_parameter("final_tree_ll", final_tree_ll)
+            metalogger.log_parameter("existing_tree_ll", existing_tree_ll)
+            if final_tree_ll <= existing_tree_ll:
+                log_message('error', "The final model tree does not have better likelihood than the existing model tree.")
+                best_concat_tree = existing_model_tree
+            else:
+                log_message('process', "The final model tree has better likelihood than the existing model tree.")
+                best_concat_tree = new_tree
+            
+            if args.estimate_best_concat_model:
+                log_message('process', "### Distinguish best model on final tree in concatenated all loci")
+                concat_best_model_result = test_model(args, final_test_logdir, concat_all_loci, all_model_set_with_all_trained, trained_model_nex, "concat", loop_id="best_model_concat", te = best_concat_tree, pre=f"{final_test_logdir}/test_best_concat_model")
+                best_infer_str, best_existing_str, best_infer_bic, best_existing_bic = extract_best_bic(concat_best_model_result)
+                best_infer_model, best_existing_model = best_infer_str.split('+', 1)[0], best_existing_str.split('+', 1)[0]
+                if best_infer_bic < best_existing_bic:
+                    log_message('result', f"The inferred model {best_infer_model} has better BIC value than the existing model:")
+                else:
+                    log_message('error', f"The existing model {best_existing_model} has better BIC value than the inferred model:")
+                log_message('result', "| Type | Best Inferred Model | Best Existing Model |", new_line=True)
                 log_message('result', "|------|-----------------|---------------------|")
-                log_message('result', f"| LogL | {final_tree_ll} | {existing_tree_ll} |")
-                metalogger.log_parameter("final_tree_ll", final_tree_ll)
-                metalogger.log_parameter("existing_tree_ll", existing_tree_ll)
-                if final_tree_ll <= existing_tree_ll:
-                    log_message('error', "The final model tree does not have better likelihood than the existing model tree.")
-                    best_concat_tree = existing_model_tree
-                else:
-                    log_message('process', "The final model tree has better likelihood than the existing model tree.")
-                    best_concat_tree = new_tree
-                
-                if args.estimate_best_concat_model:
-                    log_message('process', "### Distinguish best model on final tree in concatenated all loci")
-                    concat_best_model_result = test_model(args, final_test_logdir, concat_all_loci, all_model_set_with_all_trained, trained_model_nex, "concat", loop_id="best_model_concat", te = best_concat_tree, pre=f"{final_test_logdir}/test_best_concat_model")
-                    best_infer_str, best_existing_str, best_infer_bic, best_existing_bic = extract_best_bic(concat_best_model_result)
-                    best_infer_model, best_existing_model = best_infer_str.split('+', 1)[0], best_existing_str.split('+', 1)[0]
-                    if best_infer_bic < best_existing_bic:
-                        log_message('result', f"The inferred model {best_infer_model} has better BIC value than the existing model:")
-                    else:
-                        log_message('error', f"The existing model {best_existing_model} has better BIC value than the inferred model:")
-                    log_message('result', "| Type | Best Inferred Model | Best Existing Model |", new_line=True)
-                    log_message('result', "|------|-----------------|---------------------|")
-                    log_message('result', f"| Model | {best_infer_str} | {best_existing_str} |")
-                    log_message('result', f"| BIC | {best_infer_bic} | {best_existing_bic} |")
-                    metalogger.log_parameters({"best_infer_model_concat":best_infer_str, "best_existing_model_concat":best_existing_str, "best_infer_model_concat_bic":best_infer_bic, "best_existing_model_concat_bic":best_existing_bic})
-                    metalogger.log_parameter("concat_best_model_result", concat_best_model_result)
+                log_message('result', f"| Model | {best_infer_str} | {best_existing_str} |")
+                log_message('result', f"| BIC | {best_infer_bic} | {best_existing_bic} |")
+                metalogger.log_parameters({"best_infer_model_concat":best_infer_str, "best_existing_model_concat":best_existing_str, "best_infer_model_concat_bic":best_infer_bic, "best_existing_model_concat_bic":best_existing_bic})
+                metalogger.log_parameter("concat_best_model_result", concat_best_model_result)
 
-                if final_tree_ll >= existing_tree_ll:
-                    # If the final model has better LogL, carry out cross-validation
-                    if args.cross_validation:
-                        cross_validation_dir = final_test_dir / "cross_validation"
-                        cross_validation_dir.mkdir(parents=True, exist_ok=True)
-                        log_message('process', "### Cross validation")
-                        # Use a temporary directory to store the results of the reference tree test
-                        log_message('process', "#### All models testing on existing model tree and all loci")
-                        existing_concat_result = test_model(args, cross_validation_dir, concat_all_loci, all_model_set, trained_model_nex, "concat", loop_id="cross_existing_model_tree", te=existing_model_tree, pre=f"{cross_validation_dir}/cross_existing_model_tree")
-                        # Compare the results of the two tests
-                        log_message('process', "#### All models testing on final best tree and all loci")
-                        final_concat_result = test_model(args, cross_validation_dir, concat_all_loci, all_model_set, trained_model_nex, "concat", loop_id="cross_final_tree", te=new_tree, pre=f"{cross_validation_dir}/cross_final_tree")
-                        logging_cross_test_table(existing_concat_result, final_concat_result)
+            if final_tree_ll >= existing_tree_ll:
+                # If the final model has better LogL, carry out cross-validation
+                if args.cross_validation:
+                    cross_validation_dir = final_test_dir / "cross_validation"
+                    cross_validation_dir.mkdir(parents=True, exist_ok=True)
+                    log_message('process', "### Cross validation")
+                    # Use a temporary directory to store the results of the reference tree test
+                    log_message('process', "#### All models testing on existing model tree and all loci")
+                    existing_concat_result = test_model(args, cross_validation_dir, concat_all_loci, all_model_set, trained_model_nex, "concat", loop_id="cross_existing_model_tree", te=existing_model_tree, pre=f"{cross_validation_dir}/cross_existing_model_tree")
+                    # Compare the results of the two tests
+                    log_message('process', "#### All models testing on final best tree and all loci")
+                    final_concat_result = test_model(args, cross_validation_dir, concat_all_loci, all_model_set, trained_model_nex, "concat", loop_id="cross_final_tree", te=new_tree, pre=f"{cross_validation_dir}/cross_final_tree")
+                    logging_cross_test_table(existing_concat_result, final_concat_result)
 
     # 8. Plot RF and nRF distance among estimated trees and reference tree
     cmd = f"Rscript ./analysis/write_pairwise_tree_dist.R {trees_dir}"
