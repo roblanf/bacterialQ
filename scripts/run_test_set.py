@@ -54,7 +54,7 @@ def generate_shell_script(taxa_name, prune_mode, maximum_subtree_size, num_aln, 
         f"--model_dir {model_dir}",
         f"--output_dir {output_dir}",
         f"--FastTreeMP_path {FastTreeMP_path}",
-        "--max_threads 30",
+        "--max_threads 50",
         "--tree_size_lower_lim 10",
         f"--tree_size_upper_lim {maximum_subtree_size}",
         f"--prune_mode {prune_mode}",
@@ -67,7 +67,7 @@ def generate_shell_script(taxa_name, prune_mode, maximum_subtree_size, num_aln, 
         "--estimate_best_final_tree",   # concat all loci + Final model  -> FT tree
         "--test_final_tree",            # concat all loci + WAG/LG model -> FT tree
         "--test_partition_test_loci",   # partitioned testing loci + All model -> IQ-TREE
-        "--final_tree_tool IQFAST",     
+        "--final_tree_tool FT",     
         "--pipeline_test_settings",     # concat testing loci + FT tree -> IQ-TREE concat all loci
         "--model_update_summary",
         "--tree_comparison_report",
@@ -75,7 +75,7 @@ def generate_shell_script(taxa_name, prune_mode, maximum_subtree_size, num_aln, 
     ]
 
     script_content = " \\\n".join(params)
-    script_dir = os.path.join(output_dir, f"{taxa_name}_{maximum_subtree_size}_{num_aln:.2f}")
+    script_dir = os.path.join(output_dir, f"{taxa_name}_{maximum_subtree_size}_{num_aln}")
     os.makedirs(script_dir, exist_ok=True)
     script_path = os.path.join(script_dir, f"run_script.sh")
     with open(script_path, "w") as script_file:

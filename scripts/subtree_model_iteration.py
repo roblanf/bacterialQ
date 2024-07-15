@@ -235,8 +235,8 @@ def time_checkpoint(used_time_list, start_time, time_limit):
     if time_limit is None:
         return False
     end_time = time.time()
-    used_time = end_time - start_time
-    used_time = used_time + sum(used_time_list)
+    this_round_time = end_time - start_time
+    used_time = this_round_time + sum(used_time_list)
     if used_time > time_limit:
         return True
     return False
@@ -905,17 +905,17 @@ def main(args: argparse.Namespace) -> None:
 
         loop_end_time = time.time()
         loop_time = loop_end_time - loop_start_time
-        time_usage_inloop.append(loop_time)
         log_message('process', f"Time usage for Loop_{iteration_id}: {loop_time:.2f} seconds ({loop_time/3600:.2f} h)")
-        iteration_id += 1
 
         # Check the time usage before the next step
         if args.time_limit:
             if time_checkpoint(time_usage_inloop, loop_start_time, args.time_limit):
+                time_usage_inloop.append(loop_time)
                 log_message('process', f"Time limit reached. Program will terminate in the end of loop {iteration_id}.")
                 break
     
             if time_checkpoint(time_usage_inloop, loop_start_time, args.time_limit - bound_next_round_time(time_usage_inloop)):
+                time_usage_inloop.append(loop_time)
                 log_message('process', f"The estimated remaining time is insufficient to complete the next iteration. Program will terminate in the end of loop {iteration_id}.")
                 break 
 
@@ -923,6 +923,9 @@ def main(args: argparse.Namespace) -> None:
             # If the maximum number of iterations is reached, stop the iteration
             log_message('process', f"Stop loop after {args.max_iterate} times of iteration")
             break
+        
+        time_usage_inloop.append(loop_time)
+        iteration_id += 1
     
     # record parameters
     metalogger.log_parameter("num_aln_inloop", num_aln_inloop)
@@ -1008,7 +1011,7 @@ def main(args: argparse.Namespace) -> None:
     # 5. Test the final model on partitioned test loci without providing the constraint tree
     if args.test_partition_test_loci:
         log_message('process', "### Final model testing on partitioned test loci without constraint tree")
-        partition_test_result = test_model(args, final_test_logdir, testing_loci_path, all_model_set, trained_model_nex, "partition", loop_id="final_test_partition", initial_tree=new_tree)
+        partition_test_result = test_model(args, final_test_logdir, testing_loci_path, all_model_set, trained_model_nex, "partition", loop_id="final_test_partition", initial_tree=new_tree, pre=f"{final_test_logdir}/final_test_partition")
         metalogger.log_parameter("final_test_partition", partition_test_result)
         final_test_partition_info = write_iqtree_statistic(final_test_logdir / "final_test_partition.iqtree", "final_test_partition", f"{args.output_dir}/iqtree_results.csv", extra_info={"loop": "final_test_partition", "step": "Final test partition"})
         metalogger.log_parameter("test_partition_result",final_test_partition_info)
@@ -1054,12 +1057,12 @@ def main(args: argparse.Namespace) -> None:
         taxa_files_test = list((final_test_logdir / "subtrees" / "taxa_list").glob("*.txt"))
         sample_alignment(testing_loci_path, taxa_files_test, subtree_test_loci_dir, nchar_row=3, nchar_col=1)
         log_message('process', "#### Test model performance on subtrees")
-        test_model(args, final_test_logdir, subtree_test_loci_dir, model_set_str, trained_model_nex, "partition", loop_id="final_test_subtrees", te=None, adv_rate_opt=False)
+        test_model(args, final_test_logdir, subtree_test_loci_dir, model_set_str, trained_model_nex, "partition", loop_id="final_test_subtrees", te=None, adv_rate_opt=False, pre=f"{final_test_logdir}/test_in_subtree")
 
     # 7. Validate the final model in concatenated testing loci
     log_message('process', "### Final model testing of concatenated all loci on final tree")
     #test version: we use the full concatenated loci for testing instead of test loci
-    final_model_verify = test_model(args, final_test_logdir, concat_all_loci, all_model_set, trained_model_nex, "concat", loop_id="final_model_verify", te=new_tree, adv_rate_opt=False)
+    final_model_verify = test_model(args, final_test_logdir, concat_all_loci, all_model_set, trained_model_nex, "concat", loop_id="final_model_verify", te=new_tree, adv_rate_opt=False, pre=f"{final_test_logdir}/final_model_verify")
     metalogger.log_parameter("final_model_verify", final_model_verify)
     # If the final model has better BIC than the existing models, continue to estimate the final tree on all loci
     best_concat_model = min(final_model_verify, key=lambda x: float(x[2]))  # Find the model with the lowest BIC value

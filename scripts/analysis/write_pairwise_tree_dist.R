@@ -249,6 +249,11 @@ dir_path <- args[1]
 tree_files <- list.files(dir_path)
 tree_files <- tree_files[grepl("\\..*tre.*$", tree_files, ignore.case = TRUE)]
 
+# If only have one tree file, exit
+if (length(tree_files) < 2) {
+    stop("At least two tree files are required for pairwise comparison.")
+}
+
 # Get all possible pairs of tree files
 tree_pairs <- combn(tree_files, 2)
 
