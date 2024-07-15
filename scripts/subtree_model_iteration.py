@@ -921,6 +921,7 @@ def main(args: argparse.Namespace) -> None:
 
         if iteration_id > args.max_iterate:
             # If the maximum number of iterations is reached, stop the iteration
+            time_usage_inloop.append(loop_time)
             log_message('process', f"Stop loop after {args.max_iterate} times of iteration")
             break
         
