@@ -450,10 +450,10 @@ def test_model(args, output_dir, test_loci_dir, model_name_set, trained_model_ne
             concat_test_loci = output_dir / "concat_test_loci.faa"
             concatenate_seq_dict(str(test_loci_dir), str(concat_test_loci))
         # Test models on the concatenated alignment
-        cmd = f"iqtree -seed 1 -T {args.max_threads} -s {concat_test_loci} -m {model_opt} -mset {model_name_set} -mdef {trained_model_nex}"
+        cmd = f"iqtree -seed 1 -T AUTO --ntmax {args.max_threads} -s {concat_test_loci} -m {model_opt} -mset {model_name_set} -mdef {trained_model_nex}"
     elif mode == "partition":
         # Test models on individual test loci
-        cmd = f"iqtree -seed 1 -T {args.max_threads} -p {test_loci_dir} -m {model_opt} -mset {model_name_set} -mdef {trained_model_nex} -wpl"
+        cmd = f"iqtree -seed 1 -T AUTO --ntmax {args.max_threads} -p {test_loci_dir} -m {model_opt} -mset {model_name_set} -mdef {trained_model_nex} -wpl -mem 200G"
     else:
         log_message('error', "Invalid name of testing method.")
         return
@@ -488,21 +488,29 @@ def compare_trees(args, prev_tree, new_tree, html_output_dir, name):
     cmd_R = f"""
     Rscript -e "rmarkdown::render('tree_comparison.Rmd', output_dir= '{html_output_dir}', params = list(tree1_path = '{prev_tree}', tree2_path = '{new_tree}', root = FALSE, summary_path = '{args.output_dir}/tree_summary.csv', cophylo_path = '{html_output_dir}/cophylo_plot.pdf', name = '{name}'))"
     """
-    run_command(cmd_R, f"{args.output_dir}/log.md")
-    log_link('result', "Tree comparison report", str(html_output_dir / "tree_comparison.html"))
+    
+    try:
+        run_command(cmd_R, f"{args.output_dir}/log.md")
+        log_link('result', "Tree comparison report", str(Path(html_output_dir) / "tree_comparison.html"))
 
-    summary_df = pd.read_csv(f"{args.output_dir}/tree_summary.csv")
-    current_loop_df = summary_df[summary_df['name'] == name]
+        summary_df = pd.read_csv(f"{args.output_dir}/tree_summary.csv")
+        current_loop_df = summary_df[summary_df['name'] == name]
 
-    rf_dist = current_loop_df['RF_dist'].values[0]
-    nrf_dist = current_loop_df['nRF'].values[0]
-    tree1_bl = current_loop_df['Tree1_BL'].values[0]
-    tree2_bl = current_loop_df['Tree2_BL'].values[0]
+        rf_dist = current_loop_df['RF_dist'].values[0]
+        nrf_dist = current_loop_df['nRF'].values[0]
+        tree1_bl = current_loop_df['Tree1_BL'].values[0]
+        tree2_bl = current_loop_df['Tree2_BL'].values[0]
 
-    log_message('result', f"RF distance: {rf_dist}")
-    log_message('result', f"Normalized RF distance: {nrf_dist}")
-    log_message('result', f"Tree 1 branch length: {tree1_bl}")
-    log_message('result', f"Tree 2 branch length: {tree2_bl}")
+        log_message('result', f"RF distance: {rf_dist}")
+        log_message('result', f"Normalized RF distance: {nrf_dist}")
+        log_message('result', f"Tree 1 branch length: {tree1_bl}")
+        log_message('result', f"Tree 2 branch length: {tree2_bl}")
+
+    except subprocess.CalledProcessError as e:
+        log_message('error', f"Failed to run command for tree comparison report. Error: {str(e)}")
+    except Exception as e:
+        log_message('error', f"An unexpected error occurred while generating the tree comparison report. Error: {str(e)}")
+
 
 def extract_best_bic(model_data):
     """
@@ -852,8 +860,11 @@ def main(args: argparse.Namespace) -> None:
             subtree_log_path = subtree_update_dir / f"{args.prefix}.log"
             model_log_path = model_update_dir / f"{args.prefix}.log"
             cmd = f"Rscript model_update_summary.R {subtree_iqtree_path} {subtree_log_path} {model_log_path} {summary_dir}"
-            log_message('result', "Generated summary for model update, see" + str(summary_dir))
-            run_command(cmd, f"{args.output_dir}/log.md",log_any = False)
+            try:
+                run_command(cmd, f"{args.output_dir}/log.md", log_any=False)
+                log_message('result', "Generated summary for model update, see" + str(summary_dir))
+            except Exception as e:
+                log_message('error', f"Failed to run command for generate model update summary. Error: {str(e)}")
 
         # 5. Check for model convergence
         log_message('process', "### Check model convergence")
@@ -959,7 +970,7 @@ def main(args: argparse.Namespace) -> None:
             all_loci_partition_nex = final_test_logdir / "all_loci_partition.nex"
             create_nexus_partition([training_loci_path, testing_loci_path], all_loci_partition_nex)
             num_threads = min(int(args.max_threads), len(list(training_loci_path.glob("*.fa*"))) + len(list(testing_loci_path.glob("*.fa*"))))
-            cmd = f"iqtree -seed 1 -T {num_threads} -p {all_loci_partition_nex} -t {new_tree} -m MFP -mset {all_model_set} -mdef {trained_model_nex} -pre {final_test_logdir}/best_final_tree -wpl"
+            cmd = f"iqtree -seed 1 -T AUTO --ntmax {num_threads} -p {all_loci_partition_nex} -t {new_tree} -m MFP -mset {all_model_set} -mdef {trained_model_nex} -pre {final_test_logdir}/best_final_tree -wpl -safe"
             if args.final_tree_tool == "IQFAST":
                 cmd += " -fast" 
         else:
@@ -1078,7 +1089,7 @@ def main(args: argparse.Namespace) -> None:
             log_message('process', "#### Final tree estimation on all loci without inferred model")
             if args.final_tree_tool == "IQ" or args.final_tree_tool == "IQFAST":
                 existing_model_tree = final_test_logdir / "existing_model_tree.treefile"
-                cmd = f"iqtree -seed 1 -T {num_threads} -p {all_loci_partition_nex} -t {new_tree} -m MFP -mset {initial_model_set} -pre {final_test_logdir}/existing_model_tree -wpl"
+                cmd = f"iqtree -seed 1 -T AUTO --ntmax {num_threads} -p {all_loci_partition_nex} -t {new_tree} -m MFP -mset {initial_model_set} -pre {final_test_logdir}/existing_model_tree -wpl -safe"
                 if args.final_tree_tool == "IQFAST":
                     cmd += " -fast"
                 run_command(cmd, f"{args.output_dir}/log.md", log_output=args.keep_cmd_output, log_time=True)
@@ -1137,7 +1148,7 @@ def main(args: argparse.Namespace) -> None:
             
             if args.estimate_best_concat_model:
                 log_message('process', "### Distinguish best model on final tree in concatenated all loci")
-                concat_best_model_result = test_model(args, final_test_logdir, concat_all_loci, all_model_set_with_all_trained, trained_model_nex, "concat", loop_id="best_model_concat", te = best_concat_tree, pre=f"{final_test_logdir}/test_best_concat_model")
+                concat_best_model_result = test_model(args, final_test_logdir, concat_all_loci, all_model_set_with_all_trained, trained_model_nex, "concat", loop_id="best_model_concat", te = best_concat_tree, pre=f"{final_test_logdir}/allloci_best_concat_model")
                 best_infer_str, best_existing_str, best_infer_bic, best_existing_bic = extract_best_bic(concat_best_model_result)
                 best_infer_model, best_existing_model = best_infer_str.split('+', 1)[0], best_existing_str.split('+', 1)[0]
                 if best_infer_bic < best_existing_bic:
