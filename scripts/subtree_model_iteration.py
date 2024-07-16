@@ -460,7 +460,7 @@ def test_model(args, output_dir, test_loci_dir, model_name_set, trained_model_ne
     if te:
         cmd += f" -te {te}"
     if initial_tree:
-        cmd += f" -t {initial_tree}"
+        cmd += f" -t {initial_tree} -fast"
     test_prefix = f"{output_dir / args.prefix}_test_{mode}"
     step = f"test_{mode}"
     if pre:
