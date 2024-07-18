@@ -10,6 +10,7 @@ import itertools
 import random
 from pathlib import Path, PosixPath
 from typing import Tuple, Union, List
+from Bio import Phylo
  
 # Import functional scripts
 from Q_convert import *
@@ -40,7 +41,7 @@ def log_and_handle_error(func):
             raise
     return wrapper
 
-def run_command(cmd: str, log_file: str, log_any: bool = True, log_output: bool = False, log_time: bool = False) -> Tuple[str, str, int]:
+def run_command(cmd: str, log_file: str, log_any: bool = True, log_output: bool = False, log_time: bool = False, allow_error: bool = False) -> Tuple[str, str, int]:
     """
     Run a shell command, log its output, and return its output and exit code.
 
@@ -50,6 +51,7 @@ def run_command(cmd: str, log_file: str, log_any: bool = True, log_output: bool 
         log_any (bool): Whether to log the command itself.
         log_output (bool): Whether to log the command output.
         log_time (bool): Whether to log the command runtime.
+        allow_error (bool): Whether to allow the program to continue running even if the command fails.
 
     Returns:
         Tuple[str, str, int]: A tuple containing the command output (stdout), error output (stderr), and exit code.
@@ -82,7 +84,8 @@ def run_command(cmd: str, log_file: str, log_any: bool = True, log_output: bool 
 
     if exit_code > 0:
         log_message('error', stderr)
-        sys.exit(stderr)
+        if not allow_error:
+            sys.exit(stderr)
 
     return stdout, stderr, exit_code
 
@@ -210,7 +213,6 @@ def sample_alignment(loci_dir: Path, taxa_file_list: Union[Path, List[Path]], ou
 
 
 def get_constraint_tree(loci_dir, subtree_dir, output_tree_path):
-    from Bio import Phylo
     from get_subtree import get_subtree_from_fasta
     # Get and arrange aligments by filename
     loci_file_names = os.listdir(loci_dir)
@@ -450,10 +452,10 @@ def test_model(args, output_dir, test_loci_dir, model_name_set, trained_model_ne
             concat_test_loci = output_dir / "concat_test_loci.faa"
             concatenate_seq_dict(str(test_loci_dir), str(concat_test_loci))
         # Test models on the concatenated alignment
-        cmd = f"iqtree -seed 1 -T AUTO -ntmax {args.max_threads} -s {concat_test_loci} -m {model_opt} -mset {model_name_set} -mdef {trained_model_nex}"
+        cmd = f"iqtree -seed 1 -T AUTO -ntmax {args.max_threads} -s {concat_test_loci} -m {model_opt} -mset {model_name_set} -mdef {trained_model_nex} -safe"
     elif mode == "partition":
         # Test models on individual test loci
-        cmd = f"iqtree -seed 1 -T AUTO -ntmax {args.max_threads} -p {test_loci_dir} -m {model_opt} -mset {model_name_set} -mdef {trained_model_nex} -wpl -mem 200G"
+        cmd = f"iqtree -seed 1 -T AUTO -ntmax {args.max_threads} -p {test_loci_dir} -m {model_opt} -mset {model_name_set} -mdef {trained_model_nex} -safe -wpl -mem 200G"
     else:
         log_message('error', "Invalid name of testing method.")
         return
@@ -473,10 +475,6 @@ def test_model(args, output_dir, test_loci_dir, model_name_set, trained_model_ne
     log_link('result', f"Detail result of {mode} test", f"{test_prefix}.log")
     write_iqtree_statistic(test_iqtree_file, f"{args.prefix}", f"{args.output_dir}/iqtree_results.csv", extra_info={"loop": loop_id, "step": f"{step}"})
 
-    # Generate the tree without outgroup if the outgroup is used
-    if args.use_outgroup:
-        reroot_treefile_by_outgroup(f"{test_prefix}.treefile", args.output_dir / "outgroup_id.txt")
-
     if mode == "concat":
         model_data = extract_and_log_model_info_concat(test_iqtree_file)
     elif mode == "partition":
@@ -490,7 +488,7 @@ def compare_trees(args, prev_tree, new_tree, html_output_dir, name):
     """
     
     try:
-        run_command(cmd_R, f"{args.output_dir}/log.md")
+        run_command(cmd_R, f"{args.output_dir}/log.md", allow_error=True)
         log_link('result', "Tree comparison report", str(Path(html_output_dir) / "tree_comparison.html"))
 
         summary_df = pd.read_csv(f"{args.output_dir}/tree_summary.csv")
@@ -970,7 +968,7 @@ def main(args: argparse.Namespace) -> None:
             all_loci_partition_nex = final_test_logdir / "all_loci_partition.nex"
             create_nexus_partition([training_loci_path, testing_loci_path], all_loci_partition_nex)
             num_threads = min(int(args.max_threads), len(list(training_loci_path.glob("*.fa*"))) + len(list(testing_loci_path.glob("*.fa*"))))
-            cmd = f"iqtree -seed 1 -T AUTO -ntmax {num_threads} -p {all_loci_partition_nex} -t {new_tree} -m MFP -mset {all_model_set} -mdef {trained_model_nex} -pre {final_test_logdir}/best_final_tree -wpl -safe"
+            cmd = f"iqtree -seed 1 -T AUTO -ntmax {num_threads} -p {all_loci_partition_nex} -t {new_tree} -m MFP -mset {all_model_set} -mdef {trained_model_nex} -pre {final_test_logdir}/best_final_tree -wpl -safe -mem 200G"
             if args.final_tree_tool == "IQFAST":
                 cmd += " -fast" 
         else:
@@ -1016,7 +1014,7 @@ def main(args: argparse.Namespace) -> None:
     # 4. Plot PCA of Q matrices and state frequencies among initial and trained models
     log_message('process', "### PCA Plot for all models")
     cmd = f"Rscript PCA_Q.R {args.model_dir} {models_dir}/trained_model.nex {models_dir}"
-    run_command(cmd, f"{args.output_dir}/log.md")
+    run_command(cmd, f"{args.output_dir}/log.md", allow_error=True)
     log_link('result', "PCA plot of Q matrultices", str(models_dir / "PCA_Q.png"))
     log_link('result', "PCA plot of state frequencies", str(models_dir / "PCA_F.png"))
 
@@ -1089,7 +1087,7 @@ def main(args: argparse.Namespace) -> None:
             log_message('process', "#### Final tree estimation on all loci without inferred model")
             if args.final_tree_tool == "IQ" or args.final_tree_tool == "IQFAST":
                 existing_model_tree = final_test_logdir / "existing_model_tree.treefile"
-                cmd = f"iqtree -seed 1 -T AUTO -ntmax {num_threads} -p {all_loci_partition_nex} -t {new_tree} -m MFP -mset {initial_model_set} -pre {final_test_logdir}/existing_model_tree -wpl -safe"
+                cmd = f"iqtree -seed 1 -T AUTO -ntmax {num_threads} -p {all_loci_partition_nex} -t {new_tree} -m MFP -mset {initial_model_set} -pre {final_test_logdir}/existing_model_tree -wpl -safe -mem 200G"
                 if args.final_tree_tool == "IQFAST":
                     cmd += " -fast"
                 run_command(cmd, f"{args.output_dir}/log.md", log_output=args.keep_cmd_output, log_time=True)
@@ -1178,7 +1176,7 @@ def main(args: argparse.Namespace) -> None:
 
     # 8. Plot RF and nRF distance among estimated trees and reference tree
     cmd = f"Rscript ./analysis/write_pairwise_tree_dist.R {trees_dir}"
-    run_command(cmd, f"{args.output_dir}/log.md", log_any=False)
+    run_command(cmd, f"{args.output_dir}/log.md", log_any=False, allow_error=True)
     log_link('result', "Heatmap of RF distance of trees:", str(trees_dir / "RF_dist.png"))
     log_link('result', "Heatmap of nRF distance of trees:", str(trees_dir / "nRF_dist.png"))
     log_link('result', "Pairwise tree distance metrics: ", str(trees_dir / "tree_pairwise_compare.csv"))
