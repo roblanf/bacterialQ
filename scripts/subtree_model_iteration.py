@@ -455,7 +455,7 @@ def test_model(args, output_dir, test_loci_dir, model_name_set, trained_model_ne
         cmd = f"iqtree -seed 1 -T AUTO -ntmax {args.max_threads} -s {concat_test_loci} -m {model_opt} -mset {model_name_set} -mdef {trained_model_nex} -safe"
     elif mode == "partition":
         # Test models on individual test loci
-        cmd = f"iqtree -seed 1 -T AUTO -ntmax {args.max_threads} -p {test_loci_dir} -m {model_opt} -mset {model_name_set} -mdef {trained_model_nex} -safe -wpl -mem 200G"
+        cmd = f"iqtree -seed 1 -T AUTO -ntmax {args.max_threads} -p {test_loci_dir} -m {model_opt} -mset {model_name_set} -mdef {trained_model_nex} -safe -wpl"
     else:
         log_message('error', "Invalid name of testing method.")
         return
@@ -968,7 +968,7 @@ def main(args: argparse.Namespace) -> None:
             all_loci_partition_nex = final_test_logdir / "all_loci_partition.nex"
             create_nexus_partition([training_loci_path, testing_loci_path], all_loci_partition_nex)
             num_threads = min(int(args.max_threads), len(list(training_loci_path.glob("*.fa*"))) + len(list(testing_loci_path.glob("*.fa*"))))
-            cmd = f"iqtree -seed 1 -T AUTO -ntmax {num_threads} -p {all_loci_partition_nex} -t {new_tree} -m MFP -mset {all_model_set} -mdef {trained_model_nex} -pre {final_test_logdir}/best_final_tree -wpl -safe -mem 200G"
+            cmd = f"iqtree -seed 1 -T AUTO -ntmax {num_threads} -p {all_loci_partition_nex} -t {new_tree} -m MFP -mset {all_model_set} -mdef {trained_model_nex} -pre {final_test_logdir}/best_final_tree -wpl -safe"
             if args.final_tree_tool == "IQFAST":
                 cmd += " -fast" 
         else:
@@ -1087,7 +1087,7 @@ def main(args: argparse.Namespace) -> None:
             log_message('process', "#### Final tree estimation on all loci without inferred model")
             if args.final_tree_tool == "IQ" or args.final_tree_tool == "IQFAST":
                 existing_model_tree = final_test_logdir / "existing_model_tree.treefile"
-                cmd = f"iqtree -seed 1 -T AUTO -ntmax {num_threads} -p {all_loci_partition_nex} -t {new_tree} -m MFP -mset {initial_model_set} -pre {final_test_logdir}/existing_model_tree -wpl -safe -mem 200G"
+                cmd = f"iqtree -seed 1 -T AUTO -ntmax {num_threads} -p {all_loci_partition_nex} -t {new_tree} -m MFP -mset {initial_model_set} -pre {final_test_logdir}/existing_model_tree -wpl -safe"
                 if args.final_tree_tool == "IQFAST":
                     cmd += " -fast"
                 run_command(cmd, f"{args.output_dir}/log.md", log_output=args.keep_cmd_output, log_time=True)
