@@ -688,11 +688,11 @@ def main(args: argparse.Namespace) -> None:
     filtered_allspc_tree = args.output_dir / "ref_tree.tre"
 
     iteration_id = 1
-    prev_model = None
+    prev_model = extract_spc_Q_from_nex(args.model_dir, "LG")
     model_set = initial_model_set.replace(" ", "").split(",")
     trained_model_nex = None
     prev_tree = filtered_allspc_tree
-    initial_best_model_name = None
+    initial_best_model_name = "LG"
     new_model = None
     if args.use_outgroup:
         prev_outgroup_tree = outgroup_allspc_tree
@@ -713,106 +713,14 @@ def main(args: argparse.Namespace) -> None:
         iteration_dir = args.output_dir / f"loop_{iteration_id}"
         iteration_dir.mkdir(parents=True, exist_ok=True)
 
-        # 1. Prune subtrees from the filtered all-species tree
-        log_message('process', "### Prune subtrees")
-        subtree_dir = iteration_dir / "subtrees"
-        # Calculate the number of subtrees to prune
-        if args.fix_subtree_num:
-            # change 1.0 to keep some spare space
-            num_subtrees = math.ceil(args.num_aln * 1.0 / len(list(args.output_dir.glob('loci/training_loci/*.fa*'))))
-        else:
-            num_subtrees = None
-        prune_subtrees(args, prev_tree, subtree_dir, num_subtrees, args.prune_mode)
-
-        # 2. Extract subtree loci from the filtered sequence set using split_loci.sh
-        log_message('process', "### Extract subtree loci for trainning")
-        taxa_files = list((subtree_dir / "taxa_list").glob("*.txt"))
-        total_aln, num_aln = sample_alignment(training_loci_path, taxa_files, iteration_dir / "training_loci", num_aln=args.num_aln, prop_aln = args.prop_aln, nchar_row = 3, nchar_col = 1)
-        num_aln_inloop.append(num_aln)
-        total_aln_inloop.append(total_aln)
-        subtree_train_loci_dir = iteration_dir / "training_loci"
-        files_to_remove.append(subtree_train_loci_dir)
-
-        # 3. Run ModelFinder to find the best model using the pruned subtrees
-        log_message('process', "### Subtree update")
-        subtree_update_dir = iteration_dir / "subtree_update"
-        subtree_update_dir.mkdir(parents=True, exist_ok=True)
-        num_threads = min(int(args.max_threads), len(list(subtree_train_loci_dir.glob("*.fa*"))))
-        model_set_str = ",".join(model_set)
-        cmd = f"iqtree -seed 1 -T {num_threads} -S {subtree_train_loci_dir} -m MFP -mset {model_set_str}"
-        if trained_model_nex:
-            cmd += f" -mdef {trained_model_nex}"
-        if args.fix_subtree_topology:
-            constraint_tree_path = subtree_update_dir / "constraint_tree.tre"
-            get_constraint_tree(subtree_train_loci_dir, subtree_dir, constraint_tree_path)
-            # path_to_remove = subtree_update_dir / "constraint_tree2.tre"
-            # remove_redundant_nodes(constraint_tree_path, path_to_remove)
-            cmd += f" -te {constraint_tree_path}" 
-            # cmd += f" -te {path_to_remove}" 
-
-        cmd += f" -pre {subtree_update_dir / args.prefix}"
-        run_command(cmd, f"{args.output_dir}/log.md", log_output=args.keep_cmd_output, log_time=True)
-
-        subtree_model_nex = subtree_update_dir / f"{args.prefix}.best_model.nex"
-        subtree_iqtree_path = subtree_update_dir / f"{args.prefix}.iqtree"  
-        subtree_update_trees = subtree_update_dir / f"{args.prefix}.treefile" 
-        write_iqtree_statistic(subtree_iqtree_path, f"{args.prefix}", f"{args.output_dir}/iqtree_results.csv", extra_info={"loop": iteration_id, "step": "subtree_update"})
-        plot_loci_statistic(subtree_iqtree_path, subtree_update_dir / "loci_statistic.png")
-        log_link('result', "Subtree update log", str(subtree_update_dir / f"{args.prefix}.iqtree"))
-
-        # Detele reduandant comma in best_model nex file
-        fix_best_model_nex(subtree_model_nex)
-
-        # Get the initial best model name
-        subtree_model_data = get_and_print_model_counts(subtree_model_nex, f"{subtree_update_dir}/model_count.txt")
-        best_model_name = max(subtree_model_data, key=subtree_model_data.get)
-        if iteration_id == 1:
-            initial_best_model_name = best_model_name
-        log_message('result', f"Best models for iteration {iteration_id}:")
-        log_message('result', best_model_name)
-
-        # Print best models output as a table
-        log_message('result', "| Model | Count |", new_line = True)
-        log_message('result', "|-------|-------|")
-        for model, count in sorted(subtree_model_data.items(), key=lambda item: item[1], reverse=True):
-            log_message('result', f"| {model} | {count} |")
-        
-        # Set prev_model to the best model of past iteration
-        if best_model_name in initial_model_set:
-            prev_model = extract_spc_Q_from_nex(args.model_dir, best_model_name)
-        else:
-            prev_model = extract_spc_Q_from_nex(trained_model_nex, best_model_name)
-
-        # Update model_set based on the best models
-        best_models_output = subtree_update_dir / 'model_count.txt'
-        with open(best_models_output) as f:
-            best_model_counts = {}
-            for line in f:
-                line = line.strip()
-                if line:
-                    count, model = line.split()
-                    best_model_counts[model] = int(count)
-        
-        if new_model:
-            del best_model_counts[new_model.model_name]
-            keep_model_thres = 0.1
-        total_models = sum(best_model_counts.values())
-        model_set = [model for model, count in best_model_counts.items() if count / total_models >= keep_model_thres]
-
-        # Check the time usage before the next step
-        if args.time_limit:
-            if time_checkpoint(time_usage_inloop, loop_start_time, args.time_limit):
-                log_message('error', f"Time limit reached. Program will terminate in loop {iteration_id} before model update.")
-                break
-
         # 4. Estimate new models using ModelFinder based on the best model for each partition and the pruned subtree
         log_message('process', "### Model update")
         model_update_dir = iteration_dir / "model_update"
         model_update_dir.mkdir(parents=True, exist_ok=True)
         if not trained_model_nex:
-            cmd = f"iqtree -seed 1 -T {num_threads} -S {subtree_model_nex} -te {subtree_update_trees} --model-joint GTR20+FO --init-model {best_model_name} -pre {model_update_dir / args.prefix}"  
+            cmd = f"iqtree -seed 1 -T {num_threads} -p {concat_training_loci} --model-joint GTR20+FO --init-model LG -pre {model_update_dir / args.prefix}"  
         else:
-            cmd = f"iqtree -seed 1 -T {num_threads} -S {subtree_model_nex} -te {subtree_update_trees} --model-joint GTR20+FO --init-model {best_model_name} -mdef {trained_model_nex} -pre {model_update_dir / args.prefix}"
+            cmd = f"iqtree -seed 1 -T {num_threads} -p {concat_training_loci} --model-joint GTR20+FO --init-model LG -mdef {trained_model_nex} -pre {model_update_dir / args.prefix}"
         run_command(cmd, f"{args.output_dir}/log.md", log_output=args.keep_cmd_output, log_time=True)
 
         model_iqtree_file = model_update_dir / f"{args.prefix}.iqtree"
@@ -851,19 +759,6 @@ def main(args: argparse.Namespace) -> None:
             bubble_difference_plot(prev_model, new_model, iteration_dir / f"model_diff_{iteration_id}.png")
             log_link('result', "Model difference plot", str(iteration_dir / f"model_diff_{iteration_id}.png"))
         
-        # Generate summary for model update
-        if args.model_update_summary:
-            summary_dir = model_update_dir / "summary"
-            summary_dir.mkdir(exist_ok=True)
-            subtree_log_path = subtree_update_dir / f"{args.prefix}.log"
-            model_log_path = model_update_dir / f"{args.prefix}.log"
-            cmd = f"Rscript model_update_summary.R {subtree_iqtree_path} {subtree_log_path} {model_log_path} {summary_dir}"
-            try:
-                run_command(cmd, f"{args.output_dir}/log.md", log_any=False)
-                log_message('result', "Generated summary for model update, see" + str(summary_dir))
-            except Exception as e:
-                log_message('error', f"Failed to run command for generate model update summary. Error: {str(e)}")
-
         # 5. Check for model convergence
         log_message('process', "### Check model convergence")
         log_message('process', f"Iteration {iteration_id}: Checking convergence")
