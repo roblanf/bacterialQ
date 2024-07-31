@@ -36,7 +36,7 @@ status_file_path = f"{RESULT_DIR}/script_status.json"
 
 def generate_shell_script(taxa_name, prune_mode, maximum_subtree_size, num_aln, fix_subtree_topology):
     fix_subtree_topo_str = "fix_subtree_topo" if fix_subtree_topology else "free_subtree_topo"
-    output_dir = f"{RESULT_DIR}/{taxa_name}/{prune_mode}/{fix_subtree_topo_str}"
+    output_dir = f"{RESULT_DIR}/{taxa_name}/{fix_subtree_topo_str}"
     os.makedirs(output_dir, exist_ok=True)
     
     fix_subtree_topology_param = "--fix_subtree_topology" if fix_subtree_topology else ""

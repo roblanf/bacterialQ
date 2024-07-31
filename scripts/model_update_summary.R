@@ -17,9 +17,18 @@ subtree_log <- args[2]
 model_log <- args[3]
 output_folder <- args[4]
 
+# Function to read a file and remove NUL characters
+read_file_without_nul <- function(file_path) {
+  r = readBin(file_path, raw(), file.info(file_path)$size)
+  r[r==as.raw(0)] = as.raw(0x20) ## replace with 0x20 = <space>
+  writeBin(r, file_path)
+  lines = readLines(file_path)
+  return(lines)
+}
+
 # Function to read and process iqtree file
 process_subtree_iqtree <- function(file_path) {
-  lines <- read_lines(file_path)
+  lines <- read_file_without_nul(file_path)
 
   # Identify the start and end lines for each table
   start_alignment_info <- which(str_detect(lines, "^Input data: ")) + 1
@@ -50,14 +59,18 @@ process_subtree_iqtree <- function(file_path) {
   joined_subtree_info <- mutate(joined_subtree_info, model = ifelse(str_detect(model_setting, "\\+"), str_extract(model_setting, "^[^\\+]+"), model_setting))
 
   # Extract ID from alignment
-  joined_subtree_info <- mutate(joined_subtree_info, subtree_id = str_extract(alignment, "(?<=subtree_)\\d+(?=_)"))
-
+  joined_subtree_info <- joined_subtree_info %>%
+    mutate(
+      subtree_id = str_extract(alignment, "(?<=subtree_)\\d+(?=_)"),
+      loci_id = str_extract(alignment, "(?<=subtree_)\\d+_[^.]+(?=\\.)")
+  ) %>% 
+    mutate(loci_id = str_remove(loci_id, "^\\d+_"))
   return(joined_subtree_info)
 }
 
 process_subtree_log <- function(subtree_log) {
   # Process subtree log
-  lines <- readLines(subtree_log)
+  lines <- read_file_without_nul(subtree_log)
   start_line <- tail(grep("Estimate model parameters \\(epsilon = [0-9.]+\\)", lines), 1) + 1
   end_line <- grep("Total number of iterations: 0", lines) - 1
   content <- lines[start_line:end_line]
@@ -79,7 +92,7 @@ process_subtree_log <- function(subtree_log) {
 
 # Function to read and process model log
 process_model_log <- function(file_path) {
-  lines <- readLines(file_path)
+  lines <- read_file_without_nul(file_path)
   log_likelihood_lines <- grep("\\d+\\. Log-likelihood:", lines)
   start_line <- log_likelihood_lines[length(log_likelihood_lines) - 1] + 3
   end_line <- log_likelihood_lines[length(log_likelihood_lines)] - 1
@@ -162,8 +175,8 @@ seq_ll_diff <- ggplot(filtered_diff_partition_table, aes(x = seq, y = ll_diff, c
   geom_smooth(method = "gam", formula = y ~ s(x, bs = "cs"), se = FALSE, linetype = "dashed", alpha = 0.2) +
   geom_point(alpha = 0.5) +
   labs(
-    title = "Number of Informative Sites vs Log-Likelihood Change",
-    x = "Number of Informative Sites (seq)",
+    title = "Number of Sequences vs Log-Likelihood Change",
+    x = "Number of Sequences (seq)",
     y = "Log-Likelihood Difference (ll_diff)"
   ) +
   theme_minimal()
@@ -173,43 +186,23 @@ infor_ll_diff <- ggplot(filtered_diff_partition_table, aes(x = infor, y = ll_dif
   geom_point(alpha = 0.5) +
   labs(
     title = "Informative Sites vs Log-Likelihood Change",
-    x = "Informative Sites (infor)",
+    x = "Number of Informative Sites (infor)",
     y = "Log-Likelihood Difference (ll_diff)"
   ) +
   theme_minimal()
 
 aln_size_plot <- seq_ll_diff / infor_ll_diff
 
-# Plot 4: log(infor*seq) ~ ll_diff scatter plot with spline fit, and density plot below
-log_infor_seq_ll_diff <- ggplot(filtered_diff_partition_table, aes(x = log(infor * seq), y = ll_diff, color = model)) +
-  geom_smooth(method = "gam", formula = y ~ s(x, bs = "cs"), se = FALSE, linetype = "dashed", alpha = 0.2) +
-  geom_point(alpha = 0.5) +
-  labs(
-    title = "Total Information vs Log-Likelihood Change",
-    x = "Log(Total Information) (log(infor * seq))",
-    y = "Log-Likelihood Difference (ll_diff)"
-  ) +
-  theme_minimal()
+# Plot 4: ll_diff by subtree_id boxplot plot
+diff_partition_table_subtree <- diff_partition_table %>%
+  group_by(subtree_id) %>%
+  filter(n() > 4) %>%
+  ungroup()
 
-density_log_infor_seq <- filtered_diff_partition_table %>%
-  group_by(model) %>%
-  filter(n() >= 30) %>%
-  ungroup() %>%
-  ggplot(aes(x = log(infor * seq), fill = model)) +
-  geom_density(alpha = 0.5) +
-  labs(
-    title = "Density of Log(Total Information) by Initial Model",
-    x = "Log(Total Information) (log(infor * seq))",
-    y = "Density"
-  ) +
-  theme_minimal()
-
-infor_plot <- log_infor_seq_ll_diff / density_log_infor_seq + plot_layout(heights = c(7, 3))
-
-# Plot 5: ll_diff by subtree_id boxplot plot
-ll_diff_by_subtree <- ggplot(diff_partition_table, aes(x = reorder(as.factor(subtree_id), ll_diff, FUN = mean), y = ll_diff)) +
-  geom_boxplot() +
+ll_diff_by_subtree <- ggplot(diff_partition_table_subtree, aes(x = reorder(as.factor(subtree_id), ll_diff, FUN = mean), y = ll_diff)) +
+  geom_boxplot(outlier.shape = NA) +
   stat_summary(fun = mean, geom = "point", shape = 20, size = 3, color = "red") +
+  geom_jitter(width = 0.2, alpha = 0.2) + 
   labs(
     title = "Log-Likelihood Difference by Subtree ID",
     x = "Subtree ID",
@@ -219,9 +212,10 @@ ll_diff_by_subtree <- ggplot(diff_partition_table, aes(x = reorder(as.factor(sub
   theme(axis.text.x = element_text(angle = 45, hjust = 1))
 
 # Set the width and height based on the number of unique subtree_id
-subtree_count <- length(unique(diff_partition_table$subtree_id))
+subtree_count <- diff_partition_table %>%
+  count(subtree_id) %>% filter(n > 5) %>% nrow()
 
-# Plot 6: ll_diff by model violin plot
+# Plot 5: ll_diff by model violin plot
 ll_diff_by_model_violin <- ggplot(diff_partition_table, aes(x = reorder(model, ll_diff, FUN = mean), y = ll_diff)) +
   geom_hline(yintercept = 0, linetype = "dashed", color = "black") +
   geom_violin() +
@@ -233,8 +227,60 @@ ll_diff_by_model_violin <- ggplot(diff_partition_table, aes(x = reorder(model, l
   ) +
   theme_minimal()
 
+# Plot 6: Stacked bar plot for model preference by subtree
+subtree_model_stack_plot <- diff_partition_table_subtree %>%
+  group_by(subtree_id, model) %>%
+  summarise(count = n(), .groups = 'drop') %>%
+  group_by(subtree_id) %>%
+  mutate(prop = count / sum(count)) %>%
+  ungroup() %>%
+  mutate(subtree_id = factor(subtree_id, levels = diff_partition_table %>%
+                               count(subtree_id, sort = TRUE) %>%
+                               pull(subtree_id)),
+         model = factor(model, levels = diff_partition_table %>%
+                          count(model, sort = TRUE) %>%
+                          pull(model))) %>%
+  ggplot(aes(x = subtree_id, y = prop, fill = model)) +
+  geom_bar(stat = "identity", position = "fill") +
+  labs(
+    title = "Model Preference by Subtree",
+    x = "Subtree ID",
+    y = "Proportion",
+    fill = "Model"
+  ) +
+  theme_minimal() +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1))
+
+# Plot for loci_id ~ model
+loci_model_stack_plot <- diff_partition_table %>%
+  group_by(loci_id, model) %>%
+  summarise(count = n(), .groups = 'drop') %>%
+  group_by(loci_id) %>%
+  mutate(prop = count / sum(count)) %>%
+  ungroup() %>%
+  mutate(loci_id = factor(loci_id, levels = diff_partition_table %>%
+                            count(loci_id, sort = TRUE) %>%
+                            pull(loci_id)),
+         model = factor(model, levels = diff_partition_table %>%
+                          count(model, sort = TRUE) %>%
+                          pull(model))) %>%
+  ggplot(aes(x = loci_id, y = prop, fill = model)) +
+  geom_bar(stat = "identity", position = "fill") +
+  labs(
+    title = "Model Preference by Loci",
+    x = "Loci ID",
+    y = "Proportion",
+    fill = "Model"
+  ) +
+  theme_minimal() +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1))
+
+# Combine the two plots using patchwork
+model_preference_plot <- subtree_model_stack_plot / loci_model_stack_plot
+
+# Save plots
 ggsave(file.path(output_folder, "density_plot.png"), density_plot, width = 10, height = 10, dpi = 100, bg = "white")
 ggsave(file.path(output_folder, "aln_size_plot.png"), aln_size_plot, width = 10, height = 10, dpi = 100, bg = "white")
-ggsave(file.path(output_folder, "infor_plot.png"), infor_plot, width = 10, height = 10, dpi = 100, bg = "white")
 ggsave(file.path(output_folder, "diff_by_model.png"), ll_diff_by_model_violin, width = 10, height = 10, dpi = 100, bg = "white")
-ggsave(file.path(output_folder, "diff_by_subtree.png"), plot = ll_diff_by_subtree, width = subtree_count / 3, height = 10, bg = "white")
+ggsave(file.path(output_folder, "diff_by_subtree.png"), plot = ll_diff_by_subtree, width = 2 + (subtree_count / 3), height = 10, bg = "white", limitsize = FALSE)
+ggsave(file.path(output_folder, "model_preference_plot.png"), model_preference_plot, width = 30, height = 10, dpi = 100, bg = "white")

@@ -136,7 +136,7 @@ phylograms <- function(tree, y_scale = -5, subtitle = "") {
   ggtree(tree, cex = 0.8, lwd = 0.5, aes(color = ifelse(is.na(as.numeric(label)), 100, as.numeric(label)))) +
     scale_color_continuous(
       high = "black", low = "red",
-      name = "Support Value", limits = c(0, 100),
+      name = "Posterior Probability", limits = c(0, 100),
       guide = guide_colourbar(barwidth = 10)
     ) +
     geom_treescale(y = y_scale - 20, color = "black", fontsize = 5) +
@@ -195,7 +195,7 @@ generate_cophylo_plot <- function(rooted_tree1, rooted_tree2, output_path) {
     edgelabels.cophylo(bs, frame = "none", cex = 0.5, adj = c(0.4, -0.2), which = position)
   }
 
-  # Function to create a color gradient based on support values
+  # Function to create a color gradient based on Posterior Probabilitys
   create_edge_colors <- function(tree) {
     node_labels <- as.numeric(tree$node.label)
     support_values <- sapply(tree$edge[, 2] - Ntip(tree),
@@ -246,14 +246,14 @@ generate_cophylo_plot <- function(rooted_tree1, rooted_tree2, output_path) {
   dev.off()
 }
 
-if (result_df$nRF >= 0.05) {
+if (result_df$nRF >= 1) {
   # Generate cophylo plot
   output_path <- params$cophylo_path
   generate_cophylo_plot(tree1, tree2, output_path)
   cat("Cophylo plot generated successfully.\n")
   cat("![Cophylo plot](cophylo_plot.png)")
 } else {
-  cat("The normalized Robinson-Foulds distance is less than 0.05, cophylo plot will not be shown.")
+  cat("The normalized Robinson-Foulds distance is less than 1, cophylo plot will not be shown.")
 }
 ```
 
@@ -316,9 +316,9 @@ ggplot(branch_length_data, aes(x = branch_length, color = tree)) +
   scale_x_log10()
 ```
 
-## Support value analysis
+## Posterior Probability analysis
 
-### Support value Summary
+### Posterior Probability Summary
 ```{r echo=FALSE, message=FALSE, warning=FALSE}
 # Function to calculate node label statistics
 node_label_stats <- function(node_labels, tree_name) {
@@ -354,10 +354,10 @@ node_label_stats_tree2 <- node_label_stats(tree2$node.label, tree_name = tree2_n
 node_label_summary <- rbind(node_label_stats_tree1, node_label_stats_tree2)
 rownames(node_label_summary) <- NULL
 
-kable_styling(knitr::kable(node_label_summary, caption = "Support value Statistics"), bootstrap_options = c("striped", "hover", "condensed"))
+kable_styling(knitr::kable(node_label_summary, caption = "Posterior Probability Statistics"), bootstrap_options = c("striped", "hover", "condensed"))
 ```
 
-### Density plot of Support value
+### Density plot of Posterior Probability
 ```{r echo=FALSE, message=FALSE, warning=FALSE, fig.width=11, fig.height=4}
 # Function to process node labels
 convert_node_labels <- function(tree) {
@@ -392,7 +392,7 @@ ggplot(node_labels_data, aes(x = node_label, fill = tree)) +
     legend.title = element_blank()
   ) +
   labs(
-    title = "Density Plot of Support Values",
-    x = "Support Values", y = "Density"
+    title = "Density Plot of Posterior Probabilitys",
+    x = "Posterior Probabilitys", y = "Density"
   )
 ```

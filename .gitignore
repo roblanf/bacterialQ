@@ -4,6 +4,7 @@
 /scripts/archived/
 /Result/
 /Result_rona/
+/Result_nova/
 *.faa
 **/__pycache__/
 .*/ 
@@ -13,3 +14,5 @@ Q.GTDB_*
 Rplots.pdf
 .RData
 .Rhistory
+scripts/run_test_set_nova.py
+scripts/run_test_set.py
