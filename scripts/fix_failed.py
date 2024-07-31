@@ -672,7 +672,7 @@ def process_directory(dir_path):
 
     prev_model = None
     model_set = initial_model_set.replace(" ", "").split(",")
-
+    os.environ['OMP_NUM_THREADS'] = '3'
 
     # Create the directory for the output of models
     models_dir = args.output_dir / "inferred_models"
@@ -686,8 +686,12 @@ def process_directory(dir_path):
     final_test_logdir.mkdir(exist_ok=True)
 
     new_tree = final_test_logdir / "best_final_tree.treefile"
+    if not os.path.exists(new_tree):
+        print("No new tree")
+        sys.exit(1)
     trained_model_nex = models_dir / "trained_model.nex"
     new_model = extract_Q_from_nex(trained_model_nex)[-1]
+    
 
     concat_all_loci = final_test_dir / "all_loci.faa"
     concatenate_seq_list([concat_training_loci, concat_testing_loci], concat_all_loci)
@@ -716,30 +720,10 @@ def process_directory(dir_path):
                     new_path = os.path.join(root, new_file)
                     os.rename(old_path, new_path)
                     print(f'Renamed {old_path} to {new_path}')
-    
-    new_best_scheme_file = final_test_logdir / "testset_model_partition.best_scheme.nex"
-    if not Path(new_best_scheme_file).exists():
-        log_message('process', "### Final model testing on partitioned test loci with reference tree as constraint")
-        print("Final model testing on partitioned test loci with reference tree as constraint")
-        pre_test_part = f"{final_test_logdir}/testset_model_partition"
-        cmd = f"iqtree -seed 1 -T 20 -sp {testing_loci_path} -m MF -madd {new_model.model_name} -te {filtered_allspc_tree} -pre {pre_test_part}"
-        run_command(cmd, f"{args.output_dir}/log.md", log_output=args.keep_cmd_output, log_time=True)
-        final_test_partition_info = write_iqtree_statistic(f"{pre_test_part}.iqtree", "final_test_partition", f"{args.output_dir}/iqtree_results.csv", extra_info={"loop": "Final test", "step": "Testset model partition"})
-        model_data = extract_and_log_model_info_partition(f"{pre_test_part}.best_scheme.nex", final_test_logdir)
-        metalogger.log_parameter("final_test_partition", model_data)
-        metalogger.log_parameter("test_partition_result",final_test_partition_info)
-        # Re-estimate the tree in concatenated loci using the final model with FastTree
-        best_test_model_name =  max(model_data, key=lambda k: model_data[k])
-        metalogger.log_parameter("best_test_partition_model", best_test_model_name)
-        log_message('process', "Model {best_test_model_name} is selected for final testset tree estimation.")
-        if best_test_model_name in all_trained_model_set:
-            best_test_model = extract_spc_Q_from_nex(trained_model_nex, best_test_model_name)
-        elif best_test_model_name in list_Q_from_nex(args.model_dir):
-            best_test_model = extract_spc_Q_from_nex(args.model_dir, best_test_model_name)
-        else:
-            best_test_model = extract_spc_Q_from_nex(args.model_dir, "LG")
-        best_test_model.convert_to_fasttree(final_test_logdir)
+
+    if not "concat_best_model_result" in config:
         best_test_tree = final_test_logdir / "best_testset_tree.treefile"
+        new_model.convert_to_fasttree(final_test_logdir)
         cmd = f"{PATH_FASTTREEMP} -trans {final_test_logdir}/Q_matrix_fasttree.txt -gamma -spr 4 -sprlength 1000 -boot 100 -log {final_test_logdir}/best_testset_tree.log -intree {prev_outgroup_tree} {concat_testing_loci_og} > {best_test_tree}"
         run_command(cmd, f"{args.output_dir}/log.md", log_output=args.keep_cmd_output, log_time=True)
         reroot_treefile_by_outgroup(best_test_tree, args.output_dir / "outgroup_id.txt")
@@ -761,6 +745,7 @@ def process_directory(dir_path):
         # shutil.copy(new_tree, trees_dir / f"FinalModel_FT_All_G20.treefile")
         log_message('process', "### Distinguish best model on concatenated test loci")
         print("Distinguish best model on concatenated test loci")
+        best_test_tree = final_test_logdir / "best_testset_tree.treefile"
         testset_best_model_result = test_model(args, final_test_logdir, concat_testing_loci, all_model_set_with_all_trained, trained_model_nex, "concat", loop_id="best_model_test", te = best_test_tree, pre=f"{final_test_logdir}/test_best_concat_model")
         best_infer_str, best_existing_str, best_infer_bic, best_existing_bic = extract_best_bic(testset_best_model_result)
         best_infer_model, best_existing_model = best_infer_str.split('+', 1)[0], best_existing_str.split('+', 1)[0]

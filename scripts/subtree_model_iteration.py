@@ -1019,27 +1019,28 @@ def main(args: argparse.Namespace) -> None:
 
     # 5. Test the final model on partitioned test loci without providing the constraint tree
     if args.test_partition_test_loci:
-        log_message('process', "### Final model testing on partitioned test loci with reference tree as constraint")
-        pre_test_part = f"{final_test_logdir}/testset_model_partition"
-        cmd = f"iqtree -seed 1 -T 20 -sp {testing_loci_path} -m MF -madd {new_model.model_name} -te {filtered_allspc_tree} -pre {pre_test_part}"
-        run_command(cmd, f"{args.output_dir}/log.md", log_output=args.keep_cmd_output, log_time=True)
-        final_test_partition_info = write_iqtree_statistic(f"{pre_test_part}.iqtree", "final_test_partition", f"{args.output_dir}/iqtree_results.csv", extra_info={"loop": "Final test", "step": "Testset model partition"})
-        model_data = extract_and_log_model_info_partition(f"{pre_test_part}.best_scheme.nex", final_test_logdir)
-        metalogger.log_parameter("final_test_partition", model_data)
-        metalogger.log_parameter("test_partition_result",final_test_partition_info)
-        # Re-estimate the tree in concatenated loci using the final model with FastTree
-        best_test_model_name =  max(model_data, key=lambda k: model_data[k])
-        metalogger.log_parameter("best_test_partition_model", best_test_model_name)
-        log_message('process', "Model {best_test_model_name} is selected for final testset tree estimation.")
-        if best_test_model_name in all_trained_model_set:
-            best_test_model = extract_spc_Q_from_nex(trained_model_nex, best_test_model_name)
-        elif best_test_model_name in list_Q_from_nex(args.model_dir):
-            best_test_model = extract_spc_Q_from_nex(args.model_dir, best_test_model_name)
-        else:
-            best_test_model = extract_spc_Q_from_nex(args.model_dir, "LG")
-        best_test_model.convert_to_fasttree(final_test_logdir)
+        pass
+        # log_message('process', "### Final model testing on partitioned test loci with reference tree as constraint")
+        # pre_test_part = f"{final_test_logdir}/testset_model_partition"
+        # cmd = f"iqtree -seed 1 -T 20 -sp {testing_loci_path} -m MF -madd {new_model.model_name} -te {filtered_allspc_tree} -pre {pre_test_part}"
+        # run_command(cmd, f"{args.output_dir}/log.md", log_output=args.keep_cmd_output, log_time=True)
+        # final_test_partition_info = write_iqtree_statistic(f"{pre_test_part}.iqtree", "final_test_partition", f"{args.output_dir}/iqtree_results.csv", extra_info={"loop": "Final test", "step": "Testset model partition"})
+        # model_data = extract_and_log_model_info_partition(f"{pre_test_part}.best_scheme.nex", final_test_logdir)
+        # metalogger.log_parameter("final_test_partition", model_data)
+        # metalogger.log_parameter("test_partition_result",final_test_partition_info)
+        # # Re-estimate the tree in concatenated loci using the final model with FastTree
+        # best_test_model_name =  max(model_data, key=lambda k: model_data[k])
+        # metalogger.log_parameter("best_test_partition_model", best_test_model_name)
+        # log_message('process', "Model {best_test_model_name} is selected for final testset tree estimation.")
+        # if best_test_model_name in all_trained_model_set:
+        #     best_test_model = extract_spc_Q_from_nex(trained_model_nex, best_test_model_name)
+        # elif best_test_model_name in list_Q_from_nex(args.model_dir):
+        #     best_test_model = extract_spc_Q_from_nex(args.model_dir, best_test_model_name)
+        # else:
+        #     best_test_model = extract_spc_Q_from_nex(args.model_dir, "LG")
+        # best_test_model.convert_to_fasttree(final_test_logdir)
         best_test_tree = final_test_logdir / "best_testset_tree.treefile"
-        cmd = f"{PATH_FASTTREEMP} -trans {final_test_logdir}/Q_matrix_fasttree.txt -gamma -spr 4 -sprlength 1000 -boot 100 -log {final_test_logdir}/best_testset_tree.log -intree {prev_outgroup_tree} {concat_testing_loci_og} > {best_test_tree}"
+        cmd = f"{PATH_FASTTREEMP} -trans {model_update_dir}/Q_matrix_fasttree.txt -gamma -spr 4 -sprlength 1000 -boot 100 -log {final_test_logdir}/best_testset_tree.log -intree {prev_outgroup_tree} {concat_testing_loci_og} > {best_test_tree}"
         run_command(cmd, f"{args.output_dir}/log.md", log_output=args.keep_cmd_output, log_time=True)
         reroot_treefile_by_outgroup(best_test_tree, args.output_dir / "outgroup_id.txt")
         shutil.copy(best_test_tree, trees_dir / f"FinalModel_FT_Test_G20.treefile")
@@ -1048,16 +1049,6 @@ def main(args: argparse.Namespace) -> None:
      ######### This block is added for the pipeline test, delete in the final version ##########
     # 1. The final concatenated tree (final_concat_tree) obtained using FastTree under concatenated all loci and the final model
     if args.pipeline_test_settings:
-        # if args.use_outgroup:
-        #     cmd = f"{PATH_FASTTREEMP} -trans {model_update_dir}/Q_matrix_fasttree.txt -gamma -spr 4 -sprlength 1000 -boot 100 -log {final_test_logdir}/final_concat_tree.log -intree {prev_outgroup_tree} {concat_all_loci_og} > {final_test_logdir}/final_concat_tree.treefile"
-        # else:
-        #     cmd = f"{PATH_FASTTREEMP} -trans {model_update_dir}/Q_matrix_fasttree.txt -gamma -spr 4 -sprlength 1000 -boot 100 -log {final_test_logdir}/final_concat_tree.log -intree {new_tree} {concat_all_loci} > {final_test_logdir}/final_concat_tree.treefile"
-        # run_command(cmd, f"{args.output_dir}/log.md", log_output=args.keep_cmd_output, log_time=True)
-        # new_tree = final_test_logdir / "final_concat_tree.treefile"
-        # if args.use_outgroup:
-        #     reroot_treefile_by_outgroup(new_tree, args.output_dir / "outgroup_id.txt")
-        # metalogger.log_parameter("final_concat_tree_ll", extract_gamma20loglk(f"{final_test_logdir}/final_concat_tree.log"))
-        # shutil.copy(new_tree, trees_dir / f"FinalModel_FT_All_G20.treefile")
         log_message('process', "### Distinguish best model on concatenated test loci")
         testset_best_model_result = test_model(args, final_test_logdir, concat_testing_loci, all_model_set_with_all_trained, trained_model_nex, "concat", loop_id="best_model_test", te = best_test_tree, pre=f"{final_test_logdir}/test_best_concat_model")
         best_infer_str, best_existing_str, best_infer_bic, best_existing_bic = extract_best_bic(testset_best_model_result)
@@ -1072,7 +1063,7 @@ def main(args: argparse.Namespace) -> None:
         log_message('result', f"| BIC | {best_infer_bic} | {best_existing_bic} |")
         metalogger.log_parameters({"best_infer_model_testset":best_infer_str, "best_existing_model_testset":best_existing_str, "best_infer_model_testset_bic":best_infer_bic, "best_existing_model_testset_bic":best_existing_bic})
         metalogger.log_parameter("testset_best_model_result", testset_best_model_result)
-        
+
     ######### This block is added for the pipeline test, delete in the final version ##########
 
     # 6. Validate the final model in subtrees on testing loci
