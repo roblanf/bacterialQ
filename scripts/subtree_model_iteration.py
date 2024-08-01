@@ -1271,7 +1271,7 @@ if __name__ == "__main__":
     metalogger = MetaLogger.get_instance(str(args.output_dir / "meta.json"))
     metalogger.log_parameters({k: str(v) if isinstance(v, PosixPath) else v for k, v in vars(args).items()})
     metalogger.log_parameter("keep_model_thres", keep_model_thres)
-    metalogger.log_parameter("code_version", "2024-07-26")
+    metalogger.log_parameter("code_version", "2024-07-31")
     metalogger.log_parameter("start_time", time.strftime("%Y-%m-%d %H:%M:%S"))
     start_time = time.time()
     main(args)
