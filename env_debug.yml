@@ -1,4 +1,4 @@
-name: qgtdb
+name: qgtdb-analysis
 channels:
         - bioconda
         - conda-forge
@@ -22,10 +22,11 @@ dependencies:
         - r-kableextra
         - biopython
         - matplotlib
+        - ploty
         - pandoc
         - ucsc-faSomeRecords
         - iqtree
-        - treeshrink
+        - raxml-ng
         - r-ape
         - r-castor
         - r-phangorn
@@ -39,7 +40,8 @@ dependencies:
         - r-jsonlite
         - r-nlme
         - r-rtsne
+        - r-car
         - r-ggextra
         - r-ggcorrplot
         - r-igraph
-        - raxml-ng
+        - r-ggpubr
