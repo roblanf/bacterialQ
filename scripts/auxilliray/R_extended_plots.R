@@ -1,33 +1,36 @@
-# Function to generate heatmap from distance matrix
-#' @description Generates a heatmap from a distance matrix with hierarchical clustering.
-#' @param distance_table A tibble which should be formatted as cols: Tree1, Tree2, value1, value2, ...
-#' @param value_col Column name in distance_table for heatmap values
-generate_heatmap <- function(distance_table, value_col) {
+#' Generates a heatmap with hierarchical clustering from a distance matrix.
+#' @param distance_table A tibble or data frame representing the distance matrix. The distance matrix should have row labels in one column 
+#' and the corresponding distances in the other columns.
+#' @param value_col A string specifying the name of the column in `distance_table` that contains the values to be displayed in the heatmap.
+#' @param row_label_col A string specifying the name of the column in `distance_table` that contains the row labels.
+#' @param col_label_col A string specifying the name of the columns in `distance_table` that contains the column labels.
+#' @return A ggplot object representing the heatmap with hierarchical clustering.
+
+label_clustered_heatmap <- function(distance_table, value_col, row_label_col, col_label_col) {
   library(ggplot2)
   library(dplyr)
   library(tidyr)
 
-  # Perform hierarchical clustering
-  hc <- hclust(as.dist(distance_table), method = "complete")
+  # Perform hierarchical clustering on the rows and columns
+  hc_rows <- hclust(as.dist(distance_table %>% select(-all_of(row_label_col))), method = "complete")
+  hc_cols <- hclust(as.dist(t(distance_table %>% select(-all_of(col_label_col)))), method = "complete")
 
-  # Convert distance matrix to long format using pivot_longer
+  # Convert the distance matrix to long format
   melted_matrix <- distance_table %>%
     as.data.frame() %>%
-    tibble::rownames_to_column("Tree1") %>%
-    pivot_longer(cols = -Tree1, names_to = "Tree2", values_to = "value") %>%
+    pivot_longer(cols = -all_of(row_label_col), names_to = col_label_col, values_to = value_col) %>%
     mutate(
-      Tree1 = factor(Tree1, levels = hc$labels[hc$order]),
-      Tree2 = factor(Tree2, levels = hc$labels[hc$order])
-    ) %>%
-    filter(as.numeric(Tree1) >= as.numeric(Tree2)) # Filter for lower triangle
+      !!sym(row_label_col) := factor(!!sym(row_label_col), levels = hc_rows$labels[hc_rows$order]),
+      !!sym(col_label_col) := factor(!!sym(col_label_col), levels = hc_cols$labels[hc_cols$order])
+    )
 
-  # Generate heatmap
-  heatmap <- ggplot(melted_matrix, aes(x = Tree1, y = Tree2, fill = value)) +
+  # Generate the heatmap
+  heatmap <- ggplot(melted_matrix, aes_string(x = col_label_col, y = row_label_col, fill = value_col)) +
     geom_tile() +
-    geom_text(aes(label = value), size = 3) +
+    geom_text(aes_string(label = value_col), size = 3) +
     coord_equal() +
     scale_fill_gradient(low = "white", high = "red") +
-    labs(x = "Tree 1", y = "Tree 2", fill = value_col) +
+    labs(x = col_label_col, y = row_label_col, fill = value_col) +
     theme_light() +
     theme(
       axis.text = element_text(size = 10),
@@ -39,11 +42,25 @@ generate_heatmap <- function(distance_table, value_col) {
   return(heatmap)
 }
 
+#' Generates a heatmap from a tree distance matrix with hierarchical clustering.
+
+#' @param distance_table A tibble or data frame representing the tree distance matrix. The distance matrix should have row labels in the 
+#' `Tree1` column and corresponding distances in the `Tree2` column.
+#' @param value_col A string specifying the name of the column in `distance_table` that contains the values to be displayed in the heatmap.
+#' @return A ggplot object representing the heatmap with hierarchical clustering.
+treedist_heatmap <- function(distance_table, value_col) {
+  # Here, 'Tree1' and 'Tree2' are assumed to be the row and column labels in the distance matrix
+  label_clustered_heatmap(distance_table, value_col, row_label_col = "Tree1", col_label_col = "Tree2")
+}
+
 save_heatmap <- function(heatmap, output_path) {
   num_x_labels <- length(heatmap$data$Tree1)
   fig_size <- max(6, num_x_labels / 1.5)
   ggsave(output_path, heatmap, width = fig_size, height = fig_size)
 }
+
+
+
 
 # Function to generate NMDS plots with point shape customization
 #' @description Generates a Non-metric Multidimensional Scaling (NMDS) plot 
