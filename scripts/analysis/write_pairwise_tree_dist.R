@@ -15,8 +15,9 @@ extract_tree_name <- function(file_path) {
 }
 
 # Source auxiliary functions
-source("../auxilliray/R_tree_tool.R")
-source("../auxilliray/R_extended_plots.R")
+source("./auxiliary/R_tree_tool.R")
+source("./auxiliary/R_extended_plots.R")
+source("./auxiliary/R_ggplot_plot.R")
 
 # --- Main script ---
 
@@ -75,7 +76,7 @@ distance_matrix_nRF <- all_distances %>%
 distance_matrix_nRF[is.na(distance_matrix_nRF)] <- 0
 
 # Generate and save heatmap
-heatmap_nRF <- generate_heatmap(distance_matrix_nRF, "nRF")
+heatmap_nRF <- treedist_heatmap(all_distances, "nRF")
 save_heatmap(heatmap_nRF, file.path(dir_path, "nRF_heatmap.png"))
 
 # Generate and save NMDS plot

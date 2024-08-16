@@ -1,4 +1,6 @@
-library(tidyverse)
+library(ggplot2)
+library(dplyr)
+library(tidyr)
 
 #' @description Generate a lower triangle heatmap from a symmetric x_col and y_col data frame.
 #' @param data Data frame containing the data
@@ -207,8 +209,7 @@ marginal_scatter_plot <- function(data, x, y, add_smooth = TRUE) {
   return(combined_plot)
 }
 
-library(tidyverse)
-library(ggplot2)
+
 library(dendextend)
 
 #' @description Generate a heatmap from a CSV file with hierarchical clustering

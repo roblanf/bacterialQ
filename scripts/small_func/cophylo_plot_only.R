@@ -7,9 +7,9 @@ library(ggplot2)
 library(ggtree)
 library(phytools)
 
-source("../auxilliray/R_cophylo_plot.R")
-source("../auxilliray/R_tree_tool.R")
-source("../auxilliray/R_plylogram.R")
+source("../auxiliary/R_cophylo_plot.R")
+source("../auxiliary/R_tree_tool.R")
+source("../auxiliary/R_plylogram.R")
 
 # Get command line arguments
 args <- commandArgs(trailingOnly = TRUE)

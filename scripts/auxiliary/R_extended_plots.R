@@ -6,42 +6,59 @@
 #' @param col_label_col A string specifying the name of the columns in `distance_table` that contains the column labels.
 #' @return A ggplot object representing the heatmap with hierarchical clustering.
 
-label_clustered_heatmap <- function(distance_table, value_col, row_label_col, col_label_col) {
+label_clustered_heatmap <- function(distance_df, value_col, cluster_col1, cluster_col2) {
   library(ggplot2)
   library(dplyr)
   library(tidyr)
 
-  # Perform hierarchical clustering on the rows and columns
-  hc_rows <- hclust(as.dist(distance_table %>% select(-all_of(row_label_col))), method = "complete")
-  hc_cols <- hclust(as.dist(t(distance_table %>% select(-all_of(col_label_col)))), method = "complete")
-
-  # Convert the distance matrix to long format
-  melted_matrix <- distance_table %>%
-    as.data.frame() %>%
-    pivot_longer(cols = -all_of(row_label_col), names_to = col_label_col, values_to = value_col) %>%
-    mutate(
-      !!sym(row_label_col) := factor(!!sym(row_label_col), levels = hc_rows$labels[hc_rows$order]),
-      !!sym(col_label_col) := factor(!!sym(col_label_col), levels = hc_cols$labels[hc_cols$order])
-    )
-
-  # Generate the heatmap
-  heatmap <- ggplot(melted_matrix, aes_string(x = col_label_col, y = row_label_col, fill = value_col)) +
+# Create a symmetric dataframe
+  distance_df_sym <- distance_df %>%
+    rename(!!sym(cluster_col1) := !!sym(cluster_col2), !!sym(cluster_col2) := !!sym(cluster_col1))
+  distance_df <- rbind(distance_df, distance_df_sym)
+  
+  # Create the distance matrix
+  dist_matrix <- distance_df %>%
+    select(!!sym(cluster_col1), !!sym(cluster_col2), !!sym(value_col)) %>%
+    spread(!!sym(cluster_col2), !!sym(value_col)) %>%
+    column_to_rownames(var = cluster_col1) %>%
+    as.matrix()
+  
+  dist_matrix[is.na(dist_matrix)] <- 0  # Replace NA values with 0
+  
+  # Perform hierarchical clustering
+  hc <- hclust(as.dist(dist_matrix), method = "complete")
+  
+  # Create a dendrogram
+  dend <- as.dendrogram(hc)
+  
+  # Generate heatmap with clustering
+  distance_df <- distance_df %>%
+    mutate(!!sym(cluster_col1) := factor(!!sym(cluster_col1), levels = hc$labels[hc$order]),
+           !!sym(cluster_col2) := factor(!!sym(cluster_col2), levels = hc$labels[hc$order]))
+  
+  # Filter to only lower triangle
+  distance_df <- distance_df %>%
+    filter(as.numeric(!!sym(cluster_col1)) >= as.numeric(!!sym(cluster_col2)))
+  
+  # Generate heatmap
+  heatmap <- ggplot(distance_df, aes_string(x = cluster_col1, y = cluster_col2, fill = value_col)) +
     geom_tile() +
-    geom_text(aes_string(label = value_col), size = 3) +
+    geom_text(aes_string(label = value_col), size = 3) +  # Add text annotations
     coord_equal() +
     scale_fill_gradient(low = "white", high = "red") +
-    labs(x = col_label_col, y = row_label_col, fill = value_col) +
+    labs(x = cluster_col1, y = cluster_col2, fill = value_col) +
     theme_light() +
     theme(
       axis.text = element_text(size = 10),
       panel.background = element_rect(fill = "white"),
-      panel.grid = element_blank(),
+      panel.grid.major = element_blank(), # Remove major grid lines
+      panel.grid.minor = element_blank(),
       axis.text.x = element_text(angle = 45, hjust = 1)
-    )
-
+    ) +
+    scale_x_discrete(limits = hc$labels[hc$order]) +  # Reorder x-axis
+    scale_y_discrete(limits = hc$labels[hc$order])    # Reorder y-axis
   return(heatmap)
 }
-
 #' Generates a heatmap from a tree distance matrix with hierarchical clustering.
 
 #' @param distance_table A tibble or data frame representing the tree distance matrix. The distance matrix should have row labels in the 
@@ -50,7 +67,7 @@ label_clustered_heatmap <- function(distance_table, value_col, row_label_col, co
 #' @return A ggplot object representing the heatmap with hierarchical clustering.
 treedist_heatmap <- function(distance_table, value_col) {
   # Here, 'Tree1' and 'Tree2' are assumed to be the row and column labels in the distance matrix
-  label_clustered_heatmap(distance_table, value_col, row_label_col = "Tree1", col_label_col = "Tree2")
+  label_clustered_heatmap(distance_table, value_col, cluster_col1 = "Tree1", cluster_col2 = "Tree2")
 }
 
 save_heatmap <- function(heatmap, output_path) {
@@ -58,8 +75,6 @@ save_heatmap <- function(heatmap, output_path) {
   fig_size <- max(6, num_x_labels / 1.5)
   ggsave(output_path, heatmap, width = fig_size, height = fig_size)
 }
-
-
 
 
 # Function to generate NMDS plots with point shape customization

@@ -1,9 +1,9 @@
 library(phytools)
 
-generate_cophylo_plot <- function(rooted_tree1, rooted_tree2, output_path) {
+generate_cophylo_plot <- function(rooted_tree1, rooted_tree2, output_path, node_label = NULL) {
   # Create cophylo object
   obj <- cophylo(rooted_tree1, rooted_tree2)
-
+  
   # Calculate figure dimensions
   Nspecies <- length(rooted_tree1$tip.label)
   fig_length <- Nspecies %/% 50
@@ -23,27 +23,43 @@ generate_cophylo_plot <- function(rooted_tree1, rooted_tree2, output_path) {
   add_edge_labels <- function(tree, position) {
     node_labels <- tree$node.label
     multiply_by_100 <- should_multiply_by_100(node_labels)
-
-    bs <- sapply(tree$edge[, 2] - Ntip(tree),
-      function(x, y) {
-        if (x >= 2) {
-          value <- as.numeric(y[x])
-          if (multiply_by_100) {
-            return(value * 100)
-          } else {
+    
+    if (node_label == "PP") {
+      bs <- sapply(tree$edge[, 2] - Ntip(tree),
+        function(x, y) {
+          if (x >= 2) {
+            value <- as.numeric(y[x])
             return(value)
+          } else {
+            return("")
           }
-        } else {
-          return("")
-        }
-      },
-      y = node_labels
-    )
-
+        },
+        y = node_labels
+      )
+    } else if (node_label == "BS") {
+      bs <- sapply(tree$edge[, 2] - Ntip(tree),
+        function(x, y) {
+          if (x >= 2) {
+            value <- as.numeric(y[x])
+            if (multiply_by_100) {
+              return(value * 100)
+            } else {
+              return(value)
+            }
+          } else {
+            return("")
+          }
+        },
+        y = node_labels
+      )
+    } else {
+      bs <- rep("", length(tree$edge[, 2]))
+    }
+    
     edgelabels.cophylo(bs, frame = "none", cex = 0.5, adj = c(0.4, -0.2), which = position)
   }
 
-  # Function to create a color gradient based on Posterior Probabilitys
+  # Function to create a color gradient based on node_label
   create_edge_colors <- function(tree) {
     node_labels <- as.numeric(tree$node.label)
     support_values <- sapply(tree$edge[, 2] - Ntip(tree),
@@ -57,22 +73,31 @@ generate_cophylo_plot <- function(rooted_tree1, rooted_tree2, output_path) {
       y = node_labels
     )
 
+    if (node_label == "PP") {
+      color_limits <- c(0, 1)
+    } else if (node_label == "BS") {
+      color_limits <- c(0, 100)
+    } else {
+      return(rep("black", length(support_values))) # No color if node_label is NULL
+    }
+
     # Create color gradient from red to black
-    create_rgb_color <- function(value) {
+    create_rgb_color <- function(value, limits) {
       if (is.na(value)) {
         return(rgb(0, 0, 0, maxColorValue = 255))
       }
+      normalized <- (value - limits[1]) / diff(limits)
       red <- 255
       green <- 0
       blue <- 0
       # Interpolate from red to black
-      red <- red * (1 - value)
-      green <- green * (1 - value)
-      blue <- blue * (1 - value)
+      red <- red * (1 - normalized)
+      green <- green * (1 - normalized)
+      blue <- blue * (1 - normalized)
       return(rgb(red, green, blue, maxColorValue = 255))
     }
 
-    edge_colors <- sapply(support_values / 100, create_rgb_color)
+    edge_colors <- sapply(support_values, create_rgb_color, limits = color_limits)
 
     return(edge_colors)
   }
