@@ -87,19 +87,15 @@ read_nexus_models <- function(file_path) {
 #' @param model_name The name of the model
 #' @return The category of the model
 determine_model_category <- function(model_name) {
-  if (startsWith(model_name, "R.")) {
-    return("RMaker")
-  } else if (startsWith(model_name, "MT")) {
-    return("Mitochondria")
-  } else if (startsWith(model_name, "CP")) {
-    return("Choloroplast")
-  } else if (startsWith(model_name, "HI") || startsWith(model_name, "FL") || endsWith(model_name, "REV")) {
-    return("Virus")
-  } else if (startsWith(model_name, "p__")) {
-    return("Bac_phyla")
-  } else {
-    return("General")
-  }
+  model_name <- toupper(model_name)
+  switch(TRUE,
+         startsWith(model_name, "Q.") ~ "QMaker",
+         startsWith(model_name, "MT") ~ "Mitochondria",
+         startsWith(model_name, "CP") ~ "Choloroplast",
+         startsWith(model_name, "HI") || startsWith(model_name, "FL") || endsWith(model_name, "REV") ~ "Virus",
+         grepl("P__", model_name) ~ "Bac_phyla",
+         startsWith(model_name, "Q.BAC") ~ "Bac_General",
+         TRUE ~ "General")
 }
 
 #' Perform PCA and generate plots and component files
@@ -110,7 +106,7 @@ determine_model_category <- function(model_name) {
 #' @param existing_model_list The list of existing models
 generate_pca_output <- function(data, data_type, output_directory, existing_model_list) {
   # Determine file name suffix based on existing model list
-  file_suffix <- if (length(existing_model_list) == 0) "_trained_" else "_" 
+  file_suffix <- if (length(existing_model_list) == 0) "_trained" else "" 
 
   # Perform PCA
   pca_result <- prcomp(data, scale. = TRUE)

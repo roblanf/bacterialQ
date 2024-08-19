@@ -88,12 +88,12 @@ def analysis_on_spc_taxa_name(combined_df, taxa_scale, taxa_name):
 def shrink_loc(combined_df, t_drop):
     pattern = PATTREN
     selected_columns = [col for col in combined_df.columns if pattern.search(col)]
-    loc_to_drop = [col for col in selected_columns if combined_df[col].mean() < t_drop]
+    loc_to_drop = [col for col in selected_columns if combined_df[col].mean() <= t_drop]
     pruned_doc = combined_df.drop(columns=loc_to_drop)
     return pruned_doc
 
 def shrink_species(combined_df, t_drop):
-    species_to_drop = combined_df.index[combined_df['avg_integrity'] < t_drop]
+    species_to_drop = combined_df.index[combined_df['avg_integrity'] <= t_drop]
     pruned_doc = combined_df.drop(index=species_to_drop)
     return pruned_doc
 

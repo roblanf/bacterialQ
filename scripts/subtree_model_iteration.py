@@ -429,7 +429,7 @@ def test_model(args, output_dir, test_loci_dir, model_name_set, trained_model_ne
     if te:
         initial_tree = None
     if adv_rate_opt:
-        model_opt = "TESTNEWONLY"
+        model_opt = "TESTNEWONLY -cmin 5 -cmax 8"
     else:
         model_opt = "TESTONLY"
     output_dir.mkdir(parents=True, exist_ok=True)
@@ -456,7 +456,7 @@ def test_model(args, output_dir, test_loci_dir, model_name_set, trained_model_ne
     step = f"test_{mode}"
     if pre:
         test_prefix = pre
-        step = pre
+        step = re.split(r'/', pre)[-1]
     cmd += f" -pre {test_prefix}"
 
     run_command(cmd, f"{args.output_dir}/log.md", log_output=args.keep_cmd_output, log_time=True)
@@ -518,7 +518,7 @@ def extract_best_bic(model_data):
     
     for model, _, bic in model_data:
         bic = float(bic)
-        if model.startswith(('d__', 'p__', 'c__', 'o__', 'f__', 'g__', 's__')):
+        if model.startswith(('d__', 'p__', 'c__', 'o__', 'f__', 'g__', 's__', "Q.")):
             if bic < inferred_bic:
                 inferred_bic = bic
                 best_inferred_model = model
@@ -671,7 +671,7 @@ def main(args: argparse.Namespace) -> None:
         concat_loci_og = args.output_dir / "loci" / "concat_loci_with_outgroup.faa"
     loci_path = args.output_dir / "loci" / "loci"
     if not args.keep_aln:
-        files_to_remove.append(loci_path)
+        files_to_remove.append(args.output_dir / "loci")
         files_to_remove.append(args.output_dir / "pruned_integrity_table.csv")
 
     log_message('process', "### Prune reference tree")
@@ -953,8 +953,10 @@ def main(args: argparse.Namespace) -> None:
     # 1. Estimate the best final tree on the concatenated loci
     if args.estimate_best_final_tree or args.test_final_tree or args.cross_validation:
         log_message('process', "### Final tree estimation on all loci")
-        if args.final_tree_tool == t or args.final_tree_tool == "IQFAST":
-            cmd = f"iqtree -seed 1 -T AUTO -ntmax {num_threads} -p {loci_path} -t {new_tree} -m MFP -mset {all_model_set} -mdef {trained_model_nex} -pre {final_test_logdir}/best_final_tree -wpl -safe -B 1000"
+        if args.final_tree_tool == "IQ" or args.final_tree_tool == "IQFAST":
+            cmd = f"iqtree -seed 1 -T AUTO -ntmax {num_threads} -p {loci_path} -t {new_tree} -m MFP -mset {all_model_set} -mdef {trained_model_nex} -pre {final_test_logdir}/best_final_tree -wpl -safe"
+            if args.final_tree_tool == "IQ":
+                cmd += " -B 1000"
             if args.final_tree_tool == "IQFAST":
                 cmd += " -fast" 
         else:
@@ -982,21 +984,7 @@ def main(args: argparse.Namespace) -> None:
     log_message('result', "Compare the final tree with reference tree:")
     compare_trees(args, filtered_allspc_tree, new_tree, args.output_dir, "final_tree_compare")
 
-    # 3. Compare the final model with the initial best model
-    if initial_best_model_name:
-        log_message('process', "### Model comparison")
-        initial_best_model = extract_spc_Q_from_nex(args.model_dir, initial_best_model_name)
-        ifconverge, corr, dist = initial_best_model.check_convergence(new_model, threshold=args.t_model_converge)
-        log_message('result', f"Comparison between initial best model ({initial_best_model_name}) and final model ({new_model.model_name}):")
-        log_message('result', f"Pearson's correlation: {corr}")  
-        log_message('result', f"Euclidean distance: {dist}")  
-        bubble_plot(initial_best_model, final_test_dir / "initial_best_model.png")
-        log_link('result', "Initial best model bubble plot", str(final_test_dir / "initial_best_model.png"))
-        bubble_plot(new_model, final_test_dir / "final_model.png")
-        log_link('result', "Final model bubble plot", str(final_test_dir / "final_model.png"))
-        bubble_difference_plot(initial_best_model, new_model, final_test_dir / "model_comparison.png")
-        log_link('result', "Model comparison plot", str(final_test_dir / "model_comparison.png"))
-
+    # 3. PCA plot for all existing models with final trained model
     log_message('process', "### PCA Plot for all models")
     cmd = f"Rscript PCA_Q.R {args.model_dir} {models_dir}/trained_model.nex {models_dir}"
     run_command(cmd, f"{args.output_dir}/log.md", allow_error=True)
@@ -1017,8 +1005,10 @@ def main(args: argparse.Namespace) -> None:
             
     # 4. Re-verify the best model on the concatenated loci with reference tree as topology constraint
     log_message('process', "### Test model on reference tree in concatenated loci")
-    concat_best_model_result = test_model(args, final_test_logdir, concat_loci, all_model_set_with_all_trained, trained_model_nex, "concat", loop_id="best_model_reftree", te = filtered_allspc_tree, pre=f"{final_test_logdir}/reftree_best_concat_model", adv_rate_opt=False)
+    concat_best_model_result = test_model(args, final_test_logdir, concat_loci, all_model_set_with_all_trained, trained_model_nex, "concat", loop_id="best_model_reftree", te = filtered_allspc_tree, pre=f"{final_test_logdir}/reftree_best_concat_model", adv_rate_opt=True)
+    metalogger.log_parameter("concat_best_model_result", concat_best_model_result)
     best_infer_str, best_existing_str, best_infer_bic, best_existing_bic = extract_best_bic(concat_best_model_result)
+    metalogger.log_parameters({"best_infer_model_concat":best_infer_str, "best_existing_model_concat":best_existing_str, "best_infer_model_concat_bic":best_infer_bic, "best_existing_model_concat_bic":best_existing_bic})
     best_infer_model, best_existing_model = best_infer_str.split('+', 1)[0], best_existing_str.split('+', 1)[0]
     if best_infer_bic < best_existing_bic:
         log_message('result', f"The inferred model {best_infer_model} has better BIC value than the existing model:")
@@ -1029,17 +1019,17 @@ def main(args: argparse.Namespace) -> None:
     log_message('result', "|------|-----------------|---------------------|")
     log_message('result', f"| Model | {best_infer_str} | {best_existing_str} |")
     log_message('result', f"| BIC | {best_infer_bic} | {best_existing_bic} |")
-    metalogger.log_parameters({"best_infer_model_concat":best_infer_str, "best_existing_model_concat":best_existing_str, "best_infer_model_concat_bic":best_infer_bic, "best_existing_model_concat_bic":best_existing_bic})
-    metalogger.log_parameter("concat_best_model_result", concat_best_model_result)
 
-    if best_infer_bic > best_existing_bic:
+    if best_infer_bic < best_existing_bic:
         # 5. If the final model is better than the existing models in the concatenated test loci, perform final tree test or cross-validation
         if args.test_final_tree or args.cross_validation:
             log_message('process', "### Test final tree")
             log_message('process', "#### Final tree estimation on all loci without inferred model")
             if args.final_tree_tool == "IQ" or args.final_tree_tool == "IQFAST":
                 existing_model_tree = final_test_logdir / "existing_model_tree.treefile"
-                cmd = f"iqtree -seed 1 -T AUTO -ntmax {num_threads} -p {loci_path} -t {new_tree} -m MFP -mset {initial_model_set} -pre {final_test_logdir}/existing_model_tree -wpl -safe -B 1000"
+                cmd = f"iqtree -seed 1 -T AUTO -ntmax {num_threads} -p {loci_path} -t {new_tree} -m MFP -mset {initial_model_set} -pre {final_test_logdir}/existing_model_tree -wpl -safe"
+                if args.final_tree_tool == "IQ":
+                     cmd += " -B 1000" 
                 if args.final_tree_tool == "IQFAST":
                     cmd += " -fast"
                 run_command(cmd, f"{args.output_dir}/log.md", log_output=args.keep_cmd_output, log_time=True)
@@ -1125,15 +1115,30 @@ def main(args: argparse.Namespace) -> None:
                 inferred_model_tree_result = test_model(args, cross_validation_dir, concat_loci, all_model_set, trained_model_nex, "concat", loop_id="cross_final_tree", te=new_tree, pre=f"{cross_validation_dir}/cross_final_tree")
                 logging_cross_test_table(existing_model_tree_result, inferred_model_tree_result)
 
-    # 8. Plot RF and nRF distance among estimated trees and reference tree
-    log_message('process', "### Pairwise comparison of trees")
+    # 5. Compare the final model with the initial best model
+    if best_existing_model:
+        log_message('process', "### Model comparison")
+        initial_best_model = extract_spc_Q_from_nex(args.model_dir, best_existing_model)
+        ifconverge, corr, dist = initial_best_model.check_convergence(new_model, threshold=args.t_model_converge)
+        log_message('result', f"Comparison between best existing model ({best_existing_model}) and final model ({new_model.model_name}):")
+        log_message('result', f"Pearson's correlation: {corr}")  
+        log_message('result', f"Euclidean distance: {dist}")  
+        bubble_plot(initial_best_model, final_test_dir / "best_existing_model.png")
+        log_link('result', "Initial best model bubble plot", str(final_test_dir / "best_existing_model.png"))
+        bubble_plot(new_model, final_test_dir / "final_model.png")
+        log_link('result', "Final model bubble plot", str(final_test_dir / "final_model.png"))
+        bubble_difference_plot(best_existing_model, new_model, final_test_dir / "model_comparison.png")
+        log_link('result', "Model comparison plot", str(final_test_dir / "model_comparison.png"))
+
+    # 6. Plot RF and nRF distance among estimated trees and reference tree
+    log_message('process', "### Pairwise tree distance comparison")
     cmd = f"Rscript ./analysis/write_pairwise_tree_dist.R {trees_dir}"
     run_command(cmd, f"{args.output_dir}/log.md", log_any=False, allow_error=True)
-    log_link('result', "Heatmap of RF distance of trees:", str(trees_dir / "RF_dist.png"))
-    log_link('result', "Heatmap of nRF distance of trees:", str(trees_dir / "nRF_dist.png"))
+    log_link('result', "Heatmap of RF distance of trees:", str(trees_dir / "RF_heatmap.png"))
+    log_link('result', "Heatmap of nRF distance of trees:", str(trees_dir / "nRF_heatmap.png"))
     log_link('result', "Pairwise tree distance metrics: ", str(trees_dir / "tree_pairwise_compare.csv"))
 
-    # 9. Generate summary for final test
+    # 7. Generate record for IQ-TREE and tree compare
     log_message('process', "### Record files")
     log_link('result', "Record of IQ-TREE result", str(args.output_dir / "iqtree_results.csv"))
     log_link('result', "Record of tree comparison", str(args.output_dir / "tree_summary.csv"))
@@ -1186,7 +1191,7 @@ def cli() -> argparse.Namespace:
     parser.add_argument('--decorated_tree', type=Path, help='Path to the tree file with decorated taxanomic information')
     parser.add_argument('--outgroup_taxa_list', type=Path, help='Path to the list of outgroup taxa(in same taxanomic scale with --taxa_scale) to select from.')
 
-    parser.add_argument('--tree_size_lower_lim', type=int, default=20, help='Lower limit for the size of subtrees (default: 20)')
+    parser.add_argument('--tree_size_lower_lim', type=int, default=15, help='Lower limit for the size of subtrees (default: 15)')
     parser.add_argument('--tree_size_upper_lim', type=int, default=100, help='Upper limit for the size of subtrees (default: 100)')  
     parser.add_argument('--prune_mode', type=str, default='split', choices=['split', 'lower', 'upper', 'deep'], help="Pruning mode (split/lower/upper/deep) (default: split)")
 
@@ -1195,7 +1200,7 @@ def cli() -> argparse.Namespace:
     parser.add_argument('-c', '--keep_cmd_output', action='store_true', help='Keep detailed command output in the log file')
     parser.add_argument('-t', '--keep_tmp', action='store_true', help='Keep temporary files')
     parser.add_argument('-A', '--keep_aln', action='store_true', help='Keep training and testing alignment files.')
-    parser.add_argument('-v', '--verbose', action='store_true', help='Print commands')
+    parser.add_argument('-v', '--verbose', action='store_true', help='Print commands in logfile')
 
     parser.add_argument('--output_dir', type=Path, required=True, help='Output directory')
     parser.add_argument('--FastTreeMP_path', type=Path, required=True, help='Path to the FastTreeMP executable')
@@ -1204,7 +1209,8 @@ def cli() -> argparse.Namespace:
 if __name__ == "__main__":
     args = cli()
     # args.prefix = f"{args.taxa_name}_{args.prop_aln}"
-    args.prefix = f"{args.taxa_name}_{args.tree_size_upper_lim}_{args.num_aln}"
+    # args.prefix = f"{args.taxa_name}_{args.tree_size_upper_lim}_{args.num_aln}"
+    args.prefix = f"Q.{args.taxa_name}"
     args.output_dir = args.output_dir / f"{args.prefix}"  
     args.output_dir.mkdir(parents=True, exist_ok=True)
     metalogger = MetaLogger.get_instance(str(args.output_dir / "meta.json"))

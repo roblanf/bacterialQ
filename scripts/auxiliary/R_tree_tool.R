@@ -7,7 +7,8 @@ library(ape)
 standardize_node_labels <- function(tree) {
   # Convert node labels to numeric
   node_labels <- as.numeric(tree$node.label)
-
+  # Replace NA values with 100
+  node_labels[is.na(node_labels)] <- 0
   # Check if the mean of numeric labels is less than 1
   if (mean(node_labels, na.rm = TRUE) > 1) {
     node_labels <- ceiling(node_labels)
@@ -17,9 +18,10 @@ standardize_node_labels <- function(tree) {
 
   # Convert back to character and replace the original labels
   tree$node.label <- as.character(node_labels)
-
+    
   return(tree)
 }
+
 
 #' @description
 #' Separate a tree into PP (Posterior Probability) and BS (Bootstrap Support) trees
@@ -95,20 +97,21 @@ keep_same_tree_label <- function(tree1, tree2) {
   label2 <- seperate_node_label(tree2)
   
   # Determine the type to use based on the labels available
-  if (length(label1$BS) > 0 || length(label2$BS) > 0) {
+  if (length(label1$BS) > 0 && length(label2$BS) > 0) {
     type <- "BS"
-  } else if (length(label1$PP) > 0 || length(label2$PP) > 0) {
+  } else if (length(label1$PP) > 0 && length(label2$PP) > 0) {
     type <- "PP"
   } else {
-    type <- NULL
+    type <- "NULL"
   }
   
-  # Assign the selected type to both trees
-  tree1$node.label <- if (type == "BS") label1$BS else label1$PP
-  tree2$node.label <- if (type == "BS") label2$BS else label2$PP
-  if (!is.null(type)) {
+  if (type == "NULL") {
     tree1$node.label <- NULL
     tree2$node.label <- NULL
+  } else{
+    # Assign the selected type to both trees
+    tree1 <- if (type == "BS") label1$BS else label1$PP
+    tree2 <- if (type == "BS") label2$BS else label2$PP
   }
   
   return(list(tree1 = tree1, tree2 = tree2, type = type))

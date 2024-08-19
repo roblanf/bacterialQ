@@ -24,7 +24,7 @@ phylograms <- function(tree, y_scale = -5, subtitle = "", node_label = NULL) {
   if (is.null(color_name)) {
     plot <- ggtree(tree, cex = 0.8, lwd = 0.5)
   } else {
-  plot <- ggtree(tree, cex = 0.8, lwd = 0.5,aes(color = ifelse(is.na(as.numeric(label)), 0, as.numeric(label)))) +
+  plot <- ggtree(tree, cex = 0.8, lwd = 0.5,aes(color = ifelse(is.na(as.numeric(label)), max(color_limits), as.numeric(label)))) +
     scale_color_continuous(
       high = "black", low = "red",
       name = color_name, limits = color_limits,

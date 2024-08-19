@@ -21,19 +21,19 @@ library(kableExtra)
 library(phytools)
 
 # Read the tree files
-tree1 <- read.tree(params$tree1_path)
-tree2 <- read.tree(params$tree2_path)
+tree1_raw <- read.tree(params$tree1_path)
+tree2_raw <- read.tree(params$tree2_path)
 ifroot <- params$root
 
 if (!ifroot) {
-  tree1 <- unroot(tree1)
-  tree2 <- unroot(tree2)
+  tree1_raw <- unroot(tree1_raw)
+  tree2_raw <- unroot(tree2_raw)
 }
 
 source("./auxiliary/R_tree_tool.R")
 
 # Make sure tree1 and tree2 shares the same taxa
-standard_trees <- standardize_trees(tree1, tree2)
+standard_trees <- standardize_trees(tree1_raw, tree2_raw)
 tree1 <- standard_trees[[1]]
 tree2 <- standard_trees[[2]]
 
@@ -47,7 +47,7 @@ nodel_label_type <- same_label_trees[[3]]
 extract_tree_name <- function(file_path) {
   # Remove the directory path and file extension from the file path
   tree_name <- sub("^.*\\/", "", file_path)
-  tree_name <- sub("\\..*$", "", tree_name)
+  tree_name <- sub("\\.[^.]*$", "", tree_name)
   return(tree_name)
 }
 
@@ -127,7 +127,7 @@ if (result_df$nRF >= 0.1) {
   cat("Cophylo plot generated successfully.\n")
   cat("![Cophylo plot](cophylo_plot.pdf)")
 } else {
-  cat("The normalized Robinson-Foulds distance is less than 1, cophylo plot will not be shown.")
+  cat("The normalized Robinson-Foulds distance is less than 0.1, cophylo plot will not be shown.")
 }
 ```
 
@@ -190,9 +190,9 @@ ggplot(branch_length_data, aes(x = branch_length, color = tree)) +
   scale_x_log10()
 ```
 
-## Posterior Probability analysis
+## Support value analysis
 
-### Posterior Probability Summary
+### Support value Summary
 ```{r echo=FALSE, message=FALSE, warning=FALSE}
 # Function to calculate node label statistics
 node_label_stats <- function(node_labels, tree_name) {
@@ -220,15 +220,22 @@ node_label_stats <- function(node_labels, tree_name) {
   )
 }
 
-# Calculate node label stats for both trees
-node_label_stats_tree1 <- node_label_stats(tree1$node.label, tree_name = tree1_name)
-node_label_stats_tree2 <- node_label_stats(tree2$node.label, tree_name = tree2_name)
+if (nodel_label_type != "NULL"){
+  # Calculate node label stats for both trees
+  node_label_stats_tree1 <- node_label_stats(tree1$node.label, tree_name = tree1_name)
+  node_label_stats_tree2 <- node_label_stats(tree2$node.label, tree_name = tree2_name)
+} else {
+  cat("The two trees node labels are uncomparable.")
+  node_label_stats_tree1 <- node_label_stats(tree1_raw$node.label, tree_name = tree1_name)
+  node_label_stats_tree2 <- node_label_stats(tree2_raw$node.label, tree_name = tree2_name)
+}
+  # Combine into a data frame
+  node_label_summary <- rbind(node_label_stats_tree1, node_label_stats_tree2)
+  rownames(node_label_summary) <- NULL
 
-# Combine into a data frame
-node_label_summary <- rbind(node_label_stats_tree1, node_label_stats_tree2)
-rownames(node_label_summary) <- NULL
+  kable_styling(knitr::kable(node_label_summary, caption = "Posterior Probability Statistics"), bootstrap_options = c("striped", "hover", "condensed"))
 
-kable_styling(knitr::kable(node_label_summary, caption = "Posterior Probability Statistics"), bootstrap_options = c("striped", "hover", "condensed"))
+
 ```
 
 ### Density plot of Posterior Probability
@@ -246,27 +253,30 @@ convert_node_labels <- function(tree) {
 
   return(node_labels)
 }
+if (nodel_label_type != "NULL"){
+  # Process node labels for both trees
+  node_labels_tree1 <- convert_node_labels(tree1)
+  node_labels_tree2 <- convert_node_labels(tree2)
 
-# Process node labels for both trees
-node_labels_tree1 <- convert_node_labels(tree1)
-node_labels_tree2 <- convert_node_labels(tree2)
-
-# Create a data frame for plotting
-node_labels_data <- data.frame(
-  tree = c(rep(tree1_name, length(node_labels_tree1)), rep(tree2_name, length(node_labels_tree2))),
-  node_label = c(node_labels_tree1, node_labels_tree2)
-)
-
-# Create a density plot
-ggplot(node_labels_data, aes(x = node_label, fill = tree)) +
-  geom_density(alpha = 0.5) +
-  theme_minimal() +
-  theme(
-    plot.title = element_text(hjust = 0.5),
-    legend.title = element_blank()
-  ) +
-  labs(
-    title = "Density Plot of Posterior Probabilitys",
-    x = "Posterior Probabilitys", y = "Density"
+  # Create a data frame for plotting
+  node_labels_data <- data.frame(
+    tree = c(rep(tree1_name, length(node_labels_tree1)), rep(tree2_name, length(node_labels_tree2))),
+    node_label = c(node_labels_tree1, node_labels_tree2)
   )
+
+  # Create a density plot
+  ggplot(node_labels_data, aes(x = node_label, fill = tree)) +
+    geom_density(alpha = 0.5) +
+    theme_minimal() +
+    theme(
+      plot.title = element_text(hjust = 0.5),
+      legend.title = element_blank()
+    ) +
+    labs(
+      title = "Density Plot of Posterior Probabilitys",
+      x = "Posterior Probabilitys", y = "Density"
+    )
+  } else {
+  cat("Node labels are not available.")
+}
 ```

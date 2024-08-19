@@ -6,7 +6,7 @@ generate_cophylo_plot <- function(rooted_tree1, rooted_tree2, output_path, node_
   
   # Calculate figure dimensions
   Nspecies <- length(rooted_tree1$tip.label)
-  fig_length <- Nspecies %/% 50
+  fig_length <- Nspecies %/% 30
   fig_width <- 12 + Nspecies %/% 100
 
   # Open pdf device with reduced resolution
