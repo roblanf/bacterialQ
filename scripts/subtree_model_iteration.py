@@ -1118,12 +1118,12 @@ def main(args: argparse.Namespace) -> None:
     # 5. Compare the final model with the initial best model
     if best_existing_model:
         log_message('process', "### Model comparison")
-        initial_best_model = extract_spc_Q_from_nex(args.model_dir, best_existing_model)
-        ifconverge, corr, dist = initial_best_model.check_convergence(new_model, threshold=args.t_model_converge)
-        log_message('result', f"Comparison between best existing model ({best_existing_model}) and final model ({new_model.model_name}):")
+        best_existing_model = extract_spc_Q_from_nex(args.model_dir, best_existing_model)
+        ifconverge, corr, dist = best_existing_model.check_convergence(new_model, threshold=args.t_model_converge)
+        log_message('result', f"Comparison between best existing model ({best_existing_model.model_name}) and final model ({new_model.model_name}):")
         log_message('result', f"Pearson's correlation: {corr}")  
         log_message('result', f"Euclidean distance: {dist}")  
-        bubble_plot(initial_best_model, final_test_dir / "best_existing_model.png")
+        bubble_plot(best_existing_model, final_test_dir / "best_existing_model.png")
         log_link('result', "Initial best model bubble plot", str(final_test_dir / "best_existing_model.png"))
         bubble_plot(new_model, final_test_dir / "final_model.png")
         log_link('result', "Final model bubble plot", str(final_test_dir / "final_model.png"))

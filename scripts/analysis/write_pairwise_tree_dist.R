@@ -77,7 +77,7 @@ distance_matrix_nRF[is.na(distance_matrix_nRF)] <- 0
 
 # Generate and save heatmap
 heatmap_RF <- treedist_heatmap(all_distances, "RF_dist")
-save_heatmap(heatmap_nRF, file.path(dir_path, "RF_heatmap.png"))
+save_heatmap(heatmap_RF, file.path(dir_path, "RF_heatmap.png"))
 heatmap_nRF <- treedist_heatmap(all_distances, "nRF")
 save_heatmap(heatmap_nRF, file.path(dir_path, "nRF_heatmap.png"))
 
