@@ -212,7 +212,6 @@ def sample_alignment(loci_dir: Path, taxa_file_list: Union[Path, List[Path]], ou
     total_aln_count, splited_aln_count = process_loci_files(loci_files, taxa_file_list, output_folder, num_aln = num_aln, prop_aln = prop_aln, nchar_row = nchar_row, nchar_col = nchar_col)
     return total_aln_count, splited_aln_count
 
-
 def get_constraint_tree(loci_dir, subtree_dir, output_tree_path):
     from get_subtree import get_subtree_from_fasta
     # Get and arrange aligments by filename
@@ -231,7 +230,7 @@ def get_constraint_tree(loci_dir, subtree_dir, output_tree_path):
     with open(output_tree_path, 'w') as output_tree:
         for file in sorted_loci_file_names:
                 file_path = os.path.join(loci_dir, file)
-                subtree_name = re.search('subtree_\d+', file).group()
+                subtree_name = re.search(r'subtree_\d+', file).group()
                 get_subtree_from_fasta(tree_dict[subtree_name], file_path, output_tree)
 
 def time_checkpoint(used_time_list, start_time, time_limit):
@@ -473,7 +472,7 @@ def test_model(args, output_dir, test_loci_dir, model_name_set, trained_model_ne
 
 def compare_trees(args, prev_tree, new_tree, html_output_dir, name):
     cmd_R = f"""
-    Rscript -e "rmarkdown::render('tree_comparison.Rmd', output_dir= '{html_output_dir}', params = list(tree1_path = '{prev_tree}', tree2_path = '{new_tree}', root = FALSE, summary_path = '{args.output_dir}/tree_summary.csv', cophylo_path = '{html_output_dir}/cophylo_plot.pdf', name = '{name}'))"
+    Rscript -e "rmarkdown::render('tree_comparison.Rmd', output_dir= '{html_output_dir}', params = list(tree1_path = '{prev_tree}', tree2_path = '{new_tree}', summary_path = '{args.output_dir}/tree_summary.csv', cophylo_path = '{html_output_dir}/cophylo_plot.pdf', name = '{name}'))"
     """
     
     try:

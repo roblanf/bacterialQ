@@ -23,12 +23,6 @@ library(phytools)
 # Read the tree files
 tree1_raw <- read.tree(params$tree1_path)
 tree2_raw <- read.tree(params$tree2_path)
-ifroot <- params$root
-
-if (!ifroot) {
-  tree1_raw <- unroot(tree1_raw)
-  tree2_raw <- unroot(tree2_raw)
-}
 
 source("./auxiliary/R_tree_tool.R")
 
@@ -36,6 +30,9 @@ source("./auxiliary/R_tree_tool.R")
 standard_trees <- standardize_trees(tree1_raw, tree2_raw)
 tree1 <- standard_trees[[1]]
 tree2 <- standard_trees[[2]]
+
+# Determine weather two trees are rooted or not
+ifroot <- is.rooted(tree1_raw) && is.rooted(tree2_raw)
 
 # Make sure the style of node label is consistent
 same_label_trees <- keep_same_tree_label(tree1, tree2)
