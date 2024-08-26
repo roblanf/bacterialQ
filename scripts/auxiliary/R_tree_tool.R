@@ -124,8 +124,8 @@ keep_same_tree_label <- function(tree1, tree2) {
 #' @param tree2 Second tree object
 #' @return A list containing two modified tree objects.
 standardize_trees <- function(tree1, tree2) {
-  # Unroot trees if either tree is rooted
-  if (is.rooted(tree1) || is.rooted(tree2)) {
+  # Unroot trees if either tree is unrooted
+  if (!is.rooted(tree1) || !is.rooted(tree2)) {
     tree1 <- unroot(tree1)
     tree2 <- unroot(tree2)
   }

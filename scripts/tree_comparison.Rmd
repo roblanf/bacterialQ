@@ -32,7 +32,7 @@ tree1 <- standard_trees[[1]]
 tree2 <- standard_trees[[2]]
 
 # Determine weather two trees are rooted or not
-ifroot <- is.rooted(tree1_raw) && is.rooted(tree2_raw)
+ifroot <- is.rooted(tree1) && is.rooted(tree1)
 
 # Make sure the style of node label is consistent
 same_label_trees <- keep_same_tree_label(tree1, tree2)

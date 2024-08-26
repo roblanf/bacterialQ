@@ -88,14 +88,23 @@ read_nexus_models <- function(file_path) {
 #' @return The category of the model
 determine_model_category <- function(model_name) {
   model_name <- toupper(model_name)
-  switch(TRUE,
-         startsWith(model_name, "Q.") ~ "QMaker",
-         startsWith(model_name, "MT") ~ "Mitochondria",
-         startsWith(model_name, "CP") ~ "Choloroplast",
-         startsWith(model_name, "HI") || startsWith(model_name, "FL") || endsWith(model_name, "REV") ~ "Virus",
-         grepl("P__", model_name) ~ "Bac_phyla",
-         startsWith(model_name, "Q.BAC") ~ "Bac_General",
-         TRUE ~ "General")
+  
+  # Using if-else for Python-like switch behavior
+  if (startsWith(model_name, "Q.")) {
+    return("QMaker")
+  } else if (startsWith(model_name, "MT")) {
+    return("Mitochondria")
+  } else if (startsWith(model_name, "CP")) {
+    return("Chloroplast")
+  } else if (startsWith(model_name, "HI") || startsWith(model_name, "FL") || endsWith(model_name, "REV")) {
+    return("Virus")
+  } else if (grepl("P__", model_name)) {
+    return("Bac_phyla")
+  } else if (startsWith(model_name, "Q.BAC")) {
+    return("Bac_General")
+  } else {
+    return("General")
+  }
 }
 
 #' Perform PCA and generate plots and component files
@@ -103,11 +112,12 @@ determine_model_category <- function(model_name) {
 #' @param data The input data for PCA
 #' @param data_type The type of data, used for file naming
 #' @param output_directory The directory to save the output files
-#' @param existing_model_list The list of existing models
-generate_pca_output <- function(data, data_type, output_directory, existing_model_list) {
-  # Determine file name suffix based on existing model list
-  file_suffix <- if (length(existing_model_list) == 0) "_trained" else "" 
-
+#' @param model_origin The origin of the models (existing or trained)
+#' @param model_category The category of the models
+generate_pca_output <- function(data, data_type, output_directory, model_origin, model_category) {
+  # Determine file name suffix based on existence of existing models
+  file_suffix <- if (length(unique(model_origin)) == 1 && unique(model_origin) == "Trained") "_trained" else ""
+  
   # Perform PCA
   pca_result <- prcomp(data, scale. = TRUE)
 
@@ -159,12 +169,12 @@ model_category <- sapply(rownames(combined_R_matrices), determine_model_category
 
 # Generate PCA output for R matrices if specified
 if ("PCA_R" %in% output_elements) {
-  generate_pca_output(combined_R_matrices, "R", output_directory, existing_model_list)
+  generate_pca_output(combined_R_matrices, "R", output_directory, model_origin, model_category)
 }
 
 # Generate PCA output for F vectors if specified
 if ("PCA_F" %in% output_elements) {
-  generate_pca_output(combined_F_vectors, "F", output_directory, existing_model_list)
+  generate_pca_output(combined_F_vectors, "F", output_directory, model_origin, model_category)
 }
 
 # Calculate and process Q matrices if specified
@@ -183,5 +193,5 @@ if ("PCA_Q" %in% output_elements) {
   rownames(combined_Q_vectors) <- c(names(existing_model_list), names(trained_model_list))
 
   # Generate PCA output for Q matrices
-  generate_pca_output(combined_Q_vectors, "Q", output_directory, existing_model_list)
+  generate_pca_output(combined_Q_vectors, "Q", output_directory, model_origin, model_category)
 }

@@ -428,7 +428,7 @@ def test_model(args, output_dir, test_loci_dir, model_name_set, trained_model_ne
     if te:
         initial_tree = None
     if adv_rate_opt:
-        model_opt = "TESTNEWONLY -cmin 5 -cmax 8"
+        model_opt = "TESTNEWONLY -cmin 6 -cmax 9"
     else:
         model_opt = "TESTONLY"
     output_dir.mkdir(parents=True, exist_ok=True)
