@@ -1167,7 +1167,7 @@ def cli() -> argparse.Namespace:
     parser.add_argument('-f', '--taxa_file', type=Path, required=True, help='Path to the reference taxa information file')
     parser.add_argument('-r', '--ref_tree', type=Path, required=True, help='Path to the reference tree file')
     parser.add_argument('-m', '--model_dir', type=Path, required=True, help='Directory containing initial model files')
-    parser.add_argument('-M', '--initial_model_set', type=str, default="LG,Q.PFAM,Q.INSECT,Q.PLANT,Q.YEAST,MTMET,MTART", help='Initial model set for ModelFinder (default: LG,Q.PFAM,JTT,WAG,Q.YEAST,Q.PLANT,Q.MAMMAL,CPREV)')
+    parser.add_argument('-M', '--initial_model_set', type=str, default="LG,Q.PFAM,JTT,WAG,Q.YEAST,Q.PLANT,Q.MAMMAL,CPREV", help='Initial model set for ModelFinder (default: LG,Q.PFAM,JTT,WAG,Q.YEAST,Q.PLANT,Q.MAMMAL,CPREV)')
     parser.add_argument('--t_drop_species', type=float, default=0.2, help='Threshold of sequence integrity for dropping species (default: 0.2)')
     parser.add_argument('--t_drop_loc', type=float, default=0.1, help='Threshold of sequence integrity for dropping loci (default: 0.1)')
 
