@@ -514,10 +514,11 @@ def extract_best_bic(model_data):
     existed_bic = float('inf')
     best_inferred_model = None
     best_existed_model = None
-    
+    pattern = re.compile(r'Phylum|Class|Order|Family|Bac|Arch|__', re.IGNORECASE)
+
     for model, _, bic in model_data:
         bic = float(bic)
-        if model.startswith(('d__', 'p__', 'c__', 'o__', 'f__', 'g__', 's__', "Q.")):
+        if pattern.search(model):
             if bic < inferred_bic:
                 inferred_bic = bic
                 best_inferred_model = model
@@ -1114,7 +1115,7 @@ def main(args: argparse.Namespace) -> None:
                 inferred_model_tree_result = test_model(args, cross_validation_dir, concat_loci, all_model_set, trained_model_nex, "concat", loop_id="cross_final_tree", te=new_tree, pre=f"{cross_validation_dir}/cross_final_tree")
                 logging_cross_test_table(existing_model_tree_result, inferred_model_tree_result)
 
-    # 5. Compare the final model with the initial best model
+    # 5. Compare the final model with the best existing model
     if best_existing_model:
         log_message('process', "### Model comparison")
         best_existing_model = extract_spc_Q_from_nex(args.model_dir, best_existing_model)
@@ -1123,7 +1124,7 @@ def main(args: argparse.Namespace) -> None:
         log_message('result', f"Pearson's correlation: {corr}")  
         log_message('result', f"Euclidean distance: {dist}")  
         bubble_plot(best_existing_model, final_test_dir / "best_existing_model.png")
-        log_link('result', "Initial best model bubble plot", str(final_test_dir / "best_existing_model.png"))
+        log_link('result', "Best existing model bubble plot", str(final_test_dir / "best_existing_model.png"))
         bubble_plot(new_model, final_test_dir / "final_model.png")
         log_link('result', "Final model bubble plot", str(final_test_dir / "final_model.png"))
         bubble_difference_plot(best_existing_model, new_model, final_test_dir / "model_comparison.png")
