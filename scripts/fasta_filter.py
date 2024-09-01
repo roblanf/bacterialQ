@@ -32,6 +32,14 @@ class SequenceData:
         col_mask = np.sum(self.aln != '-', axis=0) >= pct_col * self.aln.shape[0]
         self.aln = self.aln[:, col_mask]
 
+    def filter_array_with_nstatus(self, nstatus_col):
+        def func(column):
+            unique_states = np.unique(column[column != '-'])
+            return len(unique_states) <= nstatus_col
+        
+        col_mask = np.apply_along_axis(func, 0, self.aln)
+        self.aln = self.aln[:, col_mask]
+
     def keep_array(self, ntaxa=3, npis_site=5):
         num_taxa = self.aln.shape[0]
         num_pis_site = np.sum(self.pis_mask)
