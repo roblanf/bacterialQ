@@ -10,7 +10,7 @@ sys.path.append(os.path.dirname(os.path.dirname(file_path)))
 from Q_convert import *
 
 def calculate_correlation_and_distance(model1, model2):
-    # Calculate correlation and Euclidian distance for Q_params, state_freq, and Q_matrix
+    # Calculate correlation and Euclidian distance for Q_params, state_freq, Q_exchange, and Q_matrix
     if model1.Q_matrix is None:
         model1.create_Q_matrix()
     if model2.Q_matrix is None:
@@ -22,13 +22,20 @@ def calculate_correlation_and_distance(model1, model2):
     correlations = []
     distances = []
     
-    for attr in ['Q_params', 'state_freq', 'Q_matrix']:
+    for attr in ['Q_params', 'state_freq', 'Q_exchange', 'Q_matrix']:
         attr1 = getattr(model1, attr)
         attr2 = getattr(model2, attr)
         # Check if attr1 and attr2 are square matrices
         if attr1.ndim == 2 and attr1.shape[0] == attr1.shape[1]:
-            # Create a mask to include only the lower triangular part, excluding the diagonal
-            mask = np.tril(np.ones(attr1.shape, dtype=bool), k=-1)
+            if attr == 'Q_exchange':
+                # Create a mask to include only the lower triangular part, excluding the diagonal
+                mask = np.tril(np.ones(attr1.shape, dtype=bool), k=-1)
+            elif attr == 'Q_matrix':
+                # Create a mask to include all elements except the diagonal
+                mask = ~np.eye(attr1.shape[0], dtype=bool)
+            else:
+                # Create a mask to include only the lower triangular part, excluding the diagonal
+                mask = np.tril(np.ones(attr1.shape, dtype=bool), k=-1)
             attr1_flattened = attr1[mask]
             attr2_flattened = attr2[mask]
         else:
@@ -45,8 +52,8 @@ def calculate_correlation_and_distance(model1, model2):
 def calculate_trained_models_dist(nex_file):
     models = extract_Q_from_nex(nex_file)
     n = len(models)
-    correlations = np.zeros((n, n, 3))
-    distances = np.zeros((n, n, 3))
+    correlations = np.zeros((n, n, 4))
+    distances = np.zeros((n, n, 4))
     for i in range(n):
         for j in range(i, n):
             correlations[i, j], distances[i, j] = calculate_correlation_and_distance(models[i], models[j])
@@ -57,8 +64,8 @@ def calculate_all_models_dist(trained_nex_file, existed_nex_file):
     trained_models = extract_Q_from_nex(trained_nex_file)
     existed_models = extract_Q_from_nex(existed_nex_file)
     n, m = len(trained_models), len(existed_models)
-    correlations = np.zeros((n, m, 3))
-    distances = np.zeros((n, m, 3))
+    correlations = np.zeros((n, m, 4))
+    distances = np.zeros((n, m, 4))
     for i in range(n):
         for j in range(m):
             correlations[i, j], distances[i, j] = calculate_correlation_and_distance(trained_models[i], existed_models[j])
@@ -67,7 +74,8 @@ def calculate_all_models_dist(trained_nex_file, existed_nex_file):
 def save_to_csv(correlations, distances, model_names1, model_names2, output_file):
     with open(output_file, 'w', newline='') as csvfile:
         writer = csv.writer(csvfile)
-        writer.writerow(['model1', 'model2', 'Q_params correlation', 'state_freq correlation', 'Q_matrix correlation', 'Q_params distance', 'state_freq distance', 'Q_matrix distance'])
+        writer.writerow(['model1', 'model2', 'Q_params correlation', 'state_freq correlation','Q_exchange correlation', 'Q_matrix correlation', 
+                         'Q_params distance', 'state_freq distance', 'Q_exchange distance', 'Q_matrix distance'])
         for i in range(correlations.shape[0]):
             for j in range(correlations.shape[1]):
                 writer.writerow([model_names1[i], model_names2[j]] + correlations[i, j].tolist() + distances[i, j].tolist())

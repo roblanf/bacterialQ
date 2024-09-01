@@ -92,18 +92,25 @@ if (nrow(allQ) < 2 || nrow(allF) < 2) {
 # Create a vector of model sources
 model_source <- c(rep("Existing", length(existing_models)), rep("Trained", length(trained_models)))
 
-# Create a function to determine the type based on the model name
+#' Determine the category of a model based on its name
+#'
+#' @param model_name The name of the model
+#' @return The category of the model
 determine_type <- function(model_name) {
-  if (startsWith(model_name, "Q.")) {
-    return("QMaker")
+  model_name <- toupper(model_name)
+
+  if (grepl("P__", model_name)) {
+    return("Bac_phyla")
+  } else if (startsWith(model_name, "Q.BAC")) {
+    return("Bac_General")
   } else if (startsWith(model_name, "MT")) {
     return("Mitochondria")
   } else if (startsWith(model_name, "CP")) {
-    return("Choloroplast")
+    return("Chloroplast")
   } else if (startsWith(model_name, "HI") || startsWith(model_name, "FL") || endsWith(model_name, "REV")) {
     return("Virus")
-  } else if (startsWith(model_name, "p__")) {
-    return("Bac_phyla")
+  } else if (startsWith(model_name, "Q.")) {
+    return("QMaker")
   } else {
     return("General")
   }
@@ -118,9 +125,17 @@ tsne_F <- Rtsne(allF, dims = 2, perplexity = perp, check_duplicates = FALSE, ini
 
 
 # Create t-SNE plot for Q matrices using ggplot and add labels with geom_text_repel
-tsne_Q_plot <- ggplot(data.frame(tSNE1 = tsne_Q$Y[, 1], tSNE2 = tsne_Q$Y[, 2], Model = rownames(allQ), Source = model_source, Type = model_type), aes(x = tSNE1, y = tSNE2, color = Type, shape = Source)) +
+plot_data <- data.frame(
+  tSNE1 = tsne_Q$Y[, 1],
+  tSNE2 = tsne_Q$Y[, 2],
+  Model = rownames(allQ),
+  Source = model_source,
+  Type = model_type
+)
+
+tsne_Q_plot <- ggplot(plot_data, aes(x = tSNE1, y = tSNE2, color = Type, shape = Source)) +
   geom_point() +
-  geom_text_repel(aes(label = Model), size = 3, show.legend = FALSE, max.overlaps = Inf) +
+  geom_text_repel(aes(label = Model), size = 3, show.legend = FALSE, max.overlaps = Inf, parse = TRUE) +
   scale_shape_manual(values = c(16, 8)) +
   labs(title = "t-SNE of Q matrices") +
   theme_bw() +

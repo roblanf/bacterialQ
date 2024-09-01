@@ -10,11 +10,12 @@ class AminoAcidSubstitutionModel:
         self.state_freq = state_freq
         self.if_normalized = if_normalized
         self.Q_matrix = None
+        self.Q_exchange = None
 
     def create_Q_matrix(self):
         """Create the actual Q matrix from Q_params and state_freq."""
-        self.Q_matrix = np.copy(self.Q_params)
-        self.Q_matrix = self.Q_matrix + self.Q_matrix.T
+        self.Q_exchange = self.Q_params + self.Q_params.T
+        self.Q_matrix = np.copy(self.Q_exchange)
         q_matrix = np.zeros((20, 20))
         for i in range(20):
             for j in range(20):
@@ -25,9 +26,10 @@ class AminoAcidSubstitutionModel:
         self.rescale_Q_matrix()
 
     def rescale_Q_matrix(self):
-        """Rescale Q matrix to ensure the average mutation rate is 1."""
+        """Rescale Q & exchangibility matrix to ensure the average mutation rate is 1."""
         mu = -1 / np.sum(np.diag(self.Q_matrix) * self.state_freq)
         self.Q_matrix *= mu
+        self.Q_exchange *= mu
         self.if_normalized = True
 
     def prepare_for_fasttree(self, transport=True):
@@ -420,3 +422,59 @@ def bubble_difference_plot(prev_model, curr_model, output_path, bar_freq=True, f
     plt.tight_layout()
     plt.savefig(output_path, dpi=300)
     plt.close()
+
+def model_params_to_table(models, data_type):
+    """
+    Convert a list of AminoAcidSubstitutionModel objects to a DataFrame based on the specified data type.
+
+    Args:
+        models (list): List of AminoAcidSubstitutionModel objects.
+        data_type (str): Type of data to extract ('state_freq', 'Q_matrix', 'Q_exchange').
+
+    Returns:
+        pd.DataFrame: DataFrame containing the specified data from the models.
+    """
+    import pandas as pd
+    aa_order = AA_ORDER
+
+    if data_type == 'state_freq':
+        data = {
+            'model_name': [model.model_name for model in models],
+            **{f'F({aa})': [model.state_freq[i] for model in models] for i, aa in enumerate(aa_order)}
+        }
+    elif data_type == 'Q_matrix':
+        data = {
+            'model_name': [model.model_name for model in models]
+        }
+        for i, aa1 in enumerate(aa_order):
+            for j, aa2 in enumerate(aa_order):
+                if i != j:
+                    data[f'Q({aa1},{aa2})'] = [model.Q_matrix[i, j] for model in models]
+    elif data_type == 'Q_exchange':
+        data = {
+            'model_name': [model.model_name for model in models]
+        }
+        for i, aa1 in enumerate(aa_order):
+            for j, aa2 in enumerate(aa_order):
+                if i > j:
+                    data[f'R({aa1},{aa2})'] = [model.Q_exchange[i, j] for model in models]
+    else:
+        raise ValueError("Invalid data_type. Choose from 'state_freq', 'Q_matrix', 'Q_exchange'.")
+
+    return pd.DataFrame(data)
+
+def nexus_to_csv(file_path, data_type, output_path):
+    """
+    Convert models from a nexus file to a CSV table based on the specified data type and save it to the output path.
+
+    Args:
+        file_path (str): Path to the nexus file.
+        data_type (str): Type of data to extract ('state_freq', 'Q_matrix', 'Q_exchange').
+        output_path (str): Path to save the output CSV file.
+    """
+    import pandas as pd
+    models = extract_Q_from_nex(file_path)
+    for model in models:
+        model.create_Q_matrix()
+    df = model_params_to_table(models, data_type)
+    df.to_csv(output_path, index=False)

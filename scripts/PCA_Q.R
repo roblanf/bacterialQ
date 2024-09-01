@@ -89,19 +89,18 @@ read_nexus_models <- function(file_path) {
 determine_model_category <- function(model_name) {
   model_name <- toupper(model_name)
   
-  # Using if-else for Python-like switch behavior
-  if (startsWith(model_name, "Q.")) {
-    return("QMaker")
+  if (grepl("P__", model_name)) {
+    return("Bac_phyla")
+  } else if (startsWith(model_name, "Q.BAC")) {
+    return("Bac_General")
   } else if (startsWith(model_name, "MT")) {
     return("Mitochondria")
   } else if (startsWith(model_name, "CP")) {
     return("Chloroplast")
   } else if (startsWith(model_name, "HI") || startsWith(model_name, "FL") || endsWith(model_name, "REV")) {
     return("Virus")
-  } else if (grepl("P__", model_name)) {
-    return("Bac_phyla")
-  } else if (startsWith(model_name, "Q.BAC")) {
-    return("Bac_General")
+  } else if (startsWith(model_name, "Q.")) {
+    return("QMaker")
   } else {
     return("General")
   }
@@ -121,12 +120,21 @@ generate_pca_output <- function(data, data_type, output_directory, model_origin,
   # Perform PCA
   pca_result <- prcomp(data, scale. = TRUE)
 
+  # Create a data frame for plotting
+  plot_data <- data.frame(Model = rownames(data), Origin = model_origin, Category = model_category)
+  
+  # # Modify the Model column to replace '__' with '*xx*' for italic formatting
+  # taxa_level_models <- grepl("__", plot_data$Model)
+  # # Let the Model column be italicized
+  # plot_data$Model[taxa_level_models] <- gsub("__", "~italic(", plot_data$Model[taxa_level_models])
+  # plot_data$Model[taxa_level_models] <- paste0(plot_data$Model[taxa_level_models], ")")
+
   # Create PCA plot using autoplot and add labels with geom_text_repel
   pca_plot <- autoplot(pca_result,
-    data = data.frame(Model = rownames(data), Origin = model_origin, Category = model_category),
+    data = plot_data,
     colour = "Category", shape = "Origin"
   ) +
-    geom_text_repel(aes(label = Model), size = 3, show.legend = FALSE, max.overlaps = Inf) +
+    geom_text_repel(aes(label = Model), size = 3, show.legend = FALSE, max.overlaps = Inf, parse = TRUE) +
     scale_shape_manual(values = c(16, 8)) +
     labs(title = paste0("PCA of ", data_type)) +
     theme_bw() +
@@ -135,7 +143,6 @@ generate_pca_output <- function(data, data_type, output_directory, model_origin,
   # Save PCA plot
   ggsave(filename = file.path(output_directory, paste0("PCA_", data_type, file_suffix, ".png")), plot = pca_plot, width = 12, height = 11, dpi = 300)
 }
-
 
 # ----- Main Script -----
 

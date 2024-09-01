@@ -28,16 +28,17 @@ def combine_csv_sum(input_file, output_file):
 
 def extract_last_treefile(directory, destination):
     """
-    Extract the last treefile from the loop directories.
+    Extract specific tree files from the estimated_tree directory and rename them.
     
     Args:
         directory (str): Path to the directory containing loop directories.
         destination (str): Path to the destination directory.
     """
-    loop_dirs = sorted(glob(os.path.join(directory, 'loop_*')))
-    last_loop_dir = loop_dirs[-1]
-    treefile = glob(os.path.join(last_loop_dir, 'tree_update', '*.treefile'))[0]
-    shutil.copy(treefile, destination)
+    estimated_tree_dir = os.path.join(directory, 'estimated_tree')
+    treefile = os.path.join(estimated_tree_dir, 'FinalModel_FT_All_G20.treefile')
+    if os.path.exists(treefile):
+        new_treefile_name = os.path.basename(directory) + '_FinalModel_FT.treefile'
+        shutil.copy(treefile, os.path.join(destination, new_treefile_name))
 
 def extract_phylum_name(string):
     """
@@ -46,7 +47,8 @@ def extract_phylum_name(string):
     Returns:
         str: Extracted phylum name or 'Unknown' if not found.
     """
-    match = re.search(r'p__(.*?)_\d{2,}', string)
+    # match = re.search(r'p__(.*?)_\d{2,}', string)
+    match = re.search(r'Q\.(.*)', string)
     if match:
         phylum_name = match.group(1)
     else:
@@ -61,10 +63,12 @@ def process_directory(result_dir, sum_dir='./'):
         extract_last_treefile(result_dir, os.path.join(sum_dir, 'treefiles'))
         combine_csv_sum(os.path.join(result_dir, 'iqtree_results.csv'), os.path.join(sum_dir, 'combined_iqtree_sum.csv'))
         combine_csv_sum(os.path.join(result_dir, 'tree_summary.csv'), os.path.join(sum_dir, 'combined_tree_sum.csv'))
-        Q_matrix = extract_Q_from_nex(os.path.join(result_dir, 'trained_models', 'trained_model.nex'))
+        Q_matrix = extract_Q_from_nex(os.path.join(result_dir, 'inferred_models', 'trained_model.nex'))
         for i in range(len(Q_matrix)):
             Q_matrix[i].add_Q_to_nex(os.path.join(sum_dir, 'trained_models_all.nex'))
-        Q_matrix[-1].add_Q_to_nex(os.path.join(sum_dir, 'trained_models_last.nex'))
+        last_model = Q_matrix[-1]
+        last_model.model_name = re.sub(r'_\d+$', '', last_model.model_name)
+        last_model.add_Q_to_nex(os.path.join(sum_dir, 'trained_models_last.nex'))
         shutil.copy(os.path.join(result_dir, 'log.md'), os.path.join(sum_dir, 'logfiles', '{}_log.md'.format(os.path.basename(result_dir))))
         phylum_name = extract_phylum_name(result_dir)
         with open(os.path.join(sum_dir, 'phylum_list.txt'), 'a') as f:

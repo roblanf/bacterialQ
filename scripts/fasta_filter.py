@@ -90,3 +90,24 @@ def drop_rubbish_aln(alignment_file, nchar_row=None, nchar_col=None, ntaxa=3, np
         os.remove(alignment_file)
     
     return if_keep
+
+def calculate_aa_proportions(fasta_file, AA_ORDER='ARNDCQEGHILKMFPSTWYV'):
+    # Read the fasta file
+    sequence_data = fasta_to_array(fasta_file)
+
+    # Flatten the alignment to get all amino acids
+    all_amino_acids = sequence_data.aln.flatten()
+
+    # Calculate the proportion of each amino acid
+    aa_counts = {aa: np.sum(all_amino_acids == aa) for aa in AA_ORDER}
+    total_count = np.sum(list(aa_counts.values()))
+    aa_proportions = [aa_counts[aa] / total_count if total_count > 0 else 0 for aa in AA_ORDER]
+    aa_text = ",".join(map(str, aa_proportions)) 
+    print(aa_text)
+
+    # Write the proportions to a text file
+    output_file = os.path.join(os.path.dirname(fasta_file), 'aa_usage.txt')
+    with open(output_file, 'w') as file:
+        file.write(aa_text + "\n")
+
+    return aa_proportions
