@@ -106,8 +106,8 @@ def calculate_aa_proportions(fasta_file, AA_ORDER='ARNDCQEGHILKMFPSTWYV'):
     print(aa_text)
 
     # Write the proportions to a text file
-    output_file = os.path.join(os.path.dirname(fasta_file), 'aa_usage.txt')
-    with open(output_file, 'w') as file:
-        file.write(aa_text + "\n")
+    # output_file = os.path.join(os.path.dirname(fasta_file), 'aa_usage.txt')
+    # with open(output_file, 'w') as file:
+    #     file.write(aa_text + "\n")
 
     return aa_proportions

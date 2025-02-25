@@ -2,7 +2,7 @@
 
 # Specify the output elements you want to generate
 # output_elements <- c("PCA_R", "PCA_F", "PCA_Q") 
-output_elements <- c("PCA_F", "PCA_Q") 
+output_elements <- c("PCA_R", "PCA_F", "PCA_Q") 
 
 args <- commandArgs(trailingOnly = TRUE)
 existing_models_file <- args[1]
@@ -12,15 +12,20 @@ output_directory <- args[3]
 library(ggfortify)
 library(ggrepel)
 
-#' Convert R matrix to a standardized exchange rate vector
+#' Calculate the normalization factor nu
 #'
-#' @param R_matrix The R matrix
-#' @return The R matrix as a standardized exchange rate vector
-convert_R <- function(R_matrix) {
-  diag(R_matrix) <- 0
-  R_matrix <- R_matrix / sum(R_matrix)
-  R_vector <- R_matrix[lower.tri(R_matrix)]
-  return(as.vector(R_vector))
+#' @param model A list containing R matrix and F vector
+#' @return The normalization factor nu
+get_nu <- function(model) {
+  # Multiply R matrix by F vector
+  Q_matrix <- model$R * model$F
+  # Set diagonal elements to 0
+  diag(Q_matrix) <- 0
+  # Set diagonal elements to the negative sum of each row
+  diag(Q_matrix) <- -rowSums(Q_matrix)
+  # Calculate normalization factor nu using get_nu
+  nu <- -1 / (diag(Q_matrix) * model$F)
+  return(nu)
 }
 
 #' Convert R matrix and F vector to Q matrix
@@ -34,13 +39,25 @@ convert_Q <- function(model) {
   diag(Q_matrix) <- 0
   # Set diagonal elements to the negative sum of each row
   diag(Q_matrix) <- -rowSums(Q_matrix)
-  # Calculate normalization factor nu
-  nu <- -1 / (diag(Q_matrix) * model$F)
+  # Calculate normalization factor nu using get_nu
+  nu <- get_nu(model)
   # Multiply Q matrix by nu
   Q_matrix <- Q_matrix * nu
   diag(Q_matrix) <- NA
   Q_vector <- Q_matrix[!is.na(Q_matrix)]
   return(Q_vector)
+}
+
+convert_R_with_nu <- function(model) {
+  R_matrix <- model$R
+  # Calculate normalization factor nu using get_nu
+  nu <- get_nu(model)
+  # Multiply R matrix by nu
+  R_matrix <- R_matrix * nu
+  # Extract the lower triangular part of the matrix
+  lower_tri_indices <- lower.tri(R_matrix, diag = FALSE)
+  R_vector <- R_matrix[lower_tri_indices]
+  return(R_vector)
 }
 
 #' Read models from a nexus file
@@ -88,14 +105,22 @@ read_nexus_models <- function(file_path) {
 #' @return The category of the model
 determine_model_category <- function(model_name) {
   model_name <- toupper(model_name)
-  switch(TRUE,
-         startsWith(model_name, "Q.") ~ "QMaker",
-         startsWith(model_name, "MT") ~ "Mitochondria",
-         startsWith(model_name, "CP") ~ "Choloroplast",
-         startsWith(model_name, "HI") || startsWith(model_name, "FL") || endsWith(model_name, "REV") ~ "Virus",
-         grepl("P__", model_name) ~ "Bac_phyla",
-         startsWith(model_name, "Q.BAC") ~ "Bac_General",
-         TRUE ~ "General")
+  
+  if (grepl("P__", model_name)) {
+    return("Bac_phyla")
+  } else if (startsWith(model_name, "Q.BAC")) {
+    return("Bac_General")
+  } else if (startsWith(model_name, "MT")) {
+    return("Mitochondria")
+  } else if (startsWith(model_name, "CP")) {
+    return("Chloroplast")
+  } else if (startsWith(model_name, "HI") || startsWith(model_name, "FL") || endsWith(model_name, "REV")) {
+    return("Virus")
+  } else if (startsWith(model_name, "Q.")) {
+    return("QMaker")
+  } else {
+    return("General")
+  }
 }
 
 #' Perform PCA and generate plots and component files
@@ -161,9 +186,9 @@ if (file.exists(existing_models_file)) {
 trained_model_list <- read_nexus_models(trained_models_file)
 
 # Extract data from models
-existing_R_matrices <- lapply(existing_model_list, function(model) convert_R(model$R))
+existing_R_matrices <- lapply(existing_model_list, function(model) convert_R_with_nu(model))
+trained_R_matrices <- lapply(trained_model_list, function(model) convert_R_with_nu(model))
 existing_F_vectors <- lapply(existing_model_list, function(model) model$F)
-trained_R_matrices <- lapply(trained_model_list, function(model) convert_R(model$R))
 trained_F_vectors <- lapply(trained_model_list, function(model) model$F)
 
 # Combine data from existing and trained models

@@ -894,8 +894,9 @@ def main(args: argparse.Namespace) -> None:
             prev_outgroup_tree = new_tree.with_name(new_tree.stem + '_with_outgroup' + new_tree.suffix)
    
         shutil.copy(new_tree, trees_dir / f"Loop_{iteration_id}_FT_Train_G20.treefile")
-        nrf_dist = compare_trees(args, prev_tree, new_tree, iteration_dir, f"loop_{iteration_id}")
-        inloop_nRF_dist.append(nrf_dist)
+        if args.tree_comparison_report:
+            nrf_dist = compare_trees(args, prev_tree, new_tree, iteration_dir, f"loop_{iteration_id}")
+            inloop_nRF_dist.append(nrf_dist)
 
         prev_model = new_model
         prev_tree = new_tree
@@ -982,7 +983,8 @@ def main(args: argparse.Namespace) -> None:
     # 2. Compare the final tree with the reference tree
     log_message('process', "### Tree comparison")
     log_message('result', "Compare the final tree with reference tree:")
-    compare_trees(args, filtered_allspc_tree, new_tree, args.output_dir, "final_tree_compare")
+    if args.tree_comparison_report:
+        compare_trees(args, filtered_allspc_tree, new_tree, args.output_dir, "final_tree_compare")
 
     # 3. PCA plot for all existing models with final trained model
     log_message('process', "### PCA Plot for all models")
@@ -1073,7 +1075,8 @@ def main(args: argparse.Namespace) -> None:
                 existing_tree_ll = max(best_model_tree_ll, lg_tree_ll)
 
             log_message('process', "#### Compare final tree with existing model tree")
-            compare_trees(args, existing_model_tree, new_tree, final_test_dir, "compare_existing_model_tree")
+            if args.tree_comparison_report:
+                compare_trees(args, existing_model_tree, new_tree, final_test_dir, "compare_existing_model_tree")
             # Compare LogL for the final model tree and the existing model tree
             if args.final_tree_tool == "IQ" or args.final_tree_tool == "IQFAST":
                 existing_tree_info = write_iqtree_statistic(f"{final_test_logdir}/existing_model_tree.iqtree", args.prefix, f"{args.output_dir}/iqtree_results.csv", extra_info={"loop": "Final test", "step": "Existing model tree"})

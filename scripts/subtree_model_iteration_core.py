@@ -22,7 +22,7 @@ from get_subtree import prune_tree, remove_redundant_nodes, root_at_outgroups
 from mdlogger import *
 from metalogger import *
 from analyze_best_models import *
-from fasta_filter import drop_rubbish_aln
+from fasta_filter import *
 
 # Define constants
 keep_model_thres = 0.05
@@ -292,6 +292,13 @@ def initial_aln_extraction(args: argparse.Namespace) -> Tuple[Path, Path]:
 
     log_message('process', "Abstract alignment of selected taxa scale:")
     sample_alignment(args.loci_path, args.taxa_list, args.output_dir / "loci" / "loci", num_aln=None, nchar_col=nchar_keep_col)
+    # For all the loci, apply the secondary quality filter to remove low-quality sites
+    log_message('process', "Secondary quality trimming of loci:")
+    for loci_file in (args.output_dir / "loci" / "loci").glob("*.fa"):
+        aln = fasta_to_array(loci_file)
+        aln.filter_array_with_ratio(0, args.integrity_filter)
+        aln.filter_array_with_nstatus(args.nstatus_filter)
+        aln.array_to_fasta(loci_file)
     
     concat_loci = args.output_dir / "loci" / "concat_loci.faa"
     log_message('process', "Concatenating loci...")
@@ -1178,6 +1185,9 @@ def cli() -> argparse.Namespace:
     parser.add_argument('--tree_size_lower_lim', type=int, default=15, help='Lower limit for the size of subtrees (default: 15)')
     parser.add_argument('--tree_size_upper_lim', type=int, default=100, help='Upper limit for the size of subtrees (default: 100)')  
     parser.add_argument('--prune_mode', type=str, default='split', choices=['split', 'lower', 'upper', 'deep'], help="Pruning mode (split/lower/upper/deep) (default: split)")
+
+    parser.add_argument('--integrity_filter', type=float, default=0, help='Threshold of integrity for every site')
+    parser.add_argument('--nstatus_filter', type=int, default=20, help='Threshold of character status number for every site')
 
     parser.add_argument('-S', '--model_update_summary', action='store_true', help='Enable model update summary inner each iteration')
     parser.add_argument('-R', '--tree_comparison_report', action='store_true', help='Enable tree comparison report when comparing pair of trees')

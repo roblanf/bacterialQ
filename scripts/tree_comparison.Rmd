@@ -117,14 +117,19 @@ multiplot(p1, p2, ncol = 2)
 ```{r echo=FALSE, fig.height=25, fig.width=15, message=FALSE, warning=FALSE}
 source("./auxiliary/R_cophylo_plot.R")
 
-if (result_df$nRF >= 0.1) {
+if (result_df$nRF >= 0.1 && length(tree1$tip.label) <= 5000) {
   # Generate cophylo plot
   output_path <- params$cophylo_path
   generate_cophylo_plot(tree1, tree2, output_path, nodel_label_type)
   cat("Cophylo plot generated successfully.\n")
   cat("![Cophylo plot](cophylo_plot.pdf)")
 } else {
+  if (length(tree1$tip.label) > 5000) {
+    cat("The number of taxa is too large, please plot it manully.")
+  }
+  if (result_df$nRF < 0.1) {
   cat("The normalized Robinson-Foulds distance is less than 0.1, cophylo plot will not be shown.")
+  }
 }
 ```
 

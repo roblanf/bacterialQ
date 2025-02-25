@@ -35,7 +35,7 @@ def remove_brackets(tree, remove_positions):
         tree = tree[:j] + tree[start:end] + tree[end:]
     return tree
 
-def process_tree(input_file, output_file, level):
+def process_tree(input_file, output_file, level): 
     with open(input_file, 'r') as file:
         tree = file.read().strip()
 

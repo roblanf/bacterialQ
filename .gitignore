@@ -2,9 +2,16 @@
 /download_alignments/
 /scripts/TESTING/
 /scripts/archived/
+/scripts/running_history/
+/analysis/model_and_genome_property/
 /Result/
 /Result_rona/
 /Result_nova/
+/data/discard/
+/data/other_bacteria_dataset/
+/data/r207/
+/data/r220/
+/data/other_property/
 *.faa
 **/__pycache__/
 .*/ 

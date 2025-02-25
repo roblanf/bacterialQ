@@ -1,8 +1,8 @@
 #!/usr/bin/env Rscript
 
 # Specify the output elements you want to generate
-# output_elements <- c("PCA_R", "PCA_F", "PCA_Q") 
-output_elements <- c("PCA_F", "PCA_Q") 
+output_elements <- c("PCA_R", "PCA_F", "PCA_Q") 
+# output_elements <- c("PCA_F", "PCA_Q") 
 
 args <- commandArgs(trailingOnly = TRUE)
 existing_models_file <- args[1]
@@ -106,6 +106,17 @@ determine_model_category <- function(model_name) {
   }
 }
 
+# Define your custom color palette
+color_palette <- c(
+  "Bac_phyla" = "purple",
+  "Bac_General" = "brown",
+  "Mitochondria" = "darkblue",
+  "Chloroplast" = "darkgreen",
+  "Virus" = "darkred",
+  "QMaker" = "tan",
+  "General" = "black"
+)
+
 #' Perform PCA and generate plots and component files
 #'
 #' @param data The input data for PCA
@@ -113,7 +124,8 @@ determine_model_category <- function(model_name) {
 #' @param output_directory The directory to save the output files
 #' @param model_origin The origin of the models (existing or trained)
 #' @param model_category The category of the models
-generate_pca_output <- function(data, data_type, output_directory, model_origin, model_category) {
+#' @param color_palette A custom color palette for model categories
+generate_pca_output <- function(data, data_type, output_directory, model_origin, model_category, color_palette) {
   # Determine file name suffix based on existence of existing models
   file_suffix <- if (length(unique(model_origin)) == 1 && unique(model_origin) == "Trained") "_trained" else ""
   
@@ -122,23 +134,23 @@ generate_pca_output <- function(data, data_type, output_directory, model_origin,
 
   # Create a data frame for plotting
   plot_data <- data.frame(Model = rownames(data), Origin = model_origin, Category = model_category)
-  
-  # # Modify the Model column to replace '__' with '*xx*' for italic formatting
-  # taxa_level_models <- grepl("__", plot_data$Model)
-  # # Let the Model column be italicized
-  # plot_data$Model[taxa_level_models] <- gsub("__", "~italic(", plot_data$Model[taxa_level_models])
-  # plot_data$Model[taxa_level_models] <- paste0(plot_data$Model[taxa_level_models], ")")
+
+  # Apply expression format for any letter followed by __ (e.g., p__, f__, g__)
+  plot_data$Model <- ifelse(grepl("Q.[A-Za-z]__", plot_data$Model),
+                            gsub("Q.([A-Za-z])__(.*)", "Q.*italic('\\2')", plot_data$Model),
+                            plot_data$Model)
 
   # Create PCA plot using autoplot and add labels with geom_text_repel
   pca_plot <- autoplot(pca_result,
     data = plot_data,
     colour = "Category", shape = "Origin"
   ) +
-    geom_text_repel(aes(label = Model), size = 3, show.legend = FALSE, max.overlaps = Inf, parse = TRUE) +
+    geom_text_repel(aes(label = Model), size = 3, show.legend = FALSE, max.overlaps = Inf, parse = TRUE, family = "Optima") +
     scale_shape_manual(values = c(16, 8)) +
     labs(title = paste0("PCA of ", data_type)) +
     theme_bw() +
-    theme(plot.title = element_text(hjust = 0.5))
+    theme(plot.title = element_text(hjust = 0.5))+
+    scale_colour_manual(values = color_palette)
 
   # Save PCA plot
   ggsave(filename = file.path(output_directory, paste0("PCA_", data_type, file_suffix, ".png")), plot = pca_plot, width = 12, height = 11, dpi = 300)
@@ -176,12 +188,12 @@ model_category <- sapply(rownames(combined_R_matrices), determine_model_category
 
 # Generate PCA output for R matrices if specified
 if ("PCA_R" %in% output_elements) {
-  generate_pca_output(combined_R_matrices, "R", output_directory, model_origin, model_category)
+  generate_pca_output(combined_R_matrices, "R", output_directory, model_origin, model_category, color_palette)
 }
 
 # Generate PCA output for F vectors if specified
 if ("PCA_F" %in% output_elements) {
-  generate_pca_output(combined_F_vectors, "F", output_directory, model_origin, model_category)
+  generate_pca_output(combined_F_vectors, "F", output_directory, model_origin, model_category, color_palette)
 }
 
 # Calculate and process Q matrices if specified
@@ -200,5 +212,5 @@ if ("PCA_Q" %in% output_elements) {
   rownames(combined_Q_vectors) <- c(names(existing_model_list), names(trained_model_list))
 
   # Generate PCA output for Q matrices
-  generate_pca_output(combined_Q_vectors, "Q", output_directory, model_origin, model_category)
+  generate_pca_output(combined_Q_vectors, "Q", output_directory, model_origin, model_category, color_palette)
 }

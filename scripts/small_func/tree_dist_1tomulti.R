@@ -75,7 +75,7 @@ tree_folder <- args[2]
 summary_path <- args[3]
 
 # Get a list of tree files in the folder
-tree_files <- list.files(tree_folder, full.names = TRUE)
+tree_files <- list.files(tree_folder, full.names = TRUE, pattern = ".*(tre|nw).*")
 
 # Loop through each tree file in the folder
 for (tree2_path in tree_files) {

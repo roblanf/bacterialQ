@@ -156,6 +156,7 @@ standardize_trees <- function(tree1, tree2) {
 calculate_tree_distances <- function(tree1, tree2) {
 
   library(phangorn)
+  library(Quartet)
   # Standardize trees
   standardized_trees <- standardize_trees(tree1, tree2)
   tree1 <- standardized_trees$tree1
@@ -164,11 +165,16 @@ calculate_tree_distances <- function(tree1, tree2) {
   # Calculate distances
   RF_dist <- round(RF.dist(tree1, tree2, normalize = FALSE, check.labels = TRUE), 4)
   nRF_dist <- round(RF.dist(tree1, tree2, normalize = TRUE, check.labels = TRUE), 4)
-  wRF_dist <- round(wRF.dist(tree1, tree2, normalize = FALSE, check.labels = TRUE), 4)
+  wRF_dist <- round(wRF.dist(tree1, tree2, normalize = TRUE, check.labels = TRUE), 4)
   KF_dist <- round(KF.dist(tree1, tree2, check.labels = TRUE), 4)
   SPR_dist <- round(SPR.dist(tree1, tree2), 4)
   path_dist <- round(path.dist(tree1, tree2, check.labels = TRUE, use.weight = TRUE), 4)
-
+  if (length(tree1$tip.label) <= 477) {
+    quartet_dist <- round(QuartetDivergence(QuartetStatus(tree1, tree2), similarity = TRUE), 4)
+  } else {
+    quartet_dist <- NA
+  }
+  
   # Calculate tree lengths
   tree1_bl <- sum(tree1$edge.length)
   tree2_bl <- sum(tree2$edge.length)
@@ -182,6 +188,7 @@ calculate_tree_distances <- function(tree1, tree2) {
     "KF_dist" = KF_dist,
     "SPR_dist" = SPR_dist,
     "Path_dist" = path_dist,
+    "Quartet_dist" = quartet_dist,
     "Tree1_BL" = tree1_bl,
     "Tree2_BL" = tree2_bl,
     "BL_diff_per" = bl_diff_pct

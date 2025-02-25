@@ -136,8 +136,16 @@ class AminoAcidSubstitutionModel:
         Q_matrix_fasttree_str = self.prepare_for_fasttree()
         # Check regularity
         self.check_regularity()
+        # Get the directory of the input file
+        if os.path.splitext(output_dir)[1]:
+            # If file_path has an extension, treat it as a file
+            output_file_name = output_dir
+            print(f"Saving Q matrix for FastTree to {output_file_name}")
+        else:
+            # If file_path does not have an extension, treat it as a directory
+            output_file_name = os.path.join(output_dir, 'Q_matrix_fasttree.txt')
         # Save Q matrix for FastTree
-        with open(os.path.join(output_dir, 'Q_matrix_fasttree.txt'), 'w') as f:
+        with open(output_file_name, 'w') as f:
             f.write(Q_matrix_fasttree_str)
 
     def print_parameter(self):

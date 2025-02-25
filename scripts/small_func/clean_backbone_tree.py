@@ -1,37 +1,64 @@
 #!/usr/bin/env python3
-import re
+from Bio import Phylo
 import sys
+import re
 
-def replace_text_in_quotes(file_name, drop_support_value=False):
-    with open(file_name, 'r') as file:
-        text = file.read()
+def clean_node_name(name, drop_support_value=False):
+    """
+    Processes a node name by retaining only the part before the first ';' 
+    and formatting it according to the user's requirements.
+    Optionally drops the support value or includes it in braces.
+    """
+    if name:
+        # Split the name into support value and taxonomic part
+        parts = name.split(':')
+        support_value = parts[0] if len(parts) > 1 else None
+        taxonomic_part = parts[1].split(';')[0].strip() if len(parts) > 1 else parts[0]
+        
+        if drop_support_value:
+            return taxonomic_part  # Return only the taxonomic part
+        else:
+            return f"{taxonomic_part}{{{support_value}}}"  # Include support value in braces
+    return ""
 
-    pattern = r"'[^']*'"
-    matches = re.findall(pattern, text)
-    
-    for match in matches:
-        parts = match.strip("'").split(';')
-        for part in parts:
-            if drop_support_value:
-                if ':' in part:
-                    replacement = part.split(':')[1].split(';')[0].strip()
-            else:
-                replacement = "'" + part.split(';')[0].strip() + "'"
-            text = text.replace(match, replacement)
-    
-    return text
+def drop_species_tip(tree, drop_support_value=False):
+    """
+    Prunes the tree by discarding tips that do not contain '__' in their names.
+    Also processes the name of each node to drop the support value if required.
+    """
+    terminals_to_prune = [leaf for leaf in tree.get_terminals() if '__' not in leaf.name and 'tips' not in leaf.name]
 
-def write_to_file(file_name, data):
-    with open(file_name, 'w') as file:
-        file.write(data)
+    # Print names of terminals to prune
+    print("Terminals to prune:")
+    for terminal in terminals_to_prune:
+        print(terminal.name)
+
+    # Print names of all terminals in the tree
+    print("All terminals in the tree:")
+    for terminal in tree.get_terminals():
+        print(terminal.name)
+
+    # Prune tips that don't contain '__'
+    for terminal in terminals_to_prune:
+        tree.prune(terminal)
+
+    # Process names of all nodes
+    for node in tree.get_nonterminals() + tree.get_terminals():
+        node.name = clean_node_name(node.name, drop_support_value)
 
 def main():
     input_file = sys.argv[1]
     output_file = sys.argv[2]
-    drop_support_value = sys.argv[3].lower() == 'false' if len(sys.argv) > 3 else True
+    drop_support_value = sys.argv[3].lower() == 'true' if len(sys.argv) > 3 else False
 
-    result = replace_text_in_quotes(input_file, drop_support_value)
-    write_to_file(output_file, result)
+    # Read the tree
+    tree = Phylo.read(input_file, 'newick')
+
+    # Prune the tree and process node names
+    drop_species_tip(tree, drop_support_value)
+
+    # Write the pruned tree back to a file
+    Phylo.write(tree, output_file, 'newick')
 
 if __name__ == "__main__":
     main()
