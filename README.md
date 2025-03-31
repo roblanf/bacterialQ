@@ -108,7 +108,6 @@ The core pipeline, executed via `subtree_model_iteration.py`, follows these step
    - Tree comparison (via `tree_comparison.Rmd`),
    - PCA analysis of model parameters (using `PCA_Q.R`).
 
-Refer to *Bacteria_Thesis_Draft_Intro&Method.txt* for an in-depth explanation of subsampling, model updating, and tree fitting procedures.
 
 ## Running the Pipeline
 
